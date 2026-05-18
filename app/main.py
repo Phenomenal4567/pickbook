@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 from fastapi import FastAPI, Request, Header, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, FileResponse
@@ -13,6 +14,10 @@ from app.core.database import engine, Base
 from app.author_portal.routes import router as author_router
 from app.admin.routes import router as admin_router
 from app.ingest.routes import router as ingest_router
+
+# Absolute path to this file's directory (app/)
+# Prevents broken paths when the working directory differs from the project root
+BASE_DIR = Path(__file__).resolve().parent
 
 # =========================================================
 # DATABASE INIT — lifespan replaces deprecated @on_event
@@ -56,18 +61,18 @@ app.add_middleware(
 )
 
 # =========================================================
-# STATIC FILES
+# STATIC FILES — absolute path avoids working-directory issues
 # =========================================================
 app.mount(
     "/static",
-    StaticFiles(directory="app/static"),
+    StaticFiles(directory=str(BASE_DIR / "static")),
     name="static",
 )
 
 # =========================================================
-# TEMPLATES
+# TEMPLATES — absolute path avoids working-directory issues
 # =========================================================
-templates = Jinja2Templates(directory="app/templates")
+templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 # =========================================================
 # ADMIN SECURITY DEPENDENCY
@@ -117,7 +122,7 @@ def health():
 # =========================================================
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
-    return FileResponse("app/static/favicon.ico")
+    return FileResponse(str(BASE_DIR / "static" / "favicon.ico"))
 
 # =========================================================
 # DEBUG: DATABASE TABLES  (non-production only)

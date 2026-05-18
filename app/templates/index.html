@@ -603,21 +603,14 @@ async function loadBooks() {
 //  FALLBACK LIBRARY (used when API is offline)
 // ═══════════════════════════════════════════
 const FALLBACK_NOVELS = [
-  { id:1,  title:'The Last Vow',     author:'Eleanor Marsh',  genre:'Romance', mood:'Romantic', tags:['Dark Romance','Slow Burn'],     rating:4.9, chapters:42, bg:COVER_GRADIENTS[0], synopsis:'In the shadowed corridors of Ashworth Manor, Lady Vivienne discovers a pact made before her birth — one that binds her fate to a man who wears silence like armour.', cover:null },
-  { id:2,  title:'Dark Empire',      author:'Theron Blake',   genre:'Fantasy',  mood:'Dark',     tags:['Fantasy','Action-Packed'],        rating:4.7, chapters:58, bg:COVER_GRADIENTS[1], synopsis:'An empire built on stolen magic. A rebel who carries the last true flame.', cover:null },
-  { id:3,  title:'Bound',            author:'Celia Voss',     genre:'Romance', mood:'Romantic', tags:['Slow Burn','Enemies-to-Lovers'], rating:4.8, chapters:36, bg:COVER_GRADIENTS[2], synopsis:'He is her captor. She is his inconvenience. Neither planned for the chains between them to become something neither wished to break.', cover:null },
-  { id:4,  title:'Silk & Lies',      author:'Maya Cross',     genre:'Mystery', mood:'Intense',  tags:['Thriller','Mystery'],             rating:4.6, chapters:29, bg:COVER_GRADIENTS[3], synopsis:'A fashion empire built on secrets. A journalist who gets too close. A truth someone will kill to keep buried.', cover:null },
-  { id:5,  title:'The Algorithm',    author:'Kira Sen',       genre:'Sci-Fi',   mood:'Dark',     tags:['Sci-Fi','Dystopian'],             rating:4.5, chapters:44, bg:COVER_GRADIENTS[4], synopsis:'When an AI designed to cure loneliness begins choosing who gets to love whom, one programmer discovers she has been assigned to someone she was never meant to meet.', cover:null },
-  { id:6,  title:'Crimson Hollow',   author:'D. Ashwood',     genre:'Horror',   mood:'Dark',     tags:['Horror','Gothic'],                rating:4.4, chapters:22, bg:COVER_GRADIENTS[5], synopsis:'The town of Crimson Hollow has no past — only survivors.', cover:null },
-  { id:7,  title:'The Vow',          author:'Isabelle Crane', genre:'Romance', mood:'Light',    tags:['Romance','Historical'],           rating:4.7, chapters:31, bg:COVER_GRADIENTS[6], synopsis:'Regency London. A broken engagement. A marriage of convenience that becomes inconveniently real.', cover:null },
-  { id:8,  title:'Edge of Empire',   author:'Carl Morrow',    genre:'Historical',  mood:'Intense',  tags:['Historical','Drama'],             rating:4.3, chapters:67, bg:COVER_GRADIENTS[7], synopsis:'The fall of Rome told through the eyes of a Visigoth scribe who loved the empire more than any Roman ever did.', cover:null },
-  { id:9, title:'Moonlit Hearts', author:'Ariana Vale', genre:'Romance', mood:'Romantic', tags:['College Romance','Drama'], rating:4.8, chapters:40, bg:COVER_GRADIENTS[0], synopsis:'A late-night radio host falls for the anonymous caller who understands her better than anyone else.', cover:null },
-  { id:10, title:'Shadow Reign', author:'Marcus Vale', genre:'Fantasy', mood:'Dark', tags:['Magic','War'], rating:4.9, chapters:64, bg:COVER_GRADIENTS[1], synopsis:'The last dragon rider must choose between saving the kingdom or destroying the throne forever.', cover:null },
-  { id:11, title:'Echoes of Yesterday', author:'Nina Hart', genre:'Drama', mood:'Emotional', tags:['Family','Secrets'], rating:4.6, chapters:33, bg:COVER_GRADIENTS[2], synopsis:'A forgotten letter reveals a decades-old betrayal that changes three generations forever.', cover:null },
-  { id:12, title:'Neon Skyline', author:'Jace Orion', genre:'Sci‑Fi', mood:'Intense', tags:['Cyberpunk','Action'], rating:4.7, chapters:51, bg:COVER_GRADIENTS[3], synopsis:'In a city controlled by implants, one hacker discovers a signal capable of shutting the world down.', cover:null },
-  { id:13, title:'Whispers in Ivy Hall', author:'Clara Monroe', genre:'Mystery', mood:'Dark', tags:['Boarding School','Suspense'], rating:4.5, chapters:28, bg:COVER_GRADIENTS[4], synopsis:'A student disappears from Ivy Hall and every clue points to the school itself.', cover:null },
-  { id:14, title:'Royal Flame', author:'Sienna Blake', genre:'Romance', mood:'Light', tags:['Royalty','Enemies to Lovers'], rating:4.9, chapters:47, bg:COVER_GRADIENTS[5], synopsis:'A rebellious princess and a guarded bodyguard are forced into a dangerous alliance.', cover:null },
-
+  { id:1,  title:'The Last Vow',     author:'Eleanor Marsh',  genre:'Romantic', mood:'Romantic', tags:['Dark Romance','Slow Burn'],     rating:4.9, chapters:42, bg:COVER_GRADIENTS[0], synopsis:'In the shadowed corridors of Ashworth Manor, Lady Vivienne discovers a pact made before her birth — one that binds her fate to a man who wears silence like armour.', source:'Project Gutenberg', license:'Public Domain', cover:null },
+  { id:2,  title:'Dark Empire',      author:'Theron Blake',   genre:'Fantasy',  mood:'Dark',     tags:['Fantasy','Action-Packed'],        rating:4.7, chapters:58, bg:COVER_GRADIENTS[1], synopsis:'An empire built on stolen magic. A rebel who carries the last true flame.', source:'Standard Ebooks', license:'Public Domain', cover:null },
+  { id:3,  title:'Bound',            author:'Celia Voss',     genre:'Romantic', mood:'Romantic', tags:['Slow Burn','Enemies-to-Lovers'], rating:4.8, chapters:36, bg:COVER_GRADIENTS[2], synopsis:'He is her captor. She is his inconvenience. Neither planned for the chains between them to become something neither wished to break.', source:'Author Submission', license:'Owner License', cover:null },
+  { id:4,  title:'Silk & Lies',      author:'Maya Cross',     genre:'Thriller', mood:'Intense',  tags:['Thriller','Mystery'],             rating:4.6, chapters:29, bg:COVER_GRADIENTS[3], synopsis:'A fashion empire built on secrets. A journalist who gets too close. A truth someone will kill to keep buried.', source:'Feedbooks', license:'Public Domain', cover:null },
+  { id:5,  title:'The Algorithm',    author:'Kira Sen',       genre:'Sci-Fi',   mood:'Dark',     tags:['Sci-Fi','Dystopian'],             rating:4.5, chapters:44, bg:COVER_GRADIENTS[4], synopsis:'When an AI designed to cure loneliness begins choosing who gets to love whom, one programmer discovers she has been assigned to someone she was never meant to meet.', source:'Open Library', license:'CC BY 4.0', cover:null },
+  { id:6,  title:'Crimson Hollow',   author:'D. Ashwood',     genre:'Horror',   mood:'Dark',     tags:['Horror','Gothic'],                rating:4.4, chapters:22, bg:COVER_GRADIENTS[5], synopsis:'The town of Crimson Hollow has no past — only survivors.', source:'Project Gutenberg', license:'Public Domain', cover:null },
+  { id:7,  title:'The Vow',          author:'Isabelle Crane', genre:'Romantic', mood:'Light',    tags:['Romance','Historical'],           rating:4.7, chapters:31, bg:COVER_GRADIENTS[6], synopsis:'Regency London. A broken engagement. A marriage of convenience that becomes inconveniently real.', source:'Standard Ebooks', license:'Public Domain', cover:null },
+  { id:8,  title:'Edge of Empire',   author:'Carl Morrow',    genre:'History',  mood:'Intense',  tags:['Historical','Drama'],             rating:4.3, chapters:67, bg:COVER_GRADIENTS[7], synopsis:'The fall of Rome told through the eyes of a Visigoth scribe who loved the empire more than any Roman ever did.', source:'Project Gutenberg', license:'Public Domain', cover:null },
 ];
 
 // ═══════════════════════════════════════════
@@ -630,11 +623,7 @@ function showView(v) {
     const el = document.getElementById(id);
     if (el) el.style.display = (id === v + '-view') ? 'block' : 'none';
   });
-  
-  const cats = document.querySelector('.categories');
-  if (cats) cats.style.display = (v === 'home') ? 'flex' : 'none';
   if (v === 'shelf') renderShelfView();
-
   window.scrollTo(0, 0);
 }
 

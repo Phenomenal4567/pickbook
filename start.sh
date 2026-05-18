@@ -18,8 +18,7 @@ until docker-compose exec -T redis redis-cli ping > /dev/null 2>&1; do
 done
 echo "Redis ready."
 
-# Bug fix: missing --host 0.0.0.0 means the server is unreachable inside Docker.
-# Use $PORT if set (Railway), otherwise default to 8000.
 PORT="${PORT:-8000}"
 echo "Starting uvicorn on 0.0.0.0:$PORT ..."
-uvicorn app.main:app --host 0.0.0.0 --port "$PORT" --reload
+# --reload removed: development only, not safe or performant in production
+uvicorn app.main:app --host 0.0.0.0 --port "$PORT"

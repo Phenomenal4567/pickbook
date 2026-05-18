@@ -61,4 +61,3 @@ Reads `app/deployment/railway.json` and `$PORT` automatically.
 vercel --prod
 ```
 Routes are configured in `app/deployment/vercel.json`.
-# pickbook
