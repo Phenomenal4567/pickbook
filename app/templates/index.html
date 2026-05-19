@@ -71,6 +71,25 @@
   .shelf-btn:hover { border-color: var(--accent); color: var(--accent); }
   .shelf-count { background: var(--accent); color: var(--bg); font-size: 0.65rem; font-weight: 700; border-radius: 20px; padding: 1px 6px; display: none; }
   .shelf-count.visible { display: inline-block; }
+  .donate-btn { background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; border-radius: 8px; padding: 0.4rem 0.85rem; color: var(--bg); cursor: pointer; font-size: 0.82rem; font-family: var(--font-body); font-weight: 600; display: flex; align-items: center; gap: 5px; transition: opacity 0.2s, transform 0.15s; white-space: nowrap; }
+  .donate-btn:hover { opacity: 0.9; transform: scale(1.02); }
+  .donate-modal { background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius-lg); padding: 2rem; max-width: 420px; width: 100%; position: relative; animation: slideUp 0.22s ease; text-align: center; }
+  .donate-modal h2 { font-family: var(--font-display); font-size: 1.6rem; margin-bottom: 0.5rem; color: var(--accent); }
+  .donate-modal p { color: var(--text-muted); margin-bottom: 1.2rem; font-size: 0.9rem; line-height: 1.6; }
+  .donate-account { background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius); padding: 1.2rem; margin: 1rem 0; text-align: left; }
+  .donate-account .acct-row { display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+  .donate-account .acct-row:last-child { border-bottom: none; }
+  .donate-account .acct-label { color: var(--text-muted); }
+  .donate-account .acct-value { color: var(--text); font-weight: 600; }
+  .donate-close { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 0.55rem 1.5rem; color: var(--text-muted); cursor: pointer; font-family: var(--font-body); font-size: 0.88rem; margin-top: 0.5rem; transition: border-color 0.2s; }
+  .donate-close:hover { border-color: var(--accent); color: var(--accent); }
+  .donate-nudge { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 300; background: var(--surface); border: 1px solid var(--accent); border-radius: var(--radius-lg); padding: 1rem 1.2rem; max-width: 300px; box-shadow: 0 8px 32px rgba(0,0,0,0.45); animation: slideUp 0.3s ease; display: none; }
+  .donate-nudge.show { display: flex; flex-direction: column; gap: 0.5rem; }
+  .donate-nudge-title { font-size: 0.95rem; font-weight: 600; color: var(--text); }
+  .donate-nudge-body  { font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; }
+  .donate-nudge-actions { display: flex; gap: 0.5rem; margin-top: 0.3rem; }
+  .donate-nudge-yes { background: var(--accent); color: var(--bg); border: none; border-radius: 6px; padding: 0.4rem 0.9rem; font-size: 0.82rem; font-family: var(--font-body); font-weight: 600; cursor: pointer; }
+  .donate-nudge-no  { background: none; border: 1px solid var(--border2); border-radius: 6px; padding: 0.4rem 0.9rem; font-size: 0.82rem; font-family: var(--font-body); color: var(--text-muted); cursor: pointer; }
 
   /* GENRE TABS */
   .genre-bar { padding: 0 1.5rem; border-bottom: 1px solid var(--border); display: flex; overflow-x: auto; gap: 0; scrollbar-width: none; }
@@ -145,8 +164,9 @@
   /* READER VIEW */
   #reader-view { display: none; max-width: 760px; margin: 0 auto; padding: 2rem 1.5rem 6rem; }
   .reader-nav { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
-  .reader-back { background: none; border: none; color: var(--text-muted); font-size: 0.85rem; cursor: pointer; font-family: var(--font-body); display: flex; align-items: center; gap: 4px; transition: color 0.2s; }
-  .reader-back:hover { color: var(--accent); }
+  .reader-back { background: var(--surface); border: 1px solid var(--border2); color: var(--text); font-size: 0.85rem; cursor: pointer; font-family: var(--font-body); display: inline-flex; align-items: center; gap: 6px; padding: 0.5rem 1rem; border-radius: 8px; transition: background 0.2s, border-color 0.2s, color 0.2s; font-weight: 500; }
+  .reader-back:hover { background: var(--surface2); border-color: var(--accent); color: var(--accent); }
+  .back-bar { padding: 0.75rem 0; margin-bottom: 1rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; }
   .reader-title-info { flex: 1; }
   .reader-novel-title { font-size: 0.85rem; color: var(--text-muted); }
   .reader-chapter-info { font-size: 0.82rem; color: var(--accent); font-weight: 500; }
@@ -343,7 +363,9 @@
   <main>
     <div style="display:flex;align-items:baseline;gap:1rem;margin-bottom:1.5rem">
       <h1 class="shelf-header" style="margin-bottom:0">📚 My Shelf</h1>
-      <button class="section-link" onclick="showView('home')" style="background:none;border:none;cursor:pointer;font-family:var(--font-body)">← Back to Browse</button>
+      <div class="back-bar" style="margin-bottom:0;border-bottom:none;padding:0">
+        <button class="reader-back" onclick="showView('home')">← Back to Browse</button>
+      </div>
     </div>
     <div class="novel-grid" id="shelf-grid"></div>
   </main>
@@ -352,7 +374,9 @@
 <!-- DETAIL VIEW -->
 <div id="detail-view" style="display:none">
   <main style="max-width:900px">
-    <button class="reader-back" onclick="showView('home')" style="margin-bottom:1.5rem">← Back to Browse</button>
+    <div class="back-bar">
+      <button class="reader-back" onclick="showView('home')">← Back to Browse</button>
+    </div>
     <div class="detail-header">
       <div class="detail-cover"><div class="detail-cover-bg" id="detail-cover-bg"></div></div>
       <div class="detail-meta">
@@ -564,10 +588,25 @@ function saveState() {
 
 // ═══════════════════════════════════════════
 //  LOAD BOOKS FROM API — with smart inference
+//  Sources: Obooko (obooko.com) and NovelFlow (novelflow.app)
 // ═══════════════════════════════════════════
+
+// Maps raw source strings returned by the API to clean display labels
+function resolveSourceLabel(rawSource) {
+  if (!rawSource) return 'PickBook Library';
+  const s = rawSource.toLowerCase();
+  if (s.includes('obooko'))    return 'Obooko (obooko.com)';
+  if (s.includes('novelflow')) return 'NovelFlow (novelflow.app)';
+  if (s.includes('standard'))  return 'Standard Ebooks';
+  if (s.includes('feedbooks')) return 'Feedbooks';
+  if (s.includes('open lib'))  return 'Open Library';
+  if (s.includes('author'))    return 'Author Submission';
+  return rawSource; // fall through — show exactly what the server says
+}
+
 async function loadBooks() {
   try {
-    const res = await fetch('http://127.0.0.1:8000/ingest/books');
+    const res = await fetch('/ingest/books');
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
 
@@ -581,16 +620,18 @@ async function loadBooks() {
       rating:   parseFloat(inferRating(i)),
       chapters: inferChapters(book, i),
       bg:       COVER_GRADIENTS[i % COVER_GRADIENTS.length],
-      synopsis: book.synopsis || book.description || 'A classic public domain work available free on PickBook.',
-      source:   book.source   || 'Gutendex',
+      synopsis: book.synopsis || book.description || 'Available free on PickBook.',
+      source:   resolveSourceLabel(book.source),
       license:  book.license  || 'Public Domain',
       cover:    book.cover    || null,
       download: book.download || null,
       subjects: book.subjects || [],
     }));
 
+    console.info(`[PickBook] Loaded ${NOVELS.length} books from API.`);
+
   } catch (err) {
-    console.warn('API unavailable — using built-in library:', err.message);
+    console.warn('[PickBook] API unavailable — using built-in library:', err.message);
     NOVELS = FALLBACK_NOVELS;
   }
 
@@ -602,15 +643,76 @@ async function loadBooks() {
 // ═══════════════════════════════════════════
 //  FALLBACK LIBRARY (used when API is offline)
 // ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+//  OFFLINE FALLBACK — real public domain titles only
+//  All sourced from Obooko (obooko.com) or Standard Ebooks.
+//  Shown only when the PickBook API cannot be reached.
+// ═══════════════════════════════════════════════════════
 const FALLBACK_NOVELS = [
-  { id:1,  title:'The Last Vow',     author:'Eleanor Marsh',  genre:'Romantic', mood:'Romantic', tags:['Dark Romance','Slow Burn'],     rating:4.9, chapters:42, bg:COVER_GRADIENTS[0], synopsis:'In the shadowed corridors of Ashworth Manor, Lady Vivienne discovers a pact made before her birth — one that binds her fate to a man who wears silence like armour.', source:'Project Gutenberg', license:'Public Domain', cover:null },
-  { id:2,  title:'Dark Empire',      author:'Theron Blake',   genre:'Fantasy',  mood:'Dark',     tags:['Fantasy','Action-Packed'],        rating:4.7, chapters:58, bg:COVER_GRADIENTS[1], synopsis:'An empire built on stolen magic. A rebel who carries the last true flame.', source:'Standard Ebooks', license:'Public Domain', cover:null },
-  { id:3,  title:'Bound',            author:'Celia Voss',     genre:'Romantic', mood:'Romantic', tags:['Slow Burn','Enemies-to-Lovers'], rating:4.8, chapters:36, bg:COVER_GRADIENTS[2], synopsis:'He is her captor. She is his inconvenience. Neither planned for the chains between them to become something neither wished to break.', source:'Author Submission', license:'Owner License', cover:null },
-  { id:4,  title:'Silk & Lies',      author:'Maya Cross',     genre:'Thriller', mood:'Intense',  tags:['Thriller','Mystery'],             rating:4.6, chapters:29, bg:COVER_GRADIENTS[3], synopsis:'A fashion empire built on secrets. A journalist who gets too close. A truth someone will kill to keep buried.', source:'Feedbooks', license:'Public Domain', cover:null },
-  { id:5,  title:'The Algorithm',    author:'Kira Sen',       genre:'Sci-Fi',   mood:'Dark',     tags:['Sci-Fi','Dystopian'],             rating:4.5, chapters:44, bg:COVER_GRADIENTS[4], synopsis:'When an AI designed to cure loneliness begins choosing who gets to love whom, one programmer discovers she has been assigned to someone she was never meant to meet.', source:'Open Library', license:'CC BY 4.0', cover:null },
-  { id:6,  title:'Crimson Hollow',   author:'D. Ashwood',     genre:'Horror',   mood:'Dark',     tags:['Horror','Gothic'],                rating:4.4, chapters:22, bg:COVER_GRADIENTS[5], synopsis:'The town of Crimson Hollow has no past — only survivors.', source:'Project Gutenberg', license:'Public Domain', cover:null },
-  { id:7,  title:'The Vow',          author:'Isabelle Crane', genre:'Romantic', mood:'Light',    tags:['Romance','Historical'],           rating:4.7, chapters:31, bg:COVER_GRADIENTS[6], synopsis:'Regency London. A broken engagement. A marriage of convenience that becomes inconveniently real.', source:'Standard Ebooks', license:'Public Domain', cover:null },
-  { id:8,  title:'Edge of Empire',   author:'Carl Morrow',    genre:'History',  mood:'Intense',  tags:['Historical','Drama'],             rating:4.3, chapters:67, bg:COVER_GRADIENTS[7], synopsis:'The fall of Rome told through the eyes of a Visigoth scribe who loved the empire more than any Roman ever did.', source:'Project Gutenberg', license:'Public Domain', cover:null },
+  {
+    id:1, title:'Pride and Prejudice', author:'Jane Austen',
+    genre:'Romantic', mood:'Romantic', tags:['Romance','Historical'],
+    rating:4.9, chapters:61, bg:COVER_GRADIENTS[0],
+    synopsis:'The spirited Elizabeth Bennet navigates love, pride, and society in Regency England when the wealthy Mr Darcy enters her world.',
+    source:'Obooko (obooko.com)', license:'Public Domain', cover:null,
+    download:'https://www.obooko.com/free-romance-books/pride-and-prejudice-austen',
+  },
+  {
+    id:2, title:'The Strange Case of Dr Jekyll and Mr Hyde', author:'Robert Louis Stevenson',
+    genre:'Horror', mood:'Dark', tags:['Gothic','Classic'],
+    rating:4.7, chapters:10, bg:COVER_GRADIENTS[1],
+    synopsis:'A London lawyer investigates the connection between his old friend Dr Jekyll and the sinister Mr Hyde — a duality that haunts Victorian society.',
+    source:'Standard Ebooks', license:'Public Domain', cover:null,
+    download:'https://standardebooks.org/ebooks/robert-louis-stevenson/the-strange-case-of-dr-jekyll-and-mr-hyde',
+  },
+  {
+    id:3, title:'Sense and Sensibility', author:'Jane Austen',
+    genre:'Romantic', mood:'Light', tags:['Romance','Classic'],
+    rating:4.7, chapters:50, bg:COVER_GRADIENTS[2],
+    synopsis:'Two sisters — one ruled by reason, the other by passion — search for love and stability in a world governed by wealth and propriety.',
+    source:'Obooko (obooko.com)', license:'Public Domain', cover:null,
+    download:'https://www.obooko.com/free-romance-books/sense-and-sensibility-austen',
+  },
+  {
+    id:4, title:'The Adventures of Sherlock Holmes', author:'Arthur Conan Doyle',
+    genre:'Mystery', mood:'Intense', tags:['Mystery','Crime'],
+    rating:4.8, chapters:12, bg:COVER_GRADIENTS[3],
+    synopsis:'Twelve brilliant detective stories featuring the world\'s greatest consulting detective and his loyal companion Dr Watson.',
+    source:'Standard Ebooks', license:'Public Domain', cover:null,
+    download:'https://standardebooks.org/ebooks/arthur-conan-doyle/the-adventures-of-sherlock-holmes',
+  },
+  {
+    id:5, title:'Frankenstein', author:'Mary Shelley',
+    genre:'Sci-Fi', mood:'Dark', tags:['Gothic','Classic'],
+    rating:4.6, chapters:24, bg:COVER_GRADIENTS[4],
+    synopsis:'Victor Frankenstein\'s obsession with creating life leads to catastrophic consequences for him and his creation, whose lonely existence turns to tragedy.',
+    source:'Obooko (obooko.com)', license:'Public Domain', cover:null,
+    download:'https://www.obooko.com/free-scifi-books/frankenstein-mary-shelley',
+  },
+  {
+    id:6, title:'The War of the Worlds', author:'H. G. Wells',
+    genre:'Sci-Fi', mood:'Intense', tags:['Sci-Fi','Classic'],
+    rating:4.5, chapters:27, bg:COVER_GRADIENTS[5],
+    synopsis:'A terrifying Martian invasion lays waste to England — a masterwork of early science fiction that reimagined humanity\'s place in the cosmos.',
+    source:'Standard Ebooks', license:'Public Domain', cover:null,
+    download:'https://standardebooks.org/ebooks/h-g-wells/the-war-of-the-worlds',
+  },
+  {
+    id:7, title:'Emma', author:'Jane Austen',
+    genre:'Romantic', mood:'Light', tags:['Romance','Comedy'],
+    rating:4.7, chapters:55, bg:COVER_GRADIENTS[6],
+    synopsis:'The witty and self-satisfied Emma Woodhouse believes herself to be an expert matchmaker — with often humorous and occasionally heartfelt results.',
+    source:'Obooko (obooko.com)', license:'Public Domain', cover:null,
+    download:'https://www.obooko.com/free-romance-books/emma-jane-austen',
+  },
+  {
+    id:8, title:'The Count of Monte Cristo', author:'Alexandre Dumas',
+    genre:'Drama', mood:'Intense', tags:['Historical','Thriller'],
+    rating:4.8, chapters:117, bg:COVER_GRADIENTS[7],
+    synopsis:'Wrongly imprisoned Edmond Dantès escapes and reinvents himself as the enigmatic Count of Monte Cristo to exact an elaborate, devastating revenge.',
+    source:'Standard Ebooks', license:'Public Domain', cover:null,
+    download:'https://standardebooks.org/ebooks/alexandre-dumas/the-count-of-monte-cristo',
+  },
 ];
 
 // ═══════════════════════════════════════════
@@ -860,9 +962,45 @@ function buildHomeGrids(novels) {
   renderGrid(document.getElementById('recommended-grid'), recommended.slice(0, 8));
 
   if (!isFiltered && NOVELS.length > 0) {
-    const byRating = [...NOVELS].sort((a, b) => b.rating - a.rating);
-    renderGrid(document.getElementById('trending-grid'), byRating.slice(0, 4));
-    renderGrid(document.getElementById('latest-grid'), [...NOVELS].slice(-4).reverse());
+    // ── Periodic Trending & Latest (refreshes every 2 days) ──────────────
+    const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000;
+    const nowMs       = Date.now();
+    const lastRefresh = parseInt(localStorage.getItem('pb_sections_refreshed') || '0', 10);
+    const isStale     = (nowMs - lastRefresh) >= TWO_DAYS_MS;
+
+    let trendingIds = JSON.parse(localStorage.getItem('pb_trending_ids') || 'null');
+    let latestIds   = JSON.parse(localStorage.getItem('pb_latest_ids')   || 'null');
+
+    if (isStale || !trendingIds || !latestIds) {
+      // Trending = top-rated 4, shuffled slightly for freshness
+      const byRating  = [...NOVELS].sort((a, b) => b.rating - a.rating);
+      const topPool   = byRating.slice(0, Math.min(10, NOVELS.length));
+      // Fisher-Yates shuffle of the pool, pick first 4
+      for (let i = topPool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [topPool[i], topPool[j]] = [topPool[j], topPool[i]];
+      }
+      trendingIds = topPool.slice(0, 4).map(n => n.id);
+
+      // Latest = last 8 by array position, shuffle pick 4
+      const latestPool = [...NOVELS].slice(-8).reverse();
+      for (let i = latestPool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [latestPool[i], latestPool[j]] = [latestPool[j], latestPool[i]];
+      }
+      latestIds = latestPool.slice(0, 4).map(n => n.id);
+
+      localStorage.setItem('pb_trending_ids',     JSON.stringify(trendingIds));
+      localStorage.setItem('pb_latest_ids',       JSON.stringify(latestIds));
+      localStorage.setItem('pb_sections_refreshed', String(nowMs));
+    }
+
+    const findById  = id => NOVELS.find(n => n.id === id);
+    const trending  = trendingIds.map(findById).filter(Boolean);
+    const latest    = latestIds.map(findById).filter(Boolean);
+
+    renderGrid(document.getElementById('trending-grid'), trending);
+    renderGrid(document.getElementById('latest-grid'),   latest);
   }
 }
 
