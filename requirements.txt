@@ -12,3 +12,4 @@ passlib[bcrypt]==1.7.4
 bleach==6.1.0
 beautifulsoup4
 requests
+playwright
