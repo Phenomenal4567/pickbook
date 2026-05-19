@@ -1,12 +1,12 @@
-from fastapi import APIRouter, Depends, Request
-from app.core.auth import require_admin
+from fastapi import APIRouter, Request
 from app.core.limiter import limiter
 
+# Auth is applied globally in main.py via Depends(verify_admin) on include_router.
+# Do NOT add a second auth dependency here — it causes double-checking and
+# inconsistent error codes (401 vs 403) depending on which guard fires first.
 router = APIRouter(
     prefix="/admin",
     tags=["Admin"],
-    # All admin routes require a valid admin token
-    dependencies=[Depends(require_admin)],
 )
 
 

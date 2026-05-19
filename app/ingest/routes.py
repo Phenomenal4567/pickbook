@@ -122,10 +122,13 @@ def _fetch_with_retry(url: str) -> requests.Response:
                 res.raise_for_status()
                 return res
             last_exc = RequestException(f"Server error {res.status_code}")
-        except SSLError as exc:
+        except RequestException as exc:
+            # Bug fix: previously only SSLError was caught here, and a bare
+            # `except RequestException: raise` re-raised all other errors
+            # immediately without retrying. Now ALL network errors (timeouts,
+            # DNS failures, connection resets, SSL errors) are retried up to
+            # MAX_RETRIES times with exponential backoff.
             last_exc = exc
-        except RequestException:
-            raise
         wait = RETRY_BACKOFF * (2 ** attempt)
         print(
             f"[ingest] Retrying {url} in {wait:.0f}s "
