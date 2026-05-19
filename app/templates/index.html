@@ -2,311 +2,259 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<title>PickBook — Free Novel Reading</title>
+<title>PickBook</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
 
 *{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
 }
 
 body{
-  background:#0b1120;
-  color:white;
-  font-family:'Inter',sans-serif;
+    font-family:'Inter',sans-serif;
+    background:#0b0b0b;
+    color:white;
+    min-height:100vh;
 }
 
-/* =========================
-HEADER
-========================= */
+/* =========================================
+   HEADER
+========================================= */
 
 header{
-  padding:24px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  border-bottom:1px solid rgba(255,255,255,.08);
-  position:sticky;
-  top:0;
-  z-index:100;
-  background:#0b1120;
+    padding:30px 20px;
+    border-bottom:1px solid rgba(255,255,255,.08);
+    position:sticky;
+    top:0;
+    background:#0b0b0b;
+    z-index:100;
+}
+
+.topbar{
+    max-width:1400px;
+    margin:auto;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:20px;
+    flex-wrap:wrap;
 }
 
 .logo{
-  font-size:2rem;
-  font-family:'Playfair Display',serif;
-  font-weight:700;
+    font-size:32px;
+    font-weight:800;
 }
 
 .logo span{
-  color:#3b82f6;
+    color:#ffb703;
 }
 
-.search-box{
-  width:320px;
-  max-width:100%;
+/* =========================================
+   CONTROLS
+========================================= */
+
+.controls{
+    display:flex;
+    gap:14px;
+    flex-wrap:wrap;
 }
 
-.search-box input{
-  width:100%;
-  padding:14px 18px;
-  border:none;
-  border-radius:14px;
-  background:#111827;
-  color:white;
-  outline:none;
-  font-size:15px;
+.controls input,
+.controls select{
+    padding:14px 16px;
+    border:none;
+    border-radius:12px;
+    background:#161616;
+    color:white;
+    min-width:220px;
+    outline:none;
+    font-size:15px;
 }
 
-/* =========================
-HERO
-========================= */
-
-.hero{
-  padding:80px 20px 40px;
-  text-align:center;
+.controls input::placeholder{
+    color:#aaa;
 }
 
-.hero h1{
-  font-size:4rem;
-  margin-bottom:20px;
-  font-family:'Playfair Display',serif;
+/* =========================================
+   MAIN
+========================================= */
+
+main{
+    max-width:1400px;
+    margin:auto;
+    padding:40px 20px;
 }
 
-.hero p{
-  max-width:700px;
-  margin:auto;
-  opacity:.8;
-  line-height:1.8;
-  font-size:1.1rem;
-}
-
-/* =========================
-FILTERS
-========================= */
-
-.filters{
-  display:flex;
-  justify-content:center;
-  flex-wrap:wrap;
-  gap:12px;
-  margin-top:35px;
-}
-
-.filter-btn{
-  padding:12px 18px;
-  border:none;
-  border-radius:999px;
-  background:#111827;
-  color:white;
-  cursor:pointer;
-  transition:.25s;
-  font-weight:600;
-}
-
-.filter-btn:hover{
-  background:#2563eb;
-}
-
-.filter-btn.active{
-  background:#2563eb;
-}
-
-/* =========================
-BOOKS
-========================= */
-
-.books-section{
-  max-width:1500px;
-  margin:auto;
-  padding:40px 20px 80px;
-}
-
-.section-top{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:25px;
-  flex-wrap:wrap;
-  gap:10px;
-}
-
-.section-top h2{
-  font-size:2rem;
-}
-
-#resultsCount{
-  opacity:.7;
-}
+/* =========================================
+   GRID
+========================================= */
 
 .books-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
-  gap:24px;
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+    gap:28px;
 }
 
-/* =========================
-BOOK CARD
-========================= */
+/* =========================================
+   CARD
+========================================= */
 
 .book-card{
-  background:#111827;
-  border-radius:20px;
-  overflow:hidden;
-  transition:.25s ease;
-  cursor:pointer;
-  border:1px solid rgba(255,255,255,.05);
+    background:#121212;
+    border-radius:22px;
+    overflow:hidden;
+    border:1px solid rgba(255,255,255,.06);
+    transition:.25s;
 }
 
 .book-card:hover{
-  transform:translateY(-6px);
+    transform:translateY(-5px);
+    border-color:rgba(255,255,255,.14);
+}
+
+.book-cover-wrapper{
+    width:100%;
+    aspect-ratio:2/3;
+    overflow:hidden;
+    background:#1a1a1a;
 }
 
 .book-cover{
-  width:100%;
-  height:320px;
-  object-fit:cover;
-  background:#1f2937;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
 }
 
 .book-info{
-  padding:16px;
-}
-
-.book-title{
-  font-size:1rem;
-  font-weight:700;
-  line-height:1.5;
-  margin-bottom:8px;
-}
-
-.book-author{
-  opacity:.7;
-  margin-bottom:12px;
-  font-size:.92rem;
-}
-
-.book-bottom{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
+    padding:18px;
 }
 
 .book-genre{
-  padding:6px 10px;
-  border-radius:999px;
-  background:#2563eb;
-  font-size:.8rem;
+    font-size:12px;
+    opacity:.7;
+    margin-bottom:10px;
 }
 
-.book-source{
-  font-size:.75rem;
-  opacity:.6;
-  text-transform:uppercase;
+.book-title{
+    font-size:18px;
+    font-weight:700;
+    line-height:1.35;
+    margin-bottom:10px;
 }
 
-/* =========================
-PAGINATION
-========================= */
+.book-author{
+    font-size:14px;
+    opacity:.8;
+    margin-bottom:18px;
+}
+
+.read-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:100%;
+    padding:12px;
+    border-radius:12px;
+    background:#ffb703;
+    color:black;
+    text-decoration:none;
+    font-weight:700;
+    transition:.2s;
+}
+
+.read-btn:hover{
+    opacity:.9;
+}
+
+/* =========================================
+   PAGINATION
+========================================= */
 
 .pagination{
-  margin-top:50px;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  flex-wrap:wrap;
-  gap:10px;
+    margin:50px 0 20px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:18px;
+    flex-wrap:wrap;
 }
 
 .pagination button{
-  padding:12px 18px;
-  border:none;
-  border-radius:12px;
-  background:#2563eb;
-  color:white;
-  cursor:pointer;
-  font-weight:600;
+    padding:12px 20px;
+    border:none;
+    border-radius:12px;
+    cursor:pointer;
+    background:#ffb703;
+    color:black;
+    font-weight:700;
+    transition:.2s;
+}
+
+.pagination button:hover{
+    opacity:.9;
 }
 
 .pagination button:disabled{
-  opacity:.4;
-  cursor:not-allowed;
+    opacity:.4;
+    cursor:not-allowed;
 }
 
-.page-numbers{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
+.pagination span{
+    opacity:.8;
 }
 
-.page-number{
-  width:42px;
-  height:42px;
-  border-radius:12px;
-  background:#111827;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  cursor:pointer;
-  font-weight:700;
+/* =========================================
+   EMPTY
+========================================= */
+
+.empty-state{
+    text-align:center;
+    padding:80px 20px;
+    opacity:.7;
+    font-size:18px;
 }
 
-.page-number.active{
-  background:#2563eb;
+/* =========================================
+   LOADER
+========================================= */
+
+.loader{
+    text-align:center;
+    padding:100px 20px;
+    font-size:18px;
+    opacity:.7;
 }
 
-/* =========================
-FOOTER
-========================= */
-
-footer{
-  padding:40px 20px;
-  text-align:center;
-  border-top:1px solid rgba(255,255,255,.08);
-  opacity:.6;
-}
-
-/* =========================
-RESPONSIVE
-========================= */
+/* =========================================
+   MOBILE
+========================================= */
 
 @media(max-width:768px){
 
-  .hero h1{
-    font-size:2.8rem;
-  }
+    .topbar{
+        flex-direction:column;
+        align-items:flex-start;
+    }
 
-  .books-grid{
-    grid-template-columns:repeat(2,1fr);
-  }
+    .controls{
+        width:100%;
+    }
 
-  .book-cover{
-    height:250px;
-  }
-}
+    .controls input,
+    .controls select{
+        width:100%;
+    }
 
-@media(max-width:480px){
-
-  header{
-    flex-direction:column;
-    gap:18px;
-  }
-
-  .books-grid{
-    grid-template-columns:1fr;
-  }
-
-  .hero h1{
-    font-size:2.2rem;
-  }
 }
 
 </style>
@@ -314,423 +262,342 @@ RESPONSIVE
 
 <body>
 
-<!-- =========================
-HEADER
-========================= -->
-
 <header>
 
-  <div class="logo">
-    Pick<span>Book</span>
-  </div>
+    <div class="topbar">
 
-  <div class="search-box">
-    <input
-      type="text"
-      id="searchInput"
-      placeholder="Search novels, authors, genres..."
-    >
-  </div>
+        <div class="logo">
+            Pick<span>Book</span>
+        </div>
+
+        <div class="controls">
+
+            <input
+                type="text"
+                id="searchInput"
+                placeholder="Search books..."
+            />
+
+            <select id="genreSelect">
+                <option value="All">All Genres</option>
+            </select>
+
+        </div>
+
+    </div>
 
 </header>
 
-<!-- =========================
-HERO
-========================= -->
+<main>
 
-<section class="hero">
+    <div id="books-grid" class="books-grid">
 
-  <h1>Discover Your Next Story</h1>
+        <div class="loader">
+            Loading books...
+        </div>
 
-  <p>
-    Read thousands of free novels, romance stories, fantasy adventures,
-    thrillers, mysteries and more from across the internet.
-  </p>
+    </div>
 
-  <div class="filters">
+    <div id="pagination" class="pagination"></div>
 
-    <button class="filter-btn active" data-genre="all">
-      All
-    </button>
-
-    <button class="filter-btn" data-genre="Romance">
-      Romance
-    </button>
-
-    <button class="filter-btn" data-genre="Fantasy">
-      Fantasy
-    </button>
-
-    <button class="filter-btn" data-genre="Thriller">
-      Thriller
-    </button>
-
-    <button class="filter-btn" data-genre="Science Fiction">
-      Sci-Fi
-    </button>
-
-    <button class="filter-btn" data-genre="Horror">
-      Horror
-    </button>
-
-    <button class="filter-btn" data-genre="Young Adult">
-      Young Adult
-    </button>
-
-  </div>
-
-</section>
-
-<!-- =========================
-BOOKS
-========================= -->
-
-<section class="books-section">
-
-  <div class="section-top">
-    <h2>Stories</h2>
-    <p id="resultsCount">Loading books...</p>
-  </div>
-
-  <div id="booksGrid" class="books-grid"></div>
-
-  <!-- PAGINATION -->
-
-  <div class="pagination">
-
-    <button id="prevBtn">
-      ← Previous
-    </button>
-
-    <div id="pageNumbers" class="page-numbers"></div>
-
-    <button id="nextBtn">
-      Next →
-    </button>
-
-  </div>
-
-</section>
-
-<!-- =========================
-FOOTER
-========================= -->
-
-<footer>
-  © 2026 PickBook — Read Unlimited Stories
-</footer>
+</main>
 
 <script>
 
-/* =========================
-CONFIG
-========================= */
+// =========================================
+// CONFIG
+// =========================================
 
-const API_URL = "/ingest/books";
+const API_BASE = "";
+
+// =========================================
+// STATE
+// =========================================
+
+let ALL_BOOKS = [];
+let FILTERED_BOOKS = [];
+
+let CURRENT_PAGE = 1;
+
 const BOOKS_PER_PAGE = 30;
 
-let allBooks = [];
-let filteredBooks = [];
+// =========================================
+// FETCH BOOKS
+// =========================================
 
-let currentPage = 1;
-let currentGenre = "all";
+async function loadBooks() {
 
-/* =========================
-FETCH BOOKS
-========================= */
+    try {
 
-async function fetchBooks(){
+        const response = await fetch(`${API_BASE}/ingest/books`);
 
-  try{
+        if (!response.ok) {
+            throw new Error("Failed to fetch books");
+        }
 
-    const res = await fetch(API_URL);
+        ALL_BOOKS = await response.json();
 
-    const data = await res.json();
+        FILTERED_BOOKS = [...ALL_BOOKS];
 
-    allBooks = data || [];
+        populateGenres();
 
-    filteredBooks = [...allBooks];
+        renderBooks();
 
-    renderPage(1);
+        renderPagination();
 
-  }catch(err){
+    } catch (error) {
 
-    console.error(err);
+        console.error(error);
 
-    document.getElementById("booksGrid").innerHTML = `
-      <p>Failed to load books.</p>
-    `;
-  }
-}
-
-/* =========================
-RENDER PAGE
-========================= */
-
-function renderPage(page){
-
-  currentPage = page;
-
-  const start = (page - 1) * BOOKS_PER_PAGE;
-  const end = start + BOOKS_PER_PAGE;
-
-  const books = filteredBooks.slice(start,end);
-
-  const grid = document.getElementById("booksGrid");
-
-  grid.innerHTML = "";
-
-  books.forEach(book => {
-
-    const cover =
-      book.cover && book.cover !== "null"
-        ? book.cover
-        : "https://placehold.co/400x600?text=No+Cover";
-
-    const card = document.createElement("div");
-
-    card.className = "book-card";
-
-    card.innerHTML = `
-      <img
-        src="${cover}"
-        class="book-cover"
-        loading="lazy"
-        alt="${book.title}"
-        onerror="this.src='https://placehold.co/400x600?text=No+Cover'"
-      >
-
-      <div class="book-info">
-
-        <div class="book-title">
-          ${book.title}
-        </div>
-
-        <div class="book-author">
-          ${book.author || "Unknown Author"}
-        </div>
-
-        <div class="book-bottom">
-
-          <div class="book-genre">
-            ${book.genre || "Unknown"}
-          </div>
-
-          <div class="book-source">
-            ${book.source}
-          </div>
-
-        </div>
-
-      </div>
-    `;
-
-    card.addEventListener("click", () => {
-      window.open(book.download, "_blank");
-    });
-
-    grid.appendChild(card);
-
-  });
-
-  updatePagination();
-  updateResultsCount();
-}
-
-/* =========================
-RESULTS COUNT
-========================= */
-
-function updateResultsCount(){
-
-  const total = filteredBooks.length;
-
-  let start = ((currentPage - 1) * BOOKS_PER_PAGE) + 1;
-  let end = currentPage * BOOKS_PER_PAGE;
-
-  if(end > total) end = total;
-
-  if(total === 0){
-    start = 0;
-  }
-
-  document.getElementById("resultsCount").innerText =
-    `Showing ${start}-${end} of ${total} stories`;
-}
-
-/* =========================
-PAGINATION
-========================= */
-
-function updatePagination(){
-
-  const totalPages =
-    Math.ceil(filteredBooks.length / BOOKS_PER_PAGE);
-
-  const pageNumbers =
-    document.getElementById("pageNumbers");
-
-  pageNumbers.innerHTML = "";
-
-  for(let i = 1; i <= totalPages; i++){
-
-    if(
-      i === 1 ||
-      i === totalPages ||
-      (i >= currentPage - 2 && i <= currentPage + 2)
-    ){
-
-      const btn = document.createElement("div");
-
-      btn.className = "page-number";
-
-      if(i === currentPage){
-        btn.classList.add("active");
-      }
-
-      btn.innerText = i;
-
-      btn.onclick = () => renderPage(i);
-
-      pageNumbers.appendChild(btn);
+        document.getElementById("books-grid").innerHTML = `
+            <div class="empty-state">
+                Failed to load books.
+            </div>
+        `;
     }
-  }
-
-  document.getElementById("prevBtn").disabled =
-    currentPage === 1;
-
-  document.getElementById("nextBtn").disabled =
-    currentPage === totalPages || totalPages === 0;
 }
 
-/* =========================
-BUTTONS
-========================= */
+// =========================================
+// POPULATE GENRES
+// =========================================
 
-document.getElementById("prevBtn")
-.addEventListener("click", () => {
+function populateGenres() {
 
-  if(currentPage > 1){
-    renderPage(currentPage - 1);
-  }
-});
+    const genres = [...new Set(
+        ALL_BOOKS
+            .map(book => book.genre)
+            .filter(Boolean)
+    )].sort();
 
-document.getElementById("nextBtn")
-.addEventListener("click", () => {
+    const select = document.getElementById("genreSelect");
 
-  const totalPages =
-    Math.ceil(filteredBooks.length / BOOKS_PER_PAGE);
+    select.innerHTML = `
+        <option value="All">All Genres</option>
+    `;
 
-  if(currentPage < totalPages){
-    renderPage(currentPage + 1);
-  }
-});
+    genres.forEach(genre => {
 
-/* =========================
-SEARCH
-========================= */
+        select.innerHTML += `
+            <option value="${genre}">
+                ${genre}
+            </option>
+        `;
+    });
+}
 
-document.getElementById("searchInput")
-.addEventListener("input", e => {
+// =========================================
+// FILTERS
+// =========================================
 
-  const term = e.target.value.toLowerCase();
+function applyFilters() {
 
-  filteredBooks = allBooks.filter(book => {
-
-    const matchesGenre =
-      currentGenre === "all" ||
-      (book.genre || "")
-      .toLowerCase()
-      .includes(currentGenre.toLowerCase());
-
-    const matchesSearch =
-
-      (book.title || "")
-      .toLowerCase()
-      .includes(term)
-
-      ||
-
-      (book.author || "")
-      .toLowerCase()
-      .includes(term)
-
-      ||
-
-      (book.genre || "")
-      .toLowerCase()
-      .includes(term);
-
-    return matchesGenre && matchesSearch;
-
-  });
-
-  renderPage(1);
-
-});
-
-/* =========================
-FILTERS
-========================= */
-
-document.querySelectorAll(".filter-btn")
-.forEach(btn => {
-
-  btn.addEventListener("click", () => {
-
-    document.querySelectorAll(".filter-btn")
-    .forEach(b => b.classList.remove("active"));
-
-    btn.classList.add("active");
-
-    currentGenre = btn.dataset.genre;
-
-    const search =
-      document.getElementById("searchInput")
-      .value
-      .toLowerCase();
-
-    filteredBooks = allBooks.filter(book => {
-
-      const matchesGenre =
-        currentGenre === "all" ||
-        (book.genre || "")
+    const search = document
+        .getElementById("searchInput")
+        .value
         .toLowerCase()
-        .includes(currentGenre.toLowerCase());
+        .trim();
 
-      const matchesSearch =
+    const genre = document
+        .getElementById("genreSelect")
+        .value;
 
-        (book.title || "")
-        .toLowerCase()
-        .includes(search)
+    FILTERED_BOOKS = ALL_BOOKS.filter(book => {
 
-        ||
+        const matchesSearch =
 
-        (book.author || "")
-        .toLowerCase()
-        .includes(search)
+            !search ||
 
-        ||
+            book.title?.toLowerCase().includes(search) ||
 
-        (book.genre || "")
-        .toLowerCase()
-        .includes(search);
+            book.author?.toLowerCase().includes(search);
 
-      return matchesGenre && matchesSearch;
+        const matchesGenre =
+
+            genre === "All" ||
+
+            !genre ||
+
+            book.genre === genre;
+
+        return matchesSearch && matchesGenre;
 
     });
 
-    renderPage(1);
+    CURRENT_PAGE = 1;
 
-  });
+    renderBooks();
 
-});
+    renderPagination();
+}
 
-/* =========================
-START
-========================= */
+// =========================================
+// PAGINATION
+// =========================================
 
-fetchBooks();
+function getPaginatedBooks() {
+
+    const start = (CURRENT_PAGE - 1) * BOOKS_PER_PAGE;
+
+    const end = start + BOOKS_PER_PAGE;
+
+    return FILTERED_BOOKS.slice(start, end);
+}
+
+function renderPagination() {
+
+    const totalPages = Math.ceil(
+        FILTERED_BOOKS.length / BOOKS_PER_PAGE
+    );
+
+    const pagination = document.getElementById("pagination");
+
+    if (totalPages <= 1) {
+
+        pagination.innerHTML = "";
+
+        return;
+    }
+
+    pagination.innerHTML = `
+
+        <button
+            onclick="changePage(${CURRENT_PAGE - 1})"
+            ${CURRENT_PAGE === 1 ? "disabled" : ""}
+        >
+            Previous
+        </button>
+
+        <span>
+            Page ${CURRENT_PAGE} of ${totalPages}
+        </span>
+
+        <button
+            onclick="changePage(${CURRENT_PAGE + 1})"
+            ${CURRENT_PAGE === totalPages ? "disabled" : ""}
+        >
+            Next
+        </button>
+
+    `;
+}
+
+function changePage(page) {
+
+    const totalPages = Math.ceil(
+        FILTERED_BOOKS.length / BOOKS_PER_PAGE
+    );
+
+    if (page < 1 || page > totalPages) return;
+
+    CURRENT_PAGE = page;
+
+    renderBooks();
+
+    renderPagination();
+
+    window.scrollTo({
+        top:0,
+        behavior:"smooth"
+    });
+}
+
+// =========================================
+// RENDER BOOKS
+// =========================================
+
+function renderBooks() {
+
+    const container = document.getElementById("books-grid");
+
+    const books = getPaginatedBooks();
+
+    if (!books.length) {
+
+        container.innerHTML = `
+            <div class="empty-state">
+                No books found.
+            </div>
+        `;
+
+        return;
+    }
+
+    container.innerHTML = books.map(book => {
+
+        const cover =
+
+            book.cover &&
+
+            book.cover !== "None"
+
+                ? book.cover
+
+                : "https://placehold.co/400x600?text=No+Cover";
+
+        return `
+
+            <div class="book-card">
+
+                <div class="book-cover-wrapper">
+
+                    <img
+                        src="${cover}"
+                        alt="${book.title}"
+                        class="book-cover"
+                        loading="lazy"
+                        onerror="this.src='https://placehold.co/400x600?text=No+Cover'"
+                    />
+
+                </div>
+
+                <div class="book-info">
+
+                    <div class="book-genre">
+                        ${book.genre || "Unknown"}
+                    </div>
+
+                    <div class="book-title">
+                        ${book.title}
+                    </div>
+
+                    <div class="book-author">
+                        ${book.author || "Unknown Author"}
+                    </div>
+
+                    <a
+                        href="${book.download}"
+                        target="_blank"
+                        class="read-btn"
+                    >
+                        Read Now
+                    </a>
+
+                </div>
+
+            </div>
+
+        `;
+
+    }).join("");
+}
+
+// =========================================
+// EVENTS
+// =========================================
+
+document
+    .getElementById("searchInput")
+    .addEventListener("input", applyFilters);
+
+document
+    .getElementById("genreSelect")
+    .addEventListener("change", applyFilters);
+
+// =========================================
+// START
+// =========================================
+
+loadBooks();
 
 </script>
 
