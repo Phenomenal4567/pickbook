@@ -8,19 +8,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #1A0E07;
-    --surface: #2E1810;
-    --surface2: #3D2318;
-    --text: #F5E6D8;
-    --text-muted: #A88878;
-    --accent: #D4A853;
-    --accent2: #C8956C;
-    --border: rgba(212,168,83,0.15);
-    --border2: rgba(212,168,83,0.3);
-    --danger: #C94040;
-    --success: #4CAF7D;
-    --radius: 10px;
-    --radius-lg: 16px;
+    --bg: #1A0E07; --surface: #2E1810; --surface2: #3D2318;
+    --text: #F5E6D8; --text-muted: #A88878; --accent: #D4A853; --accent2: #C8956C;
+    --border: rgba(212,168,83,0.15); --border2: rgba(212,168,83,0.3);
+    --danger: #C94040; --success: #4CAF7D;
+    --radius: 10px; --radius-lg: 16px;
     --font-display: 'Playfair Display', Georgia, serif;
     --font-body: 'DM Sans', system-ui, sans-serif;
     --transition: 0.25s ease;
@@ -71,8 +63,6 @@
   .shelf-btn:hover { border-color: var(--accent); color: var(--accent); }
   .shelf-count { background: var(--accent); color: var(--bg); font-size: 0.65rem; font-weight: 700; border-radius: 20px; padding: 1px 6px; display: none; }
   .shelf-count.visible { display: inline-block; }
-
-  /* DONATE BUTTON IN NAV */
   .donate-nav-btn { background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; border-radius: 8px; padding: 0.4rem 0.85rem; color: var(--bg); cursor: pointer; font-size: 0.82rem; font-family: var(--font-body); font-weight: 600; display: flex; align-items: center; gap: 5px; transition: opacity 0.2s, transform 0.15s; white-space: nowrap; }
   .donate-nav-btn:hover { opacity: 0.9; transform: scale(1.02); }
 
@@ -94,26 +84,34 @@
   .donate-close-btn { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 0.55rem 1.5rem; color: var(--text-muted); cursor: pointer; font-family: var(--font-body); font-size: 0.88rem; transition: border-color 0.2s, color 0.2s; width: 100%; }
   .donate-close-btn:hover { border-color: var(--accent); color: var(--accent); }
 
-  /* DONATE NUDGE (auto-popup after 10–15 min) */
+  /* DONATE NUDGE */
   .donate-nudge { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 400; background: var(--surface); border: 1px solid var(--accent); border-radius: var(--radius-lg); padding: 1.1rem 1.3rem; max-width: 310px; box-shadow: 0 12px 36px rgba(0,0,0,0.55); opacity: 0; transform: translateY(20px); transition: opacity 0.4s, transform 0.4s; pointer-events: none; }
   .donate-nudge.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
   .nudge-dismiss { position: absolute; top: 0.6rem; right: 0.75rem; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1rem; line-height: 1; }
   .nudge-dismiss:hover { color: var(--text); }
   .nudge-heart { font-size: 1.6rem; margin-bottom: 0.4rem; display: block; }
   .nudge-title { font-weight: 600; font-size: 0.95rem; color: var(--text); margin-bottom: 0.3rem; }
-  .nudge-body  { font-size: 0.82rem; color: var(--text-muted); line-height: 1.55; margin-bottom: 0.8rem; }
+  .nudge-body { font-size: 0.82rem; color: var(--text-muted); line-height: 1.55; margin-bottom: 0.8rem; }
   .nudge-actions { display: flex; gap: 0.5rem; }
   .nudge-yes { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: var(--bg); border: none; border-radius: 7px; padding: 0.45rem 1rem; font-size: 0.82rem; font-family: var(--font-body); font-weight: 600; cursor: pointer; flex: 1; transition: opacity 0.2s; }
   .nudge-yes:hover { opacity: 0.88; }
-  .nudge-no  { background: none; border: 1px solid var(--border2); border-radius: 7px; padding: 0.45rem 1rem; font-size: 0.82rem; font-family: var(--font-body); color: var(--text-muted); cursor: pointer; flex: 1; transition: border-color 0.2s; }
+  .nudge-no { background: none; border: 1px solid var(--border2); border-radius: 7px; padding: 0.45rem 1rem; font-size: 0.82rem; font-family: var(--font-body); color: var(--text-muted); cursor: pointer; flex: 1; transition: border-color 0.2s; }
   .nudge-no:hover { border-color: var(--accent); color: var(--accent); }
 
-  /* GENRE TABS */
-  .genre-bar { padding: 0 1.5rem; border-bottom: 1px solid var(--border); display: flex; overflow-x: auto; gap: 0; scrollbar-width: none; }
+  /* GENRE TABS — hidden in reader view */
+  .genre-bar-wrap { position: relative; border-bottom: 1px solid var(--border); background: var(--bg); }
+  .genre-bar-wrap.hidden, .mood-filter-bar.hidden { display: none !important; }
+  .genre-bar { padding: 0 1.5rem; display: flex; overflow-x: auto; gap: 0; scrollbar-width: none; scroll-behavior: smooth; }
   .genre-bar::-webkit-scrollbar { display: none; }
-  .genre-tab { padding: 0.75rem 1.1rem; font-size: 0.88rem; font-weight: 500; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; transition: color 0.2s, border-color 0.2s; flex-shrink: 0; background: none; border-top: none; border-left: none; border-right: none; font-family: var(--font-body); }
+  .genre-tab { padding: 0.65rem 0.95rem; font-size: 0.83rem; font-weight: 500; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; transition: color 0.2s, border-color 0.2s; flex-shrink: 0; background: none; border-top: none; border-left: none; border-right: none; font-family: var(--font-body); }
   .genre-tab:hover { color: var(--text); }
   .genre-tab.active { color: var(--accent2); border-bottom-color: var(--accent2); }
+  /* Fade + arrow scroll indicators */
+  .genre-scroll-btn { position: absolute; top: 0; bottom: 0; width: 36px; display: flex; align-items: center; justify-content: center; background: none; border: none; cursor: pointer; z-index: 5; font-size: 1rem; color: var(--text-muted); transition: color 0.2s; }
+  .genre-scroll-btn:hover { color: var(--accent); }
+  .genre-scroll-btn.left  { left: 0;  background: linear-gradient(to right, var(--bg) 55%, transparent); }
+  .genre-scroll-btn.right { right: 0; background: linear-gradient(to left,  var(--bg) 55%, transparent); }
+  .genre-scroll-btn.hide { display: none; }
 
   /* MOOD FILTER */
   .mood-filter-bar { padding: 0.6rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; gap: 0.5rem; align-items: center; overflow-x: auto; scrollbar-width: none; background: var(--bg); }
@@ -134,7 +132,7 @@
   .skeleton-line.short { width: 60%; }
   @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-  /* EMPTY / ERROR STATE */
+  /* EMPTY / ERROR */
   .load-error { background: var(--surface); border: 1px solid var(--danger); border-radius: var(--radius); padding: 1.5rem; margin: 1rem 0; text-align: center; }
   .load-error .err-icon { font-size: 2rem; margin-bottom: 0.5rem; }
   .load-error p { color: var(--text-muted); font-size: 0.88rem; }
@@ -183,43 +181,19 @@
   #continue-section { display: none; }
   #continue-section.visible { display: block; }
 
-  /* ── BACK NAV CONTAINER (used on detail, shelf, reader) ── */
-  .view-back-bar {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 1.5rem;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    position: sticky;
-    top: 60px;    /* directly below the navbar */
-    z-index: 90;
-  }
-  .view-back-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: var(--surface2);
-    border: 1px solid var(--border2);
-    border-radius: 8px;
-    padding: 0.45rem 1rem;
-    color: var(--text);
-    font-family: var(--font-body);
-    font-size: 0.85rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.2s, border-color 0.2s, color 0.2s;
-  }
+  /* BACK NAV */
+  .view-back-bar { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1.5rem; background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 60px; z-index: 90; }
+  .view-back-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 0.45rem 1rem; color: var(--text); font-family: var(--font-body); font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: background 0.2s, border-color 0.2s, color 0.2s; }
   .view-back-btn:hover { background: var(--surface); border-color: var(--accent); color: var(--accent); }
   .view-back-btn .arrow { font-size: 0.9rem; }
   .view-back-crumb { font-size: 0.8rem; color: var(--text-muted); }
   .view-back-crumb span { color: var(--text); font-weight: 500; }
 
-  /* SHELF VIEW */
+  /* SHELF */
   #shelf-view { display: none; }
   .shelf-header { font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--text); }
 
-  /* DETAIL VIEW */
+  /* DETAIL */
   #detail-view { display: none; }
   .detail-header { display: flex; gap: 2rem; margin-bottom: 2rem; flex-wrap: wrap; }
   .detail-cover { width: 160px; flex-shrink: 0; aspect-ratio: 2/3; border-radius: var(--radius); overflow: hidden; position: relative; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
@@ -287,6 +261,28 @@
   .action-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(212,168,83,0.08); }
   .you-may-like { margin-top: 2.5rem; }
 
+  /* LOADING SPINNER for chapter fetch */
+  .chapter-loading { text-align: center; padding: 3rem 1rem; color: var(--text-muted); }
+  .spinner { display: inline-block; width: 36px; height: 36px; border: 3px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 1rem; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* EROTIC REQUEST FORM */
+  .erotic-request-wrap { max-width: 540px; margin: 3rem auto; text-align: center; }
+  .erotic-icon { font-size: 3rem; margin-bottom: 0.75rem; }
+  .erotic-title { font-family: var(--font-display); font-size: 1.6rem; color: var(--accent); margin-bottom: 0.5rem; }
+  .erotic-sub { color: var(--text-muted); font-size: 0.9rem; line-height: 1.7; margin-bottom: 2rem; }
+  .erotic-form { background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius-lg); padding: 2rem; text-align: left; }
+  .erotic-form label { display: block; font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.3rem; margin-top: 1rem; }
+  .erotic-form label:first-child { margin-top: 0; }
+  .erotic-form input, .erotic-form textarea, .erotic-form select { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 0.6rem 0.85rem; color: var(--text); font-family: var(--font-body); font-size: 0.88rem; outline: none; transition: border-color 0.2s; }
+  .erotic-form input:focus, .erotic-form textarea:focus, .erotic-form select:focus { border-color: var(--accent); }
+  .erotic-form textarea { min-height: 90px; resize: vertical; }
+  .erotic-form select option { background: var(--surface2); }
+  .erotic-submit-btn { width: 100%; margin-top: 1.5rem; background: linear-gradient(135deg,#c94040,#a03030); color: #fff; border: none; border-radius: 8px; padding: 0.75rem; font-family: var(--font-body); font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .erotic-submit-btn:hover { opacity: 0.88; }
+  .erotic-wa-badge { display: inline-flex; align-items: center; gap: 6px; background: #25D366; color: #fff; border-radius: 20px; padding: 0.3rem 0.8rem; font-size: 0.78rem; font-weight: 600; margin-top: 0.5rem; }
+  .erotic-disclaimer { font-size: 0.75rem; color: var(--text-muted); margin-top: 1.2rem; line-height: 1.6; text-align: center; padding: 0.75rem; background: rgba(201,64,64,0.08); border-radius: 8px; border: 1px solid rgba(201,64,64,0.2); }
+
   /* TOAST */
   .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: var(--surface); border: 1px solid var(--border2); border-radius: 8px; padding: 0.6rem 1.2rem; font-size: 0.85rem; color: var(--text); z-index: 300; opacity: 0; transition: opacity 0.3s, transform 0.3s; pointer-events: none; white-space: nowrap; max-width: 90vw; text-align: center; }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
@@ -301,6 +297,9 @@
   footer a:hover { text-decoration: underline; }
   footer .footer-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; margin-bottom: 0.5rem; }
 
+  /* 18+ badge on genre tab */
+  .genre-tab .age-badge { font-size: 0.6rem; background: var(--danger); color: #fff; border-radius: 4px; padding: 1px 4px; margin-left: 4px; vertical-align: middle; }
+
   @media (max-width: 640px) {
     .detail-cover { width: 110px; } .detail-title { font-size: 1.4rem; }
     .novel-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
@@ -312,9 +311,7 @@
 </head>
 <body>
 
-<!-- ════════════════════════════════════════════
-     AGE GATE
-════════════════════════════════════════════ -->
+<!-- AGE GATE -->
 <div class="overlay" id="age-gate-overlay">
   <div class="modal age-gate-modal">
     <div class="warning">🔞</div>
@@ -329,32 +326,28 @@
   </div>
 </div>
 
-<!-- ════════════════════════════════════════════
-     TASTE PICKER
-════════════════════════════════════════════ -->
+<!-- TASTE PICKER -->
 <div class="overlay" id="taste-picker-overlay">
   <div class="modal">
     <h2>What do you love reading?</h2>
     <p>Pick 3 genres to personalise your PickBook experience.</p>
     <div class="taste-grid">
-      <div class="taste-option" data-genre="Romantic"><span class="taste-emoji">💞</span>Romantic</div>
+      <div class="taste-option" data-genre="Romance"><span class="taste-emoji">💞</span>Romance</div>
       <div class="taste-option" data-genre="Fantasy"><span class="taste-emoji">🗡️</span>Fantasy</div>
       <div class="taste-option" data-genre="Thriller"><span class="taste-emoji">🔪</span>Thriller</div>
-      <div class="taste-option" data-genre="Sci-Fi"><span class="taste-emoji">🚀</span>Sci-Fi</div>
+      <div class="taste-option" data-genre="Science Fiction"><span class="taste-emoji">🚀</span>Sci-Fi</div>
       <div class="taste-option" data-genre="Horror"><span class="taste-emoji">👻</span>Horror</div>
-      <div class="taste-option" data-genre="Comedy"><span class="taste-emoji">😂</span>Comedy</div>
-      <div class="taste-option" data-genre="History"><span class="taste-emoji">📜</span>History</div>
-      <div class="taste-option" data-genre="Business"><span class="taste-emoji">💼</span>Business</div>
-      <div class="taste-option" data-genre="Drama"><span class="taste-emoji">🎭</span>Drama</div>
+      <div class="taste-option" data-genre="Young Adult"><span class="taste-emoji">🌟</span>Young Adult</div>
+      <div class="taste-option" data-genre="Historical Fiction"><span class="taste-emoji">📜</span>Historical</div>
+      <div class="taste-option" data-genre="Non Fiction"><span class="taste-emoji">💼</span>Non Fiction</div>
+      <div class="taste-option" data-genre="Paranormal"><span class="taste-emoji">👁️</span>Paranormal</div>
     </div>
     <p id="taste-count-msg" style="color:var(--accent);font-size:0.82rem;text-align:center;">Select 3 genres</p>
     <button class="btn-primary" id="taste-done-btn" style="width:100%;margin-top:0.5rem;opacity:0.4;cursor:not-allowed" disabled onclick="confirmTastePicker()">Let's Go →</button>
   </div>
 </div>
 
-<!-- ════════════════════════════════════════════
-     DONATE MODAL
-════════════════════════════════════════════ -->
+<!-- DONATE MODAL -->
 <div class="overlay" id="donate-overlay">
   <div class="donate-modal">
     <div class="donate-modal-header">
@@ -363,14 +356,8 @@
     </div>
     <p class="donate-sub">PickBook is completely free and ad-free. If you've been enjoying your reading here, a small donation helps keep the lights on and new books coming. Every naira counts!</p>
     <div class="donate-account">
-      <div class="acct-row">
-        <span class="acct-label">Bank</span>
-        <span class="acct-value">OPay</span>
-      </div>
-      <div class="acct-row">
-        <span class="acct-label">Account Name</span>
-        <span class="acct-value">Adelakun Abdulsalam</span>
-      </div>
+      <div class="acct-row"><span class="acct-label">Bank</span><span class="acct-value">OPay</span></div>
+      <div class="acct-row"><span class="acct-label">Account Name</span><span class="acct-value">Adelakun Abdulsalam</span></div>
       <div class="acct-row">
         <span class="acct-label">Account Number</span>
         <span style="display:flex;align-items:center;gap:6px">
@@ -384,9 +371,7 @@
   </div>
 </div>
 
-<!-- ════════════════════════════════════════════
-     DONATE NUDGE (auto-popup)
-════════════════════════════════════════════ -->
+<!-- DONATE NUDGE -->
 <div class="donate-nudge" id="donate-nudge">
   <button class="nudge-dismiss" onclick="dismissNudge()" aria-label="Dismiss">✕</button>
   <span class="nudge-heart">📚</span>
@@ -394,15 +379,13 @@
   <div class="nudge-body">You've been reading for a while — we're glad you're here! PickBook is free and made with love. A small donation helps us keep it that way.</div>
   <div class="nudge-actions">
     <button class="nudge-yes" onclick="openDonateFromNudge()">Support Us ❤️</button>
-    <button class="nudge-no"  onclick="dismissNudge()">Not Now</button>
+    <button class="nudge-no" onclick="dismissNudge()">Not Now</button>
   </div>
 </div>
 
-<!-- ════════════════════════════════════════════
-     NAVBAR
-════════════════════════════════════════════ -->
+<!-- NAVBAR -->
 <nav>
-  <div class="logo" onclick="showView('home')">Pick<span>Book</span></div>
+  <div class="logo" onclick="goHome()">Pick<span>Book</span></div>
   <div class="search-wrap">
     <span class="search-icon">🔍</span>
     <input type="text" placeholder="Search novels, authors, genres…" id="search-input" oninput="handleSearch(this.value)" autocomplete="off">
@@ -418,22 +401,30 @@
 </nav>
 
 <!-- GENRE TABS -->
-<div class="genre-bar">
-  <button class="genre-tab active" onclick="selectGenre(this,'All')">All</button>
-  <button class="genre-tab" onclick="selectGenre(this,'Romantic')">Romantic</button>
-  <button class="genre-tab" onclick="selectGenre(this,'Erotic')">Erotic</button>
-  <button class="genre-tab" onclick="selectGenre(this,'Business')">Business</button>
-  <button class="genre-tab" onclick="selectGenre(this,'Fantasy')">Fantasy</button>
-  <button class="genre-tab" onclick="selectGenre(this,'Thriller')">Thriller</button>
-  <button class="genre-tab" onclick="selectGenre(this,'Sci-Fi')">Sci-Fi</button>
-  <button class="genre-tab" onclick="selectGenre(this,'Horror')">Horror</button>
-  <button class="genre-tab" onclick="selectGenre(this,'Comedy')">Comedy</button>
-  <button class="genre-tab" onclick="selectGenre(this,'History')">History</button>
-  <button class="genre-tab" onclick="selectGenre(this,'Mystery')">Mystery</button>
+<div class="genre-bar-wrap" id="genre-bar">
+  <button class="genre-scroll-btn left hide" id="genre-scroll-left" onclick="scrollGenre(-1)">&#8249;</button>
+  <div class="genre-bar" id="genre-bar-inner">
+    <button class="genre-tab active" onclick="selectGenre(this,'All')">All Genres</button>
+    <button class="genre-tab" onclick="selectGenre(this,'Action & Adventure')">Action &amp; Adventure</button>
+    <button class="genre-tab" onclick="selectGenre(this,'Fantasy')">Fantasy</button>
+    <button class="genre-tab" onclick="selectGenre(this,'Historical Fiction')">Historical Fiction</button>
+    <button class="genre-tab" onclick="selectGenre(this,'Horror')">Horror</button>
+    <button class="genre-tab" onclick="selectGenre(this,'LGBTQ+')">LGBTQ+ <span class="age-badge">18+</span></button>
+    <button class="genre-tab" onclick="selectGenre(this,'Non Fiction')">Non Fiction</button>
+    <button class="genre-tab" onclick="selectGenre(this,'Other')">Other</button>
+    <button class="genre-tab" onclick="selectGenre(this,'Paranormal')">Paranormal</button>
+    <button class="genre-tab" onclick="selectGenre(this,'Romance')">Romance</button>
+    <button class="genre-tab" onclick="selectGenre(this,'Science Fiction')">Science Fiction</button>
+    <button class="genre-tab" onclick="selectGenre(this,'Thriller')">Thriller</button>
+    <button class="genre-tab" onclick="selectGenre(this,'Unknown')">Unknown</button>
+    <button class="genre-tab" onclick="selectGenre(this,'Young Adult')">Young Adult <span class="age-badge">18+</span></button>
+    <button class="genre-tab" onclick="selectGenre(this,'Erotic')">Erotic &#128286;</button>
+  </div>
+  <button class="genre-scroll-btn right" id="genre-scroll-right" onclick="scrollGenre(1)">&#8250;</button>
 </div>
 
 <!-- MOOD FILTER -->
-<div class="mood-filter-bar">
+<div class="mood-filter-bar" id="mood-filter-bar">
   <span class="mood-label">Mood:</span>
   <button class="mood-chip active" data-mood="All" onclick="selectMood(this,'All')">All Moods</button>
   <button class="mood-chip" data-mood="Dark" onclick="selectMood(this,'Dark')">🌑 Dark &amp; Brooding</button>
@@ -442,9 +433,7 @@
   <button class="mood-chip" data-mood="Romantic" onclick="selectMood(this,'Romantic')">💞 Slow Burn</button>
 </div>
 
-<!-- ════════════════════════════════════════════
-     HOME VIEW
-════════════════════════════════════════════ -->
+<!-- HOME VIEW -->
 <div id="home-view" style="display:block">
   <main>
     <div id="continue-section">
@@ -456,7 +445,6 @@
       <a class="section-link" onclick="clearFilters()">See all</a>
     </div>
     <div class="novel-grid" id="recommended-grid">
-      <!-- skeletons -->
       <div class="skeleton-card"><div class="skeleton-cover"></div><div class="skeleton-info"><div class="skeleton-line"></div><div class="skeleton-line short"></div></div></div>
       <div class="skeleton-card"><div class="skeleton-cover"></div><div class="skeleton-info"><div class="skeleton-line"></div><div class="skeleton-line short"></div></div></div>
       <div class="skeleton-card"><div class="skeleton-cover"></div><div class="skeleton-info"><div class="skeleton-line"></div><div class="skeleton-line short"></div></div></div>
@@ -472,9 +460,7 @@
   </main>
 </div>
 
-<!-- ════════════════════════════════════════════
-     SHELF VIEW
-════════════════════════════════════════════ -->
+<!-- SHELF VIEW -->
 <div id="shelf-view" style="display:none">
   <div class="view-back-bar">
     <button class="view-back-btn" onclick="showView('home')"><span class="arrow">←</span> Browse</button>
@@ -486,9 +472,7 @@
   </main>
 </div>
 
-<!-- ════════════════════════════════════════════
-     DETAIL VIEW
-════════════════════════════════════════════ -->
+<!-- DETAIL VIEW -->
 <div id="detail-view" style="display:none">
   <div class="view-back-bar">
     <button class="view-back-btn" onclick="showView('home')"><span class="arrow">←</span> Browse</button>
@@ -520,11 +504,8 @@
   </main>
 </div>
 
-<!-- ════════════════════════════════════════════
-     READER VIEW
-════════════════════════════════════════════ -->
+<!-- READER VIEW -->
 <div id="reader-view" style="display:none">
-  <!-- Sticky back bar + controls -->
   <div class="view-back-bar">
     <button class="view-back-btn" onclick="showView('detail')"><span class="arrow">←</span> Back to Novel</button>
     <span class="view-back-crumb" id="reader-crumb-title"></span>
@@ -540,8 +521,6 @@
     </div>
   </div>
   <div class="reader-progress"><div class="reader-progress-fill" id="progress-fill" style="width:0%"></div></div>
-
-  <!-- Reading content -->
   <div class="reader-content">
     <div class="reader-body" id="reader-body"></div>
     <div class="reader-actions">
@@ -585,26 +564,22 @@
 
 <script>
 // ═══════════════════════════════════════════
-//  GENRE / MOOD / TAG INFERENCE
+//  CONSTANTS — genres now match the API exactly
 // ═══════════════════════════════════════════
-const GENRE_KEYWORDS = {
-  'Romantic':  ['love','romance','romantic','marriage','courtship','heart','passion','affair','wedding','lovers','sweetheart','devotion'],
-  'Fantasy':   ['fantasy','magic','wizard','dragon','quest','enchant','myth','legend','fairy','sorcery','kingdom','sword','elf','dwarf','orc'],
-  'Thriller':  ['thriller','crime','detective','murder','spy','suspense','conspiracy','investigation','police','fugitive'],
-  'Mystery':   ['mystery','detective','clue','whodunit','sleuth','enigma','puzzle'],
-  'Sci-Fi':    ['science fiction','sci-fi','space','robot','future','technology','dystopia','alien','time travel','cyberpunk','android','galaxy'],
-  'Horror':    ['horror','ghost','haunted','vampire','monster','terror','fear','supernatural','curse','demon','witch','undead','gothic'],
-  'History':   ['history','historical','ancient','medieval','victorian','roman','greek','war','empire','revolution','19th century','18th century','civil war','world war'],
-  'Comedy':    ['comedy','humour','humor','satire','wit','comic','farce','funny','laughter','absurd','parody'],
-  'Business':  ['business','economics','finance','commerce','trade','industry','entrepreneurship','management','leadership','wealth'],
-  'Drama':     ['drama','tragedy','family','society','social','moral','struggle','conflict','emotion','literary'],
-};
+const ALL_GENRES = [
+  'All Genres','Action & Adventure','Fantasy','Historical Fiction','Horror',
+  'LGBTQ+','Non Fiction','Other','Paranormal','Romance',
+  'Science Fiction','Thriller','Unknown','Young Adult'
+];
+
+// Genres that require 18+ age verification
+const ADULT_GENRES = new Set(['LGBTQ+', 'Young Adult', 'Erotic']);
 
 const MOOD_KEYWORDS = {
-  'Dark':      ['dark','gothic','horror','murder','death','tragedy','grim','despair','evil','sinister','bleak','haunted','cursed','vampire','demon','ghost'],
-  'Romantic':  ['love','romance','passion','heart','tender','devotion','longing','desire','courtship','lovers'],
-  'Intense':   ['thriller','suspense','war','crime','battle','danger','chase','spy','conflict','survival','fight'],
-  'Light':     ['comedy','humour','humor','adventure','fairy','children','whimsy','joy','wit','satire','pleasant','gentle'],
+  'Dark':     ['dark','gothic','horror','murder','death','tragedy','grim','despair','evil','sinister','bleak','haunted','cursed','vampire','demon','ghost'],
+  'Romantic': ['love','romance','passion','heart','tender','devotion','longing','desire','courtship','lovers'],
+  'Intense':  ['thriller','suspense','war','crime','battle','danger','chase','spy','conflict','survival','fight'],
+  'Light':    ['comedy','humour','humor','adventure','fairy','children','whimsy','joy','wit','satire','pleasant','gentle'],
 };
 
 const COVER_GRADIENTS = [
@@ -620,37 +595,12 @@ const COVER_GRADIENTS = [
   'linear-gradient(135deg,#2E1A2E,#5C3D5C)',
 ];
 
-// Maps genre labels returned by the /ingest/books API to the UI genre tab labels.
-// The API stores canonical genre names (e.g. "Romance", "Science Fiction") that differ
-// from the genre tabs in the UI ("Romantic", "Sci-Fi"), so we translate here.
-const API_GENRE_MAP = {
-  'Romance':            'Romantic',
-  'Fantasy':            'Fantasy',
-  'Science Fiction':    'Sci-Fi',
-  'Horror':             'Horror',
-  'Thriller':           'Thriller',
-  'Historical Fiction': 'History',
-  'Non Fiction':        'Business',
-  'Classic':            'History',
-  'Poetry':             'Drama',
-  'Young Adult':        'Romantic',
-  'Paranormal':         'Horror',
-  'Action & Adventure': 'Fantasy',
-  'LGBTQ+':             'Drama',
-};
-
-function mapApiGenre(genre) {
-  return API_GENRE_MAP[genre] || null;
-}
-
+// ═══════════════════════════════════════════
+//  GENRE / MOOD / TAG INFERENCE
+//  Uses the exact API genre names now
+// ═══════════════════════════════════════════
 function textFromBook(book) {
-  // Include book.genre so mood / keyword inference also benefits from the API's genre data
   return [...(book.subjects || []), book.title || '', book.author || '', book.genre || ''].join(' ').toLowerCase();
-}
-function inferGenre(book) {
-  const t = textFromBook(book);
-  for (const [g, kws] of Object.entries(GENRE_KEYWORDS)) if (kws.some(k => t.includes(k))) return g;
-  return 'Drama';
 }
 function inferMood(book) {
   const t = textFromBook(book);
@@ -729,53 +679,43 @@ function saveState() {
 // ═══════════════════════════════════════════
 //  DONATE
 // ═══════════════════════════════════════════
-function openDonate() {
-  document.getElementById('donate-overlay').classList.add('active');
-}
-function closeDonate() {
-  document.getElementById('donate-overlay').classList.remove('active');
-}
-function openDonateFromNudge() {
-  dismissNudge();
-  openDonate();
-}
+function openDonate()         { document.getElementById('donate-overlay').classList.add('active'); }
+function closeDonate()        { document.getElementById('donate-overlay').classList.remove('active'); }
+function openDonateFromNudge(){ dismissNudge(); openDonate(); }
 function copyAcct() {
   if (navigator.clipboard) navigator.clipboard.writeText('8069904015').catch(() => {});
   showToast('✓ Account number copied!');
 }
-// Nudge timer: fire between 10–15 mins after session start
 function scheduleDonateNudge() {
   if (state.nudgeDone) return;
-  const delay = (10 + Math.random() * 5) * 60 * 1000; // 10–15 min
-  setTimeout(() => {
-    if (state.nudgeDone) return;
-    document.getElementById('donate-nudge').classList.add('show');
-  }, delay);
+  const delay = (10 + Math.random() * 5) * 60 * 1000;
+  setTimeout(() => { if (!state.nudgeDone) document.getElementById('donate-nudge').classList.add('show'); }, delay);
 }
 function dismissNudge() {
   document.getElementById('donate-nudge').classList.remove('show');
-  state.nudgeDone = true;
-  saveState();
+  state.nudgeDone = true; saveState();
 }
 
 // ═══════════════════════════════════════════
-//  LOAD BOOKS FROM API
+//  LOAD BOOKS — paginated, lazy-rendered
 // ═══════════════════════════════════════════
+const PAGE_SIZE = 24;
+let renderOffset = 0;
+let currentFilteredNovels = [];
+
 async function loadBooks() {
   try {
     const res = await fetch('/ingest/books');
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
-
-    if (!Array.isArray(data) || data.length === 0) {
-      throw new Error('Empty catalogue returned from server');
-    }
+    if (!Array.isArray(data) || data.length === 0) throw new Error('Empty catalogue');
 
     NOVELS = data.map((book, i) => ({
-      id:       book.id       || (i + 1),
+      id:       book.id       ?? (i + 1),
       title:    book.title    || 'Untitled',
       author:   book.author   || 'Unknown Author',
-      genre:    mapApiGenre(book.genre) || inferGenre(book),
+      // Use the API genre directly (it already matches our tabs)
+      genre:    book.genre    || 'Unknown',
       mood:     inferMood(book),
       tags:     inferTags(book),
       rating:   parseFloat(inferRating(i)),
@@ -785,28 +725,25 @@ async function loadBooks() {
       source:   book.source   || 'PickBook Library',
       license:  book.license  || 'Public Domain',
       cover:    book.cover    || null,
-      download: book.download || null,
+      // *** KEY FIX: store the real content/download URL for reading ***
+      download: book.download || book.content_url || null,
+      file_path: book.file_path || null,
       subjects: Array.isArray(book.subjects) ? book.subjects : (book.subjects || '').split('|').filter(Boolean),
     }));
 
-    console.info(`[PickBook] Loaded ${NOVELS.length} books from API.`);
+    console.info(`[PickBook] Loaded ${NOVELS.length} books.`);
     document.getElementById('home-error').style.display = 'none';
-
   } catch (err) {
     console.error('[PickBook] API error:', err.message);
-    // Show error state — NO hardcoded fallback
     const errDiv = document.getElementById('home-error');
     errDiv.style.display = 'block';
-    errDiv.innerHTML = `
-      <div class="load-error">
-        <div class="err-icon">📡</div>
-        <p><strong>Could not load the book catalogue.</strong><br>
-        The server may be starting up or temporarily unavailable.</p>
-        <button class="retry-btn" onclick="loadBooks()">Try Again</button>
-      </div>`;
+    errDiv.innerHTML = `<div class="load-error">
+      <div class="err-icon">📡</div>
+      <p><strong>Could not load the book catalogue.</strong><br>The server may be starting up or temporarily unavailable.</p>
+      <button class="retry-btn" onclick="loadBooks()">Try Again</button>
+    </div>`;
     document.getElementById('recommended-grid').innerHTML = '';
   }
-
   buildHomeGrids(getFilteredNovels());
   renderContinueSection();
   renderShelfCount();
@@ -816,13 +753,24 @@ async function loadBooks() {
 //  VIEWS
 // ═══════════════════════════════════════════
 const VIEWS = ['home-view','detail-view','reader-view','shelf-view'];
+const GENRE_BAR_HIDDEN_IN = new Set(['reader-view']);
+
 function showView(v) {
   VIEWS.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = (id === v + '-view') ? 'block' : 'none';
   });
+  // Hide genre bar and mood filter while reading
+  const inReader = (v === 'reader');
+  document.getElementById('genre-bar').classList.toggle('hidden', inReader);
+  document.getElementById('mood-filter-bar').classList.toggle('hidden', inReader);
   if (v === 'shelf') renderShelfView();
   window.scrollTo(0, 0);
+}
+
+function goHome() {
+  showView('home');
+  buildHomeGrids(getFilteredNovels());
 }
 
 // ═══════════════════════════════════════════
@@ -843,8 +791,7 @@ function updateStreak() {
   const yesterday = new Date(Date.now() - 86400000).toDateString();
   if (state.streakDate === today) return;
   state.streakCount = state.streakDate === yesterday ? state.streakCount + 1 : 1;
-  state.streakDate = today;
-  saveState(); renderStreak(); checkMilestones();
+  state.streakDate = today; saveState(); renderStreak(); checkMilestones();
 }
 function renderStreak() { const el = document.getElementById('streak-count'); if (el) el.textContent = state.streakCount; }
 
@@ -929,7 +876,7 @@ function renderContinueSection() {
     const n = NOVELS.find(x => x.id == nId);
     if (!n) return '';
     const cover = n.cover
-      ? `<img src="${n.cover}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">`
+      ? `<img src="${escapeHtml(n.cover)}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">`
       : `<div class="continue-cover-bg" style="background:${n.bg}"></div>`;
     return `<div class="continue-strip" onclick="resumeReading(${n.id})">
       <div class="continue-cover">${cover}</div>
@@ -955,17 +902,35 @@ function resumeReading(novelId) {
 // ═══════════════════════════════════════════
 function getFilteredNovels() {
   let novels = NOVELS;
-  if (activeGenre !== 'All') novels = novels.filter(n => n.genre === activeGenre);
-  if (activeMood  !== 'All') novels = novels.filter(n => n.mood  === activeMood);
+  if (activeGenre !== 'All' && activeGenre !== 'All Genres')
+    novels = novels.filter(n => n.genre === activeGenre);
+  if (activeMood !== 'All')
+    novels = novels.filter(n => n.mood === activeMood);
   return novels;
 }
+
 function selectGenre(el, genre) {
-  if (genre === 'Erotic') { showAgeGate(); return; }
+  // Erotic tab → request poll, no books
+  if (genre === 'Erotic') {
+    document.querySelectorAll('.genre-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    activeGenre = 'Erotic';
+    showEroticRequestPage();
+    return;
+  }
+  // Age gate for adult genres
+  if (ADULT_GENRES.has(genre) && !state.ageVerified) {
+    pendingGenreEl    = el;
+    pendingGenreValue = genre;
+    document.getElementById('age-gate-overlay').classList.add('active');
+    return;
+  }
   document.querySelectorAll('.genre-tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   activeGenre = genre;
   buildHomeGrids(getFilteredNovels());
 }
+
 function selectMood(el, mood) {
   document.querySelectorAll('.mood-chip').forEach(c => c.classList.remove('active'));
   el.classList.add('active');
@@ -975,28 +940,101 @@ function selectMood(el, mood) {
 function clearFilters() {
   activeGenre = 'All'; activeMood = 'All';
   document.querySelectorAll('.genre-tab').forEach(t => t.classList.remove('active'));
-  document.querySelector('.genre-tab').classList.add('active');
+  document.querySelector('#genre-bar-inner .genre-tab').classList.add('active');
   document.querySelectorAll('.mood-chip').forEach(c => c.classList.remove('active'));
   document.querySelector('.mood-chip').classList.add('active');
   buildHomeGrids(NOVELS);
 }
 
 // ═══════════════════════════════════════════
-//  GRID RENDERER
+//  EROTIC REQUEST PAGE (replaces grid)
+// ═══════════════════════════════════════════
+function showEroticRequestPage() {
+  const grid = document.getElementById('recommended-grid');
+  const header = document.getElementById('recommended-title');
+  if (header) header.textContent = '🔞 Erotic Content';
+  ['trending-header','trending-grid','latest-header','latest-grid'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  grid.style.display = 'block';
+  grid.innerHTML = `
+    <div style="grid-column:1/-1">
+      <div class="erotic-request-wrap">
+        <div class="erotic-icon">🔞</div>
+        <div class="erotic-title">Erotic Stories — Request a Novel</div>
+        <p class="erotic-sub">
+          We do not host erotic content directly on PickBook, but you can request a specific erotic story below.
+          Our team will source and send it to you privately via WhatsApp.
+          All requests are for readers <strong>18 years and older only</strong>.
+        </p>
+        <div class="erotic-form" id="erotic-form">
+          <label>📖 Story title or description *</label>
+          <textarea id="erotic-story-desc" placeholder="e.g. 'A steamy romance between a CEO and her assistant' or a specific book title…"></textarea>
+          <label>🎭 Genre / Vibe</label>
+          <select id="erotic-genre-pick">
+            <option value="">-- Choose one --</option>
+            <option>Steamy Romance</option>
+            <option>BDSM / Kink</option>
+            <option>Paranormal / Supernatural</option>
+            <option>LGBT+ Erotica</option>
+            <option>Historical Erotica</option>
+            <option>Contemporary Adult</option>
+            <option>Other / Surprise me</option>
+          </select>
+          <label>📞 Your WhatsApp number *</label>
+          <input type="tel" id="erotic-phone" placeholder="+234 800 000 0000">
+          <label>📝 Any other notes (optional)</label>
+          <input type="text" id="erotic-notes" placeholder="Language, length, specific authors…">
+          <div class="erotic-disclaimer">
+            🔞 By submitting this request you confirm you are <strong>18 years or older</strong>.
+            Requests are reviewed manually. You will be contacted only via WhatsApp.
+          </div>
+          <button class="erotic-submit-btn" onclick="submitEroticRequest()">
+            <span>📲</span> Send Request via WhatsApp
+          </button>
+          <div style="text-align:center;margin-top:0.8rem">
+            <span class="erotic-wa-badge">💬 Replies via WhatsApp · 09042427548</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function submitEroticRequest() {
+  const desc  = document.getElementById('erotic-story-desc').value.trim();
+  const genre = document.getElementById('erotic-genre-pick').value;
+  const phone = document.getElementById('erotic-phone').value.trim();
+  const notes = document.getElementById('erotic-notes').value.trim();
+  if (!desc) { showToast('Please describe the story you want'); return; }
+  if (!phone) { showToast('Please enter your WhatsApp number'); return; }
+  const msg = encodeURIComponent(
+    `*PickBook Erotic Story Request* 🔞\n\n` +
+    `📖 Story: ${desc}\n` +
+    `🎭 Genre: ${genre || 'Not specified'}\n` +
+    `📞 My Number: ${phone}\n` +
+    `📝 Notes: ${notes || 'None'}\n\n` +
+    `_I confirm I am 18+ years old._`
+  );
+  window.open(`https://wa.me/2349042427548?text=${msg}`, '_blank');
+  showToast('✅ Opening WhatsApp to send your request!');
+}
+
+// ═══════════════════════════════════════════
+//  GRID RENDERER (paginated)
 // ═══════════════════════════════════════════
 function renderGrid(el, novels) {
   if (!el) return;
-  if (!novels.length) {
+  if (!novels || !novels.length) {
     el.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🔍</div><p>No novels match this filter.<br>Try a different genre or mood.</p></div>`;
     return;
   }
   el.innerHTML = novels.map(n => {
     const onShelf   = isOnShelf(n.id);
     const coverHtml = n.cover
-      ? `<img src="${n.cover}" alt="${escapeHtml(n.title)}">`
+      ? `<img src="${escapeHtml(n.cover)}" alt="${escapeHtml(n.title)}" loading="lazy">`
       : `<div class="novel-cover-bg" style="background:${n.bg}"></div>`;
-    // Shorten source label for the pill
-    const srcShort = n.source.replace(' (standardebooks.org)','').replace(' (feedbooks.com)','');
+    const srcShort = (n.source || '').replace(' (standardebooks.org)','').replace(' (feedbooks.com)','');
     return `<div class="novel-card" onclick="showDetail(${n.id})">
       <div class="novel-cover">
         ${coverHtml}
@@ -1009,15 +1047,15 @@ function renderGrid(el, novels) {
       <div class="novel-info">
         <div class="novel-title-sm">${escapeHtml(n.title)}</div>
         <div class="novel-author-sm">${escapeHtml(n.author)}</div>
-        <span class="novel-tag">${escapeHtml(n.tags[0])}</span>
-        <div><span class="source-pill" title="${escapeHtml(n.source)}">📚 ${escapeHtml(srcShort)}</span></div>
+        <span class="novel-tag">${escapeHtml(n.tags[0] || n.genre)}</span>
+        <div><span class="source-pill" title="${escapeHtml(n.source || '')}">📚 ${escapeHtml(srcShort)}</span></div>
       </div>
     </div>`;
   }).join('');
 }
 
 function buildHomeGrids(novels) {
-  const isFiltered = activeGenre !== 'All' || activeMood !== 'All';
+  const isFiltered = (activeGenre !== 'All' && activeGenre !== 'All Genres') || activeMood !== 'All';
   ['trending-header','trending-grid','latest-header','latest-grid'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = isFiltered ? 'none' : '';
@@ -1029,43 +1067,33 @@ function buildHomeGrids(novels) {
     if (tasted.length) recommended = tasted;
   }
   const title = document.getElementById('recommended-title');
-  if (title) title.textContent = (!isFiltered && state.tasteGenres.length > 0) ? '✨ Recommended For You' : '✨ Browse';
+  if (title) title.textContent = (!isFiltered && state.tasteGenres.length > 0) ? '✨ Recommended For You' : (isFiltered ? `✨ ${activeGenre === 'All Genres' ? 'Browse' : activeGenre}` : '✨ Browse');
 
-  renderGrid(document.getElementById('recommended-grid'), recommended.slice(0, 8));
+  const grid = document.getElementById('recommended-grid');
+  if (grid) {
+    grid.style.display = 'grid';
+    renderGrid(grid, recommended.slice(0, 20));
+  }
 
   if (!isFiltered && NOVELS.length > 0) {
-    // Trending & Latest — refresh every 48 h from real API data only
     const TWO_DAYS = 2 * 24 * 60 * 60 * 1000;
-    const now      = Date.now();
-    const last     = parseInt(localStorage.getItem('pb_sections_refreshed') || '0', 10);
-    const stale    = (now - last) >= TWO_DAYS;
-
+    const now = Date.now();
+    const last = parseInt(localStorage.getItem('pb_sections_refreshed') || '0', 10);
+    const stale = (now - last) >= TWO_DAYS;
     let trendingIds = JSON.parse(localStorage.getItem('pb_trending_ids') || 'null');
     let latestIds   = JSON.parse(localStorage.getItem('pb_latest_ids')   || 'null');
-
     if (stale || !trendingIds || !latestIds) {
-      // Trending = top-rated books shuffled for freshness
       const byRating = [...NOVELS].sort((a, b) => b.rating - a.rating);
       const topPool  = byRating.slice(0, Math.min(12, NOVELS.length));
-      for (let i = topPool.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [topPool[i], topPool[j]] = [topPool[j], topPool[i]];
-      }
+      for (let i = topPool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [topPool[i], topPool[j]] = [topPool[j], topPool[i]]; }
       trendingIds = topPool.slice(0, 4).map(n => n.id);
-
-      // Latest = most recently fetched (last in array = newest from API)
       const latestPool = [...NOVELS].slice(-10).reverse();
-      for (let i = latestPool.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [latestPool[i], latestPool[j]] = [latestPool[j], latestPool[i]];
-      }
+      for (let i = latestPool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [latestPool[i], latestPool[j]] = [latestPool[j], latestPool[i]]; }
       latestIds = latestPool.slice(0, 4).map(n => n.id);
-
       localStorage.setItem('pb_trending_ids',       JSON.stringify(trendingIds));
       localStorage.setItem('pb_latest_ids',         JSON.stringify(latestIds));
       localStorage.setItem('pb_sections_refreshed', String(now));
     }
-
     renderGrid(document.getElementById('trending-grid'), trendingIds.map(id => NOVELS.find(n => n.id === id)).filter(Boolean));
     renderGrid(document.getElementById('latest-grid'),   latestIds.map(id => NOVELS.find(n => n.id === id)).filter(Boolean));
   }
@@ -1085,19 +1113,19 @@ function handleSearch(val) {
       n.author.toLowerCase().includes(lower) ||
       n.genre.toLowerCase().includes(lower) ||
       n.tags.some(t => t.toLowerCase().includes(lower))
-    );
+    ).slice(0, 12);
     const drop = document.getElementById('search-drop');
     if (!results.length) {
       drop.innerHTML = `<div class="search-no-results">No results for "<strong>${escapeHtml(val)}</strong>"</div>`;
     } else {
       drop.innerHTML = results.map(n => {
         const thumb = n.cover
-          ? `<img src="${n.cover}" style="width:100%;height:100%;object-fit:cover;">`
+          ? `<img src="${escapeHtml(n.cover)}" style="width:100%;height:100%;object-fit:cover;" loading="lazy">`
           : `<div style="background:${n.bg};width:100%;height:100%;"></div>`;
         return `<div class="search-result-item" onclick="clearSearch();showDetail(${n.id})">
           <div class="search-result-cover">${thumb}</div>
           <div><div class="search-result-title">${escapeHtml(n.title)}</div>
-          <div class="search-result-sub">${escapeHtml(n.author)} · ${n.genre}</div></div>
+          <div class="search-result-sub">${escapeHtml(n.author)} · ${escapeHtml(n.genre)}</div></div>
         </div>`;
       }).join('');
     }
@@ -1134,18 +1162,18 @@ function showDetail(id) {
   document.getElementById('detail-rating-text').textContent = `${n.rating} · ${(n.rating * 3000).toLocaleString()} ratings`;
 
   const coverEl = document.getElementById('detail-cover-bg');
-  if (n.cover) { coverEl.innerHTML = `<img src="${n.cover}">`; coverEl.style.background = ''; }
+  if (n.cover) { coverEl.innerHTML = `<img src="${escapeHtml(n.cover)}" alt="${escapeHtml(n.title)}">`; coverEl.style.background = ''; }
   else         { coverEl.innerHTML = ''; coverEl.style.background = n.bg; }
 
   document.getElementById('detail-tags').innerHTML =
     n.tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('') +
-    `<span class="tag">${n.genre}</span>`;
+    `<span class="tag">${escapeHtml(n.genre)}</span>`;
 
   updateDetailShelfBtn();
 
   const chapEl = document.getElementById('chapter-list-items');
   const prog   = state.progress[n.id];
-  chapEl.innerHTML = Array.from({ length: Math.min(n.chapters, 10) }, (_, i) => {
+  chapEl.innerHTML = Array.from({ length: Math.min(n.chapters, 15) }, (_, i) => {
     const chNum  = i + 1;
     const key    = `${n.id}_${chNum}`;
     const isRead = state.chaptersRead.includes(key);
@@ -1159,7 +1187,7 @@ function showDetail(id) {
       <span class="chapter-meta">${READING_TIMES[i % READING_TIMES.length]} min</span>
     </div>`;
   }).join('');
-  if (n.chapters > 10) chapEl.innerHTML += `<div style="text-align:center;padding:1rem;color:var(--text-muted);font-size:0.82rem">+ ${n.chapters - 10} more chapters</div>`;
+  if (n.chapters > 15) chapEl.innerHTML += `<div style="text-align:center;padding:1rem;color:var(--text-muted);font-size:0.82rem">+ ${n.chapters - 15} more chapters</div>`;
 
   showView('detail');
 }
@@ -1168,20 +1196,57 @@ function goToChapter(num)  { currentChapter = num; renderReaderView(); showView(
 function startReading()    { renderReaderView(); showView('reader'); }
 
 // ═══════════════════════════════════════════
-//  READER VIEW
+//  READER VIEW — fetches real chapter content
 // ═══════════════════════════════════════════
-const CHAPTER_INTROS = [
-  ["The hall fell silent as Vivienne descended the staircase, her ivory gown a stark contrast against the obsidian-panelled walls of Ashworth Manor.", "He stood at the far end of the great hall, his back to the fire. Lord Ashworth did not turn when she entered — he never did.", '"You came," he said, his voice low. "I had wondered."', '"You summoned me," she replied evenly. "I had little choice."', '"There is always a choice." He turned then, and she was unprepared, as she always was, for the directness of his gaze. Grey as winter iron.'],
+async function fetchChapterContent(novel, chapter) {
+  // Try server-side chapter endpoint first (your ingestion system)
+  try {
+    const res = await fetch(`/ingest/books/${novel.id}/chapters/${chapter}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.content) return data.content;
+      if (data && data.text)    return data.text;
+    }
+  } catch(e) { /* fall through */ }
+
+  // Fallback: try the download/content_url directly
+  if (novel.download) {
+    try {
+      const res = await fetch(novel.download);
+      if (res.ok) {
+        const text = await res.text();
+        // Chunk the full text into chapter-sized blocks
+        const words = text.split(/\s+/);
+        const wordsPerChapter = Math.max(600, Math.floor(words.length / Math.max(novel.chapters, 1)));
+        const start = (chapter - 1) * wordsPerChapter;
+        const chunk = words.slice(start, start + wordsPerChapter).join(' ');
+        if (chunk.trim()) return chunk;
+      }
+    } catch(e) { /* fall through */ }
+  }
+
+  // Final fallback: informative placeholder
+  return null;
+}
+
+const FALLBACK_PASSAGES = [
+  ["The hall fell silent as Vivienne descended the staircase, her ivory gown a stark contrast against the obsidian-panelled walls of Ashworth Manor.", "He stood at the far end of the great hall, his back to the fire. Lord Ashworth did not turn when she entered — he never did.", '"You came," he said, his voice low. "I had wondered."', '"You summoned me," she replied evenly. "I had little choice."', '"There is always a choice." He turned then, and she was unprepared, as she always was, for the directness of his gaze.'],
   ["Dawn came reluctantly, as though the sun itself had learned to dread what the day would bring. Kael stood at the citadel's highest parapet and watched the mist roll in.", "Three days since the siege began. Three days of counting arrows and rationing silence.", '"The northern gate is holding," Seren said quietly. "For now."', '"For now covers a great deal of ground," he replied, not taking his eyes from the fog.'],
   ["The letter arrived on a Tuesday. She turned it over twice. No return address — her name in a handwriting she recognised the way you recognise an old song.", '"You going to open it?" asked Remi from the kitchen doorway, holding two mugs of tea.', '"Eventually," she said, and set it on the table between them.', 'Outside, the city continued its ordinary morning, entirely indifferent to the fact that everything was about to change.'],
 ];
 
-function getChapterText(novelId, chapter) {
-  const idx = (novelId + chapter) % CHAPTER_INTROS.length;
-  return CHAPTER_INTROS[idx].map(p => `<p>${p}</p>`).join('');
+function formatContentAsHtml(rawText) {
+  if (!rawText) return '';
+  // Strip excessive whitespace, split into paragraphs
+  const paragraphs = rawText
+    .replace(/\r\n/g, '\n')
+    .split(/\n\n+/)
+    .map(p => p.replace(/\n/g, ' ').trim())
+    .filter(p => p.length > 0);
+  return paragraphs.map(p => `<p>${escapeHtml(p)}</p>`).join('');
 }
 
-function renderReaderView() {
+async function renderReaderView() {
   if (!currentNovel) return;
   const n   = currentNovel;
   const pct = Math.round((currentChapter / n.chapters) * 100);
@@ -1190,19 +1255,34 @@ function renderReaderView() {
   document.getElementById('reader-chapter-info').textContent = `Chapter ${currentChapter} / ${n.chapters}`;
   document.getElementById('reader-attribution').textContent  = n.source + ' · ' + n.license;
   document.getElementById('progress-fill').style.width       = pct + '%';
-  document.getElementById('reader-body').innerHTML           = getChapterText(n.id, currentChapter);
-  document.getElementById('reader-body').style.fontSize      = state.fontSize + 'rem';
-  // Update breadcrumb
+
   const crumb = document.getElementById('reader-crumb-title');
   if (crumb) crumb.innerHTML = `<span>${escapeHtml(n.title)}</span> · Ch. ${currentChapter}`;
 
-  const bKey        = `${n.id}_${currentChapter}`;
+  const bKey = `${n.id}_${currentChapter}`;
   const bookmarkBtn = document.getElementById('bookmark-btn');
   bookmarkBtn.textContent = state.bookmarks[bKey] ? '🔖 Bookmarked' : '🔖 Bookmark';
   bookmarkBtn.classList.toggle('active', !!state.bookmarks[bKey]);
 
+  // Show loading state while fetching
+  const bodyEl = document.getElementById('reader-body');
+  bodyEl.innerHTML = `<div class="chapter-loading"><div class="spinner"></div><p>Loading chapter…</p></div>`;
+  bodyEl.style.fontSize = state.fontSize + 'rem';
+
+  const raw = await fetchChapterContent(n, currentChapter);
+  if (raw) {
+    bodyEl.innerHTML = formatContentAsHtml(raw);
+  } else {
+    // Use rotating fallback passages if server content unavailable
+    const idx = (n.id + currentChapter) % FALLBACK_PASSAGES.length;
+    bodyEl.innerHTML = FALLBACK_PASSAGES[idx].map(p => `<p>${escapeHtml(p)}</p>`).join('') +
+      `<p style="color:var(--text-muted);font-style:italic;font-size:0.85rem;margin-top:2rem">
+        ⚠️ Full chapter text is being fetched from the server. If this persists, check that your ingestion endpoint <code>/ingest/books/${n.id}/chapters/${currentChapter}</code> is returning content.
+      </p>`;
+  }
+
   markChapterRead(n.id, currentChapter);
-  renderGrid(document.getElementById('also-like-grid'), NOVELS.filter(x => x.id !== n.id).slice(0, 3));
+  renderGrid(document.getElementById('also-like-grid'), NOVELS.filter(x => x.id !== n.id && x.genre === n.genre).slice(0, 3));
   saveProgress(n.id, currentChapter, pct);
   renderContinueSection();
 }
@@ -1251,23 +1331,27 @@ function shareChapter() {
 // ═══════════════════════════════════════════
 //  AGE GATE
 // ═══════════════════════════════════════════
-function showAgeGate() {
-  if (state.ageVerified) { activeGenre = 'Erotic'; buildHomeGrids(getFilteredNovels()); return; }
-  document.getElementById('age-gate-overlay').classList.add('active');
-}
+let pendingGenreEl    = null;
+let pendingGenreValue = null;
+
 function confirmAge() {
   if (!document.getElementById('age-confirm').checked) { showToast('Please confirm your age first'); return; }
   state.ageVerified = true; saveState();
-  closeAgeGate(); activeGenre = 'Erotic';
-  buildHomeGrids(getFilteredNovels());
+  closeAgeGate();
+  // If pending genre (LGBTQ+ / Young Adult), apply it now
+  if (pendingGenreEl && pendingGenreValue) {
+    document.querySelectorAll('.genre-tab').forEach(t => t.classList.remove('active'));
+    pendingGenreEl.classList.add('active');
+    activeGenre = pendingGenreValue;
+    pendingGenreEl = null; pendingGenreValue = null;
+    buildHomeGrids(getFilteredNovels());
+  }
   showToast('✓ Access granted');
 }
 function closeAgeGate() {
   document.getElementById('age-gate-overlay').classList.remove('active');
   document.getElementById('age-confirm').checked = false;
-  document.querySelectorAll('.genre-tab').forEach(t => t.classList.remove('active'));
-  document.querySelector('.genre-tab').classList.add('active');
-  activeGenre = 'All';
+  pendingGenreEl = null; pendingGenreValue = null;
 }
 
 // ═══════════════════════════════════════════
@@ -1327,6 +1411,30 @@ function escapeHtml(s) {
 }
 
 // ═══════════════════════════════════════════
+//  GENRE BAR SCROLL
+// ═══════════════════════════════════════════
+function scrollGenre(dir) {
+  const bar = document.getElementById('genre-bar-inner');
+  if (!bar) return;
+  bar.scrollBy({ left: dir * 220, behavior: 'smooth' });
+}
+function updateGenreScrollBtns() {
+  const bar = document.getElementById('genre-bar-inner');
+  const lBtn = document.getElementById('genre-scroll-left');
+  const rBtn = document.getElementById('genre-scroll-right');
+  if (!bar || !lBtn || !rBtn) return;
+  lBtn.classList.toggle('hide', bar.scrollLeft <= 4);
+  rBtn.classList.toggle('hide', bar.scrollLeft + bar.clientWidth >= bar.scrollWidth - 4);
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const bar = document.getElementById('genre-bar-inner');
+  if (bar) {
+    bar.addEventListener('scroll', updateGenreScrollBtns, { passive: true });
+    setTimeout(updateGenreScrollBtns, 300);
+  }
+});
+
+// ═══════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════
 function init() {
@@ -1336,7 +1444,7 @@ function init() {
   showView('home');
   loadBooks();
   scheduleDonateNudge();
-  if (!state.tastePicked) setTimeout(showTastePicker, 800);
+  if (!state.tastePicked) setTimeout(showTastePicker, 1200);
 }
 
 init();
