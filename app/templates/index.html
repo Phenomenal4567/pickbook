@@ -621,8 +621,32 @@ const COVER_GRADIENTS = [
   'linear-gradient(135deg,#2E1A2E,#5C3D5C)',
 ];
 
+// Maps genre labels returned by the /ingest/books API to the UI genre tab labels.
+// The API stores canonical genre names (e.g. "Romance", "Science Fiction") that differ
+// from the genre tabs in the UI ("Romantic", "Sci-Fi"), so we translate here.
+const API_GENRE_MAP = {
+  'Romance':            'Romantic',
+  'Fantasy':            'Fantasy',
+  'Science Fiction':    'Sci-Fi',
+  'Horror':             'Horror',
+  'Thriller':           'Thriller',
+  'Historical Fiction': 'History',
+  'Non Fiction':        'Business',
+  'Classic':            'History',
+  'Poetry':             'Drama',
+  'Young Adult':        'Romantic',
+  'Paranormal':         'Horror',
+  'Action & Adventure': 'Fantasy',
+  'LGBTQ+':             'Drama',
+};
+
+function mapApiGenre(genre) {
+  return API_GENRE_MAP[genre] || null;
+}
+
 function textFromBook(book) {
-  return [...(book.subjects || []), book.title || '', book.author || ''].join(' ').toLowerCase();
+  // Include book.genre so mood / keyword inference also benefits from the API's genre data
+  return [...(book.subjects || []), book.title || '', book.author || '', book.genre || ''].join(' ').toLowerCase();
 }
 function inferGenre(book) {
   const t = textFromBook(book);
@@ -752,7 +776,7 @@ async function loadBooks() {
       id:       book.id       || (i + 1),
       title:    book.title    || 'Untitled',
       author:   book.author   || 'Unknown Author',
-      genre:    inferGenre(book),
+      genre:    mapApiGenre(book.genre) || inferGenre(book),
       mood:     inferMood(book),
       tags:     inferTags(book),
       rating:   parseFloat(inferRating(i)),
