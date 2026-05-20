@@ -440,9 +440,10 @@ def scrape_nf_playwright(slug: str, genre: str) -> list[dict]:
 # INGEST ROUTES
 # =========================================================
 
-@router.get("/obooko", dependencies=[Depends(_require_admin)])
-@limiter.limit("5/minute")
-def ingest_obooko(request: Request):
+# ── Core logic extracted so ingest_all can call them without re-triggering the
+#    rate-limit decorator (calling a @limiter.limit-decorated function from inside
+#    another request handler triggers a second rate-limit check and can 429).
+def _run_obooko_ingest() -> dict:
     scrape = scrape_obooko_playwright if USE_PLAYWRIGHT else scrape_obooko_static
     total = 0
 
@@ -465,9 +466,7 @@ def ingest_obooko(request: Request):
     }
 
 
-@router.get("/novelflow", dependencies=[Depends(_require_admin)])
-@limiter.limit("5/minute")
-def ingest_novelflow(request: Request):
+def _run_novelflow_ingest() -> dict:
     scrape = scrape_nf_playwright if USE_PLAYWRIGHT else scrape_nf_static
     total = 0
 
@@ -490,11 +489,25 @@ def ingest_novelflow(request: Request):
     }
 
 
+@router.get("/obooko", dependencies=[Depends(_require_admin)])
+@limiter.limit("5/minute")
+def ingest_obooko(request: Request):
+    return _run_obooko_ingest()
+
+
+@router.get("/novelflow", dependencies=[Depends(_require_admin)])
+@limiter.limit("5/minute")
+def ingest_novelflow(request: Request):
+    return _run_novelflow_ingest()
+
+
 @router.get("/all", dependencies=[Depends(_require_admin)])
 @limiter.limit("2/minute")
 def ingest_all(request: Request):
-    o = ingest_obooko(request)
-    n = ingest_novelflow(request)
+    # FIX: call the plain helper functions instead of the decorated endpoint
+    # functions — avoids double rate-limit checks and JSONResponse wrapping issues.
+    o = _run_obooko_ingest()
+    n = _run_novelflow_ingest()
 
     return {
         "status": "success",

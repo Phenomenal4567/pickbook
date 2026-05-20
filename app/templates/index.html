@@ -874,9 +874,10 @@ function showView(v) {
     const el = document.getElementById(id);
     if (el) el.style.display = (id === v + '-view') ? 'block' : 'none';
   });
-  const inReader = (v === 'reader');
-  document.getElementById('genre-bar').classList.toggle('hidden', inReader);
-  document.getElementById('mood-filter-bar').classList.toggle('hidden', inReader);
+  // Hide genre/mood bars when viewing a novel detail or reading — show only on home/shelf
+  const hideFilters = (v === 'reader' || v === 'detail');
+  document.getElementById('genre-bar').classList.toggle('hidden', hideFilters);
+  document.getElementById('mood-filter-bar').classList.toggle('hidden', hideFilters);
   if (v === 'shelf') renderShelfView();
   window.scrollTo(0, 0);
 }
@@ -1330,9 +1331,17 @@ function showDetail(novelId) {
   document.getElementById('detail-license').textContent = n.license || 'Public Domain';
   document.getElementById('detail-rating-text').textContent = `${n.rating} / 5`;
 
-  // FIX: render cover using coverHtml helper (gradient bg + img with onload/onerror)
-  const coverBg = document.getElementById('detail-cover-bg');
-  coverBg.outerHTML = coverHtml(n, 'detail-cover-bg') .replace('class="detail-cover-bg"', 'class="detail-cover-bg" id="detail-cover-bg"');
+  // FIX: render cover into parent .detail-cover wrapper to avoid outerHTML losing the id
+  const detailCoverWrapper = document.querySelector('#detail-view .detail-cover');
+  if (detailCoverWrapper) {
+    const gradient = n.bg || COVER_GRADIENTS[0];
+    let imgTag = '';
+    if (n.cover && typeof n.cover === 'string' && n.cover.startsWith('http')) {
+      const uid = 'cimg_' + (++_coverImgIdCounter);
+      imgTag = `<img id="${uid}" src="${escapeHtml(n.cover)}" alt="${escapeHtml(n.title)}" loading="lazy" onload="this.classList.add('loaded')" onerror="this.style.display='none'">`;
+    }
+    detailCoverWrapper.innerHTML = `<div class="detail-cover-bg" id="detail-cover-bg" style="background:${gradient}">${imgTag}</div>`;
+  }
 
   const tagsEl = document.getElementById('detail-tags');
   tagsEl.innerHTML = n.tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('') +
