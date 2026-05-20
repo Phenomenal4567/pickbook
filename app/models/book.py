@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Text
 from app.core.database import Base
 
 class Book(Base):
@@ -13,10 +13,13 @@ class Book(Base):
 
     author = Column(String)
 
-    genre = Column(String)   # ✅ ADD THIS LINE
+    genre = Column(String)
 
     cover = Column(String)
 
     download = Column(String)
 
     language = Column(String)
+
+    # ADD THIS
+    synopsis = Column(Text, nullable=True)
