@@ -154,27 +154,16 @@
   .novel-card { cursor: pointer; border-radius: var(--radius); overflow: hidden; background: var(--surface); border: 1px solid var(--border); transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s; position: relative; }
   .novel-card:hover { transform: translateY(-4px); border-color: var(--border2); box-shadow: 0 8px 20px rgba(0,0,0,0.25); }
 
-  /*
-   * FIX: .novel-cover must be position:relative so the absolutely-positioned
-   * .novel-cover-bg fills it correctly. Also ensure aspect-ratio is set here.
-   */
   .novel-cover {
     aspect-ratio: 2/3;
     width: 100%;
-    position: relative;   /* â† critical: child absolute elements anchor here */
+    position: relative;
     overflow: hidden;
     display: flex;
     align-items: flex-end;
     padding: 0.5rem;
   }
 
-  /*
-   * FIX: .novel-cover-bg sits at inset:0 inside .novel-cover.
-   * The gradient is set as the background on this div.
-   * The <img> inside it is absolutely positioned and fills 100%.
-   * If the image loads, it covers the gradient. If it fails (onerror),
-   * the gradient shows through.
-   */
   .novel-cover-bg {
     position: absolute;
     inset: 0;
@@ -182,7 +171,6 @@
     background-position: center top;
   }
 
-  /* FIX: img inside cover bg fills its parent absolutely */
   .novel-cover-bg img {
     position: absolute;
     inset: 0;
@@ -191,11 +179,9 @@
     object-fit: cover;
     object-position: center top;
     display: block;
-    /* Smooth fade-in so gradientâ†’image transition isn't jarring */
     opacity: 0;
     transition: opacity 0.3s ease;
   }
-  /* Once loaded, fade in */
   .novel-cover-bg img.loaded {
     opacity: 1;
   }
@@ -217,14 +203,13 @@
   .continue-strip { background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius); padding: 1rem 1.25rem; display: flex; align-items: center; gap: 1rem; cursor: pointer; transition: border-color 0.2s; margin-bottom: 0.5rem; }
   .continue-strip:hover { border-color: var(--accent); }
 
-  /* FIX: continue-cover must also be position:relative */
   .continue-cover {
     width: 48px;
     height: 72px;
     border-radius: 6px;
     flex-shrink: 0;
     overflow: hidden;
-    position: relative;   /* â† critical */
+    position: relative;
   }
   .continue-cover-bg {
     position: absolute;
@@ -271,14 +256,13 @@
   #detail-view { display: none; }
   .detail-header { display: flex; gap: 2rem; margin-bottom: 2rem; flex-wrap: wrap; }
 
-  /* FIX: detail-cover must be position:relative for absolute child */
   .detail-cover {
     width: 160px;
     flex-shrink: 0;
     aspect-ratio: 2/3;
     border-radius: var(--radius);
     overflow: hidden;
-    position: relative;   /* â† critical */
+    position: relative;
     box-shadow: 0 8px 32px rgba(0,0,0,0.4);
   }
   .detail-cover-bg {
@@ -403,6 +387,9 @@
   /* 18+ badge on genre tab */
   .genre-tab .age-badge { font-size: 0.6rem; background: var(--danger); color: #fff; border-radius: 4px; padding: 1px 4px; margin-left: 4px; vertical-align: middle; }
 
+  /* Chapter load-more */
+  .chapter-load-more { text-align: center; padding: 1rem 0; }
+
   @media (max-width: 640px) {
     .detail-cover { width: 110px; } .detail-title { font-size: 1.4rem; }
     .novel-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
@@ -417,7 +404,7 @@
 <!-- AGE GATE -->
 <div class="overlay" id="age-gate-overlay">
   <div class="modal age-gate-modal">
-    <div class="warning">ðŸ”ž</div>
+    <div class="warning">&#128286;</div>
     <h2>Adults Only</h2>
     <p>This section contains mature content intended for readers 18 years and older.</p>
     <div class="age-gate-check">
@@ -435,21 +422,23 @@
     <h2>What do you love reading?</h2>
     <p>Pick 3 genres to personalise your PickBook experience.</p>
     <div class="taste-grid">
-      <div class="taste-option" data-genre="Romance"><span class="taste-emoji">ðŸ’ž</span>Romance</div>
-      <div class="taste-option" data-genre="Fantasy"><span class="taste-emoji">ðŸ—¡ï¸</span>Fantasy</div>
-      <div class="taste-option" data-genre="Werewolf"><span class="taste-emoji">ðŸº</span>Werewolf</div>
-      <div class="taste-option" data-genre="Billionaire"><span class="taste-emoji">ðŸ’Ž</span>Billionaire</div>
-      <div class="taste-option" data-genre="Dark Romance"><span class="taste-emoji">ðŸŒ‘</span>Dark Romance</div>
-      <div class="taste-option" data-genre="Thriller"><span class="taste-emoji">ðŸ”ª</span>Thriller</div>
-      <div class="taste-option" data-genre="Science Fiction"><span class="taste-emoji">ðŸš€</span>Sci-Fi</div>
-      <div class="taste-option" data-genre="Horror"><span class="taste-emoji">ðŸ‘»</span>Horror</div>
-      <div class="taste-option" data-genre="YA/Teen"><span class="taste-emoji">ðŸŒŸ</span>YA/Teen</div>
-      <div class="taste-option" data-genre="Historical Fiction"><span class="taste-emoji">ðŸ“œ</span>Historical</div>
-      <div class="taste-option" data-genre="Non Fiction"><span class="taste-emoji">ðŸ’¼</span>Non Fiction</div>
-      <div class="taste-option" data-genre="Paranormal"><span class="taste-emoji">ðŸ‘ï¸</span>Paranormal</div>
+      <div class="taste-option" data-genre="Romance"><span class="taste-emoji">&#128158;</span>Romance</div>
+      <div class="taste-option" data-genre="Fantasy"><span class="taste-emoji">&#9876;&#65039;</span>Fantasy</div>
+      <div class="taste-option" data-genre="Werewolf"><span class="taste-emoji">&#128058;</span>Werewolf</div>
+      <div class="taste-option" data-genre="Billionaire"><span class="taste-emoji">&#128142;</span>Billionaire</div>
+      <div class="taste-option" data-genre="Dark Romance"><span class="taste-emoji">&#127761;</span>Dark Romance</div>
+      <div class="taste-option" data-genre="Thriller"><span class="taste-emoji">&#128298;</span>Thriller</div>
+      <div class="taste-option" data-genre="Science Fiction"><span class="taste-emoji">&#128640;</span>Sci-Fi</div>
+      <div class="taste-option" data-genre="Horror"><span class="taste-emoji">&#128123;</span>Horror</div>
+      <div class="taste-option" data-genre="YA/Teen"><span class="taste-emoji">&#127775;</span>YA/Teen</div>
+      <div class="taste-option" data-genre="Historical Fiction"><span class="taste-emoji">&#128220;</span>Historical</div>
+      <div class="taste-option" data-genre="Non Fiction"><span class="taste-emoji">&#128188;</span>Non Fiction</div>
+      <div class="taste-option" data-genre="Paranormal"><span class="taste-emoji">&#128065;&#65039;</span>Paranormal</div>
     </div>
     <p id="taste-count-msg" style="color:var(--accent);font-size:0.82rem;text-align:center;">Select 3 genres</p>
-    <button class="btn-primary" id="taste-done-btn" style="width:100%;margin-top:0.5rem;opacity:0.4;cursor:not-allowed" disabled onclick="confirmTastePicker()">Let's Go â†’</button>
+    <button class="btn-primary" id="taste-done-btn" style="width:100%;margin-top:0.5rem;opacity:0.4;cursor:not-allowed" disabled onclick="confirmTastePicker()">Let's Go &rarr;</button>
+    <!-- FIX 1: Added dismiss button so users are never trapped in this overlay -->
+    <button class="btn-secondary" style="width:100%;margin-top:0.5rem" onclick="document.getElementById('taste-picker-overlay').classList.remove('active')">Maybe Later</button>
   </div>
 </div>
 
@@ -457,7 +446,7 @@
 <div class="overlay" id="donate-overlay">
   <div class="donate-modal">
     <div class="donate-modal-header">
-      <div class="donate-icon-ring">â¤ï¸</div>
+      <div class="donate-icon-ring">&#10084;&#65039;</div>
       <h2>Support PickBook</h2>
     </div>
     <p class="donate-sub">PickBook is completely free and ad-free. If you've been enjoying your reading here, a small donation helps keep the lights on and new books coming. Every naira counts!</p>
@@ -472,19 +461,19 @@
         </span>
       </div>
     </div>
-    <p class="donate-cta">Transfer any amount via your banking app. Thank you from the bottom of our hearts â€” you make PickBook possible. ðŸ™</p>
+    <p class="donate-cta">Transfer any amount via your banking app. Thank you from the bottom of our hearts &#128591;</p>
     <button class="donate-close-btn" onclick="closeDonate()">Maybe Later</button>
   </div>
 </div>
 
 <!-- DONATE NUDGE -->
 <div class="donate-nudge" id="donate-nudge">
-  <button class="nudge-dismiss" onclick="dismissNudge()" aria-label="Dismiss">âœ•</button>
-  <span class="nudge-heart">ðŸ“š</span>
+  <button class="nudge-dismiss" onclick="dismissNudge()" aria-label="Dismiss">&#10005;</button>
+  <span class="nudge-heart">&#128218;</span>
   <div class="nudge-title">Enjoying PickBook?</div>
-  <div class="nudge-body">You've been reading for a while â€” we're glad you're here! PickBook is free and made with love. A small donation helps us keep it that way.</div>
+  <div class="nudge-body">You've been reading for a while &mdash; we're glad you're here! PickBook is free and made with love. A small donation helps us keep it that way.</div>
   <div class="nudge-actions">
-    <button class="nudge-yes" onclick="openDonateFromNudge()">Support Us â¤ï¸</button>
+    <button class="nudge-yes" onclick="openDonateFromNudge()">Support Us &#10084;&#65039;</button>
     <button class="nudge-no" onclick="dismissNudge()">Not Now</button>
   </div>
 </div>
@@ -493,16 +482,16 @@
 <nav>
   <div class="logo" onclick="goHome()">Pick<span>Book</span></div>
   <div class="search-wrap">
-    <span class="search-icon">ðŸ”</span>
-    <input type="text" placeholder="Search novels, authors, genresâ€¦" id="search-input" oninput="handleSearch(this.value)" autocomplete="off">
-    <button class="search-clear" id="search-clear" onclick="clearSearch()">âœ•</button>
+    <span class="search-icon">&#128269;</span>
+    <input type="text" placeholder="Search novels, authors, genres&hellip;" id="search-input" oninput="handleSearch(this.value)" autocomplete="off">
+    <button class="search-clear" id="search-clear" onclick="clearSearch()">&#10005;</button>
     <div class="search-results-drop" id="search-drop"></div>
   </div>
   <div class="nav-actions">
-    <div class="streak-badge" id="streak-badge">ðŸ”¥ <span id="streak-count">0</span> day streak</div>
-    <button class="shelf-btn" onclick="showView('shelf')">ðŸ“š <span>My Shelf</span><span class="shelf-count" id="shelf-count-badge">0</span></button>
-    <button class="donate-nav-btn" onclick="openDonate()">â¤ï¸ <span class="donate-label">Donate</span></button>
-    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">â˜€ï¸</button>
+    <div class="streak-badge" id="streak-badge">&#128293; <span id="streak-count">0</span> day streak</div>
+    <button class="shelf-btn" onclick="showView('shelf')">&#128218; <span>My Shelf</span><span class="shelf-count" id="shelf-count-badge">0</span></button>
+    <button class="donate-nav-btn" onclick="openDonate()">&#10084;&#65039; <span class="donate-label">Donate</span></button>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">&#9728;&#65039;</button>
   </div>
 </nav>
 
@@ -511,7 +500,7 @@
   <button class="genre-scroll-btn left hide" id="genre-scroll-left" onclick="scrollGenre(-1)">&#8249;</button>
   <div class="genre-bar" id="genre-bar-inner">
     <button class="genre-tab active" onclick="selectGenre(this,'All')">All Genres</button>
-    <button class="genre-tab" onclick="selectGenre(this,'Action & Adventure')">Action &amp; Adventure</button>
+    <button class="genre-tab" onclick="selectGenre(this,'Action &amp; Adventure')">Action &amp; Adventure</button>
     <button class="genre-tab" onclick="selectGenre(this,'Billionaire')">Billionaire</button>
     <button class="genre-tab" onclick="selectGenre(this,'Dark Romance')">Dark Romance</button>
     <button class="genre-tab" onclick="selectGenre(this,'Fantasy')">Fantasy</button>
@@ -536,10 +525,10 @@
 <div class="mood-filter-bar" id="mood-filter-bar">
   <span class="mood-label">Mood:</span>
   <button class="mood-chip active" data-mood="All" onclick="selectMood(this,'All')">All Moods</button>
-  <button class="mood-chip" data-mood="Dark" onclick="selectMood(this,'Dark')">ðŸŒ‘ Dark &amp; Brooding</button>
-  <button class="mood-chip" data-mood="Light" onclick="selectMood(this,'Light')">â˜€ï¸ Light-hearted</button>
-  <button class="mood-chip" data-mood="Intense" onclick="selectMood(this,'Intense')">âš¡ Edge-of-seat</button>
-  <button class="mood-chip" data-mood="Romantic" onclick="selectMood(this,'Romantic')">ðŸ’ž Slow Burn</button>
+  <button class="mood-chip" data-mood="Dark" onclick="selectMood(this,'Dark')">&#127761; Dark &amp; Brooding</button>
+  <button class="mood-chip" data-mood="Light" onclick="selectMood(this,'Light')">&#9728;&#65039; Light-hearted</button>
+  <button class="mood-chip" data-mood="Intense" onclick="selectMood(this,'Intense')">&#9889; Edge-of-seat</button>
+  <button class="mood-chip" data-mood="Romantic" onclick="selectMood(this,'Romantic')">&#128158; Slow Burn</button>
 </div>
 
 <!-- SOURCE FILTER -->
@@ -554,11 +543,11 @@
 <div id="home-view" style="display:block">
   <main>
     <div id="continue-section">
-      <div class="section-header"><h2 class="section-title">ðŸ“– Continue Reading</h2></div>
+      <div class="section-header"><h2 class="section-title">&#128214; Continue Reading</h2></div>
       <div id="continue-strips"></div>
     </div>
     <div class="section-header">
-      <h2 class="section-title" id="recommended-title">âœ¨ Recommended For You</h2>
+      <h2 class="section-title" id="recommended-title">&#10024; Recommended For You</h2>
       <a class="section-link" onclick="clearFilters()">See all</a>
     </div>
     <div class="novel-grid" id="recommended-grid">
@@ -570,9 +559,9 @@
       <div class="skeleton-card"><div class="skeleton-cover"></div><div class="skeleton-info"><div class="skeleton-line"></div><div class="skeleton-line short"></div></div></div>
     </div>
     <div id="home-error" style="display:none"></div>
-    <div class="section-header" id="trending-header"><h2 class="section-title">ðŸ”¥ Trending Now</h2></div>
+    <div class="section-header" id="trending-header"><h2 class="section-title">&#128293; Trending Now</h2></div>
     <div class="novel-grid" id="trending-grid"></div>
-    <div class="section-header" id="latest-header"><h2 class="section-title">ðŸ†• Latest Added</h2></div>
+    <div class="section-header" id="latest-header"><h2 class="section-title">&#127381; Latest Added</h2></div>
     <div class="novel-grid" id="latest-grid"></div>
   </main>
 </div>
@@ -580,11 +569,11 @@
 <!-- SHELF VIEW -->
 <div id="shelf-view" style="display:none">
   <div class="view-back-bar">
-    <button class="view-back-btn" onclick="showView('home')"><span class="arrow">â†</span> Browse</button>
+    <button class="view-back-btn" onclick="showView('home')"><span class="arrow">&larr;</span> Browse</button>
     <span class="view-back-crumb">My Shelf</span>
   </div>
   <main>
-    <h1 class="shelf-header">ðŸ“š My Shelf</h1>
+    <h1 class="shelf-header">&#128218; My Shelf</h1>
     <div class="novel-grid" id="shelf-grid"></div>
   </main>
 </div>
@@ -592,7 +581,7 @@
 <!-- DETAIL VIEW -->
 <div id="detail-view" style="display:none">
   <div class="view-back-bar">
-    <button class="view-back-btn" onclick="showView('home')"><span class="arrow">â†</span> Browse</button>
+    <button class="view-back-btn" onclick="showView('home')"><span class="arrow">&larr;</span> Browse</button>
     <span class="view-back-crumb">Novel Detail</span>
   </div>
   <main style="max-width:900px">
@@ -604,13 +593,13 @@
         <h1 class="detail-title" id="detail-title"></h1>
         <div class="detail-author" id="detail-author"></div>
         <div class="detail-tags" id="detail-tags"></div>
-        <div class="detail-rating">â˜…â˜…â˜…â˜…Â½ <span style="color:var(--text-muted);font-size:0.85rem" id="detail-rating-text"></span></div>
+        <div class="detail-rating">&#9733;&#9733;&#9733;&#9733;&#189; <span style="color:var(--text-muted);font-size:0.85rem" id="detail-rating-text"></span></div>
         <div class="detail-actions">
           <button class="btn-primary" onclick="startReading()">Read Now</button>
           <button class="btn-secondary" id="shelf-toggle-btn" onclick="toggleShelf()">+ My Shelf</button>
         </div>
         <div class="attribution-box">
-          ðŸ“Œ Sourced from: <strong style="color:var(--text)" id="detail-source"></strong><br>
+          &#128204; Sourced from: <strong style="color:var(--text)" id="detail-source"></strong><br>
           License: <span id="detail-license"></span>
         </div>
       </div>
@@ -626,7 +615,7 @@
 <!-- READER VIEW -->
 <div id="reader-view" style="display:none">
   <div class="view-back-bar">
-    <button class="view-back-btn" onclick="showView('detail')"><span class="arrow">â†</span> Back to Novel</button>
+    <button class="view-back-btn" onclick="showView('detail')"><span class="arrow">&larr;</span> Back to Novel</button>
     <span class="view-back-crumb" id="reader-crumb-title"></span>
   </div>
   <div class="reader-controls-bar">
@@ -635,7 +624,7 @@
       <div class="reader-chapter-info" id="reader-chapter-info"></div>
     </div>
     <div class="font-controls">
-      <button class="font-btn" onclick="changeFontSize(-1)">Aâˆ’</button>
+      <button class="font-btn" onclick="changeFontSize(-1)">A&minus;</button>
       <button class="font-btn" onclick="changeFontSize(1)">A+</button>
     </div>
   </div>
@@ -643,21 +632,21 @@
   <div class="reader-content">
     <div class="reader-body" id="reader-body"></div>
     <div class="reader-actions">
-      <button class="action-btn" id="bookmark-btn" onclick="toggleBookmark()">ðŸ”– Bookmark</button>
-      <button class="action-btn" id="rate-btn" onclick="rateChapter()">â˜… Rate</button>
-      <button class="action-btn" onclick="shareChapter()">â†— Share</button>
-      <button class="action-btn" onclick="toggleShelfFromReader()">ðŸ“š Shelf</button>
+      <button class="action-btn" id="bookmark-btn" onclick="toggleBookmark()">&#128214; Bookmark</button>
+      <button class="action-btn" id="rate-btn" onclick="rateChapter()">&#9733; Rate</button>
+      <button class="action-btn" onclick="shareChapter()">&#8599; Share</button>
+      <button class="action-btn" onclick="toggleShelfFromReader()">&#128218; Shelf</button>
     </div>
     <div class="reader-chapter-nav">
-      <button class="chapter-nav-btn" onclick="prevChapter()">â† Prev Chapter</button>
-      <button class="chapter-nav-btn primary" onclick="nextChapter()">Next Chapter â†’</button>
+      <button class="chapter-nav-btn" onclick="prevChapter()">&larr; Prev Chapter</button>
+      <button class="chapter-nav-btn primary" onclick="nextChapter()">Next Chapter &rarr;</button>
     </div>
     <div class="you-may-like">
       <div class="section-header" style="margin-top:0"><h2 class="section-title" style="font-size:1rem">You May Also Like</h2></div>
       <div class="novel-grid" id="also-like-grid"></div>
     </div>
     <div class="attribution-box">
-      ðŸ“Œ Content sourced from: <strong style="color:var(--text)" id="reader-attribution"></strong>
+      &#128204; Content sourced from: <strong style="color:var(--text)" id="reader-attribution"></strong>
     </div>
   </div>
 </div>
@@ -667,24 +656,24 @@
   <div class="footer-links">
     <a href="#">About</a>
     <a href="#" onclick="showTastePicker()">Preferences</a>
-    <a href="#" onclick="openDonate()">â¤ï¸ Donate</a>
-    <a href="https://wa.me/2349042427548?text=PickBook%20Feedback%3A%20" target="_blank">ðŸ’¬ Feedback</a>
+    <a href="#" onclick="openDonate()">&#10084;&#65039; Donate</a>
+    <a href="https://wa.me/2349042427548?text=PickBook%20Feedback%3A%20" target="_blank">&#128172; Feedback</a>
     <a href="#">Submit a Novel</a>
   </div>
-  <div>Â© 2026 PickBook Â· Free public domain reading Â· Sources: Standard Ebooks &amp; Feedbooks</div>
+  <div>&copy; 2026 PickBook &middot; Free public domain reading &middot; Sources: Standard Ebooks &amp; Feedbooks</div>
 </footer>
 
 <div class="toast" id="toast"></div>
 <div class="milestone-badge" id="milestone-badge">
-  <span class="badge-icon" id="milestone-icon">ðŸ†</span>
+  <span class="badge-icon" id="milestone-icon">&#127942;</span>
   <div class="badge-title" id="milestone-title">Achievement Unlocked!</div>
   <div id="milestone-desc" style="font-size:0.78rem;color:var(--text-muted)"></div>
 </div>
 
 <script>
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 //  CONSTANTS
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 const ADULT_GENRES = new Set(['LGBTQ+', 'YA/Teen', 'Erotic']);
 
 const MOOD_KEYWORDS = {
@@ -707,9 +696,11 @@ const COVER_GRADIENTS = [
   'linear-gradient(135deg,#2E1A2E,#5C3D5C)',
 ];
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+const CHAPTER_PAGE_SIZE = 50;
+
+// ═══════════════════════════════════════════════════════
 //  HELPERS
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 function textFromBook(book) {
   return [...(book.subjects || []), book.title || '', book.author || '', book.genre || '', book.synopsis || ''].join(' ').toLowerCase();
 }
@@ -741,17 +732,17 @@ function escapeHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 //  LOCAL STORAGE
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 const LS = {
   get: (k, def) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch(e) { return def; } },
   set: (k, v)   => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} }
 };
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 //  STATE
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 let NOVELS = [];
 let state = {
   theme:        LS.get('pb_theme', 'dark'),
@@ -768,6 +759,9 @@ let state = {
   milestones:   LS.get('pb_milestones', []),
   nudgeDone:    LS.get('pb_nudge_done', false),
 };
+
+// FIX 10: Use a Set for O(1) shelf lookups instead of O(n) array.includes()
+let shelfSet = new Set(state.shelf);
 
 let currentNovel   = null;
 let currentChapter = 1;
@@ -790,21 +784,14 @@ function saveState() {
   Object.entries(keys).forEach(([k, v]) => LS.set(k, v));
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-//  COVER IMAGE HELPER  (FIXED)
-//
-//  FIX 1: gradient is always set as CSS background on .novel-cover-bg
-//  FIX 2: if cover URL exists, an <img> is layered on top with opacity:0
-//  FIX 3: onload sets .loaded class â†’ CSS transitions opacity to 1
-//  FIX 4: onerror hides the img so gradient shows through cleanly
-//  FIX 5: unique ID on each img so we can target it with onload/onerror
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
+//  COVER IMAGE HELPER
+// ═══════════════════════════════════════════════════════
 let _coverImgIdCounter = 0;
 
 function coverHtml(novel, cssClass = 'novel-cover-bg') {
   const gradient = novel.bg || COVER_GRADIENTS[0];
   let imgTag = '';
-
   if (novel.cover && typeof novel.cover === 'string' && novel.cover.startsWith('http')) {
     const uid = 'cimg_' + (++_coverImgIdCounter);
     imgTag = `<img
@@ -816,19 +803,18 @@ function coverHtml(novel, cssClass = 'novel-cover-bg') {
       onerror="this.style.display='none'"
     >`;
   }
-
   return `<div class="${cssClass}" style="background:${gradient}">${imgTag}</div>`;
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 //  DONATE
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 function openDonate()         { document.getElementById('donate-overlay').classList.add('active'); }
 function closeDonate()        { document.getElementById('donate-overlay').classList.remove('active'); }
 function openDonateFromNudge(){ dismissNudge(); openDonate(); }
 function copyAcct() {
   if (navigator.clipboard) navigator.clipboard.writeText('8069904015').catch(() => {});
-  showToast('âœ“ Account number copied!');
+  showToast('Account number copied!');
 }
 function scheduleDonateNudge() {
   if (state.nudgeDone) return;
@@ -840,9 +826,9 @@ function dismissNudge() {
   state.nudgeDone = true; saveState();
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 //  LOAD BOOKS
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 async function loadBooks() {
   try {
     const res = await fetch('/ingest/books');
@@ -865,7 +851,6 @@ async function loadBooks() {
       synopsis: book.synopsis || 'Available free on PickBook.',
       source:   book.source   || 'PickBook Library',
       license:  book.license  || 'Public Domain',
-      // FIX: validate cover URL â€” must be a real http(s) URL, not a blob or placeholder
       cover:    (book.cover && typeof book.cover === 'string' && book.cover.startsWith('http')) ? book.cover : null,
       download: book.download || book.content_url || null,
       subjects: Array.isArray(book.subjects) ? book.subjects : (book.subjects ? String(book.subjects).split('|').filter(Boolean) : []),
@@ -878,7 +863,7 @@ async function loadBooks() {
     const errDiv = document.getElementById('home-error');
     errDiv.style.display = 'block';
     errDiv.innerHTML = `<div class="load-error">
-      <div class="err-icon">ðŸ“¡</div>
+      <div class="err-icon">&#128225;</div>
       <p><strong>Could not load the book catalogue.</strong><br>The server may be starting up or temporarily unavailable.</p>
       <button class="retry-btn" onclick="loadBooks()">Try Again</button>
     </div>`;
@@ -889,9 +874,9 @@ async function loadBooks() {
   renderShelfCount();
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 //  VIEWS
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 const VIEWS = ['home-view','detail-view','reader-view','shelf-view'];
 
 function showView(v) {
@@ -899,7 +884,6 @@ function showView(v) {
     const el = document.getElementById(id);
     if (el) el.style.display = (id === v + '-view') ? 'block' : 'none';
   });
-  // Hide genre/mood bars when viewing a novel detail or reading â€” show only on home/shelf
   const hideFilters = (v === 'reader' || v === 'detail');
   document.getElementById('genre-bar').classList.toggle('hidden', hideFilters);
   document.getElementById('mood-filter-bar').classList.toggle('hidden', hideFilters);
@@ -913,19 +897,19 @@ function goHome() {
   buildHomeGrids(getFilteredNovels());
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 //  THEME
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 function applyTheme() {
   document.documentElement.setAttribute('data-theme', state.theme);
   const btn = document.getElementById('theme-btn');
-  if (btn) btn.textContent = state.theme === 'dark' ? 'â˜€ï¸' : 'ðŸŒ™';
+  if (btn) btn.textContent = state.theme === 'dark' ? '\u2600\uFE0F' : '\uD83C\uDF19';
 }
 function toggleTheme() { state.theme = state.theme === 'dark' ? 'light' : 'dark'; applyTheme(); saveState(); }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 //  STREAK
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 function updateStreak() {
   const today = new Date().toDateString();
   const yesterday = new Date(Date.now() - 86400000).toDateString();
@@ -935,16 +919,16 @@ function updateStreak() {
 }
 function renderStreak() { const el = document.getElementById('streak-count'); if (el) el.textContent = state.streakCount; }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 //  MILESTONES
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 const MILESTONE_DEFS = [
-  { id:'first_read',  icon:'ðŸ“–', title:'First Chapter!',   desc:'You read your very first chapter.',      check: () => state.chaptersRead.length >= 1 },
-  { id:'five_chaps',  icon:'ðŸŽ¯', title:'5 Chapters Read',  desc:'Getting into the reading habit!',        check: () => state.chaptersRead.length >= 5 },
-  { id:'first_shelf', icon:'ðŸ—‚ï¸', title:'Bookshelf Begun',  desc:'Added your first novel to your shelf.',  check: () => state.shelf.length >= 1 },
-  { id:'taste_set',   icon:'ðŸŽ¨', title:'Taste Defined',    desc:'You picked your favourite genres.',       check: () => state.tastePicked },
-  { id:'streak_3',    icon:'ðŸ”¥', title:'3-Day Streak!',    desc:'Reading 3 days in a row â€” impressive!',  check: () => state.streakCount >= 3 },
-  { id:'ten_chaps',   icon:'ðŸ†', title:'10 Chapters Read', desc:'A true bookworm is emerging.',           check: () => state.chaptersRead.length >= 10 },
+  { id:'first_read',  icon:'\uD83D\uDCD6', title:'First Chapter!',   desc:'You read your very first chapter.',      check: () => state.chaptersRead.length >= 1 },
+  { id:'five_chaps',  icon:'\uD83C\uDFAF', title:'5 Chapters Read',  desc:'Getting into the reading habit!',        check: () => state.chaptersRead.length >= 5 },
+  { id:'first_shelf', icon:'\uD83D\uDDC2\uFE0F', title:'Bookshelf Begun', desc:'Added your first novel to your shelf.', check: () => state.shelf.length >= 1 },
+  { id:'taste_set',   icon:'\uD83C\uDFA8', title:'Taste Defined',    desc:'You picked your favourite genres.',       check: () => state.tastePicked },
+  { id:'streak_3',    icon:'\uD83D\uDD25', title:'3-Day Streak!',    desc:'Reading 3 days in a row - impressive!',   check: () => state.streakCount >= 3 },
+  { id:'ten_chaps',   icon:'\uD83C\uDFC6', title:'10 Chapters Read', desc:'A true bookworm is emerging.',           check: () => state.chaptersRead.length >= 10 },
 ];
 function checkMilestones() {
   for (const m of MILESTONE_DEFS) {
@@ -961,15 +945,23 @@ function checkMilestones() {
   }
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 //  SHELF
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+//  FIX 10: Uses shelfSet (Set) for O(1) lookups
+// ═══════════════════════════════════════════════════════
 function toggleShelf(novelId) {
   const id = novelId !== undefined ? novelId : (currentNovel ? currentNovel.id : null);
   if (id === null) return;
   const idx = state.shelf.indexOf(id);
-  if (idx === -1) { state.shelf.push(id); showToast('ðŸ“š Added to your shelf!'); }
-  else            { state.shelf.splice(idx, 1); showToast('Removed from shelf'); }
+  if (idx === -1) {
+    state.shelf.push(id);
+    shelfSet.add(id);
+    showToast('\uD83D\uDCDA Added to your shelf!');
+  } else {
+    state.shelf.splice(idx, 1);
+    shelfSet.delete(id);
+    showToast('Removed from shelf');
+  }
   saveState(); renderShelfCount(); updateDetailShelfBtn(); checkMilestones();
   const homeEl  = document.getElementById('home-view');
   const shelfEl = document.getElementById('shelf-view');
@@ -977,7 +969,10 @@ function toggleShelf(novelId) {
   if (shelfEl && shelfEl.style.display !== 'none') renderShelfView();
 }
 function toggleShelfFromReader() { toggleShelf(currentNovel ? currentNovel.id : undefined); }
-function isOnShelf(id) { return state.shelf.includes(id); }
+
+// FIX 10: O(1) lookup via Set
+function isOnShelf(id) { return shelfSet.has(id); }
+
 function renderShelfCount() {
   const badge = document.getElementById('shelf-count-badge');
   if (!badge) return;
@@ -988,22 +983,22 @@ function updateDetailShelfBtn() {
   const btn = document.getElementById('shelf-toggle-btn');
   if (!btn || !currentNovel) return;
   const on = isOnShelf(currentNovel.id);
-  btn.textContent = on ? 'âœ“ On My Shelf' : '+ My Shelf';
+  btn.textContent = on ? '\u2713 On My Shelf' : '+ My Shelf';
   btn.classList.toggle('on-shelf', on);
 }
 function renderShelfView() {
   const grid = document.getElementById('shelf-grid');
   if (!grid) return;
   if (!state.shelf.length) {
-    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">ðŸ“š</div><p>Your shelf is empty.<br>Browse novels and add them.</p><br><button class="btn-primary" onclick="showView('home')" style="margin-top:0.5rem">Browse Novels</button></div>`;
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">\uD83D\uDCDA</div><p>Your shelf is empty.<br>Browse novels and add them.</p><br><button class="btn-primary" onclick="showView('home')" style="margin-top:0.5rem">Browse Novels</button></div>`;
     return;
   }
-  renderGrid(grid, NOVELS.filter(n => state.shelf.includes(n.id)));
+  renderGrid(grid, NOVELS.filter(n => isOnShelf(n.id)));
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 //  PROGRESS / CONTINUE READING
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 function saveProgress(novelId, chapter, pct) { state.progress[novelId] = { chapter, pct }; saveState(); }
 function renderContinueSection() {
   const section = document.getElementById('continue-section');
@@ -1013,7 +1008,8 @@ function renderContinueSection() {
   if (!entries.length || !NOVELS.length) { section.classList.remove('visible'); return; }
   section.classList.add('visible');
   strips.innerHTML = entries.slice(-2).reverse().map(([nId, prog]) => {
-    const n = NOVELS.find(x => x.id == nId);
+    // FIX 7: Use String() comparison to avoid loose == type coercion bugs
+    const n = NOVELS.find(x => String(x.id) === String(nId));
     if (!n) return '';
     return `<div class="continue-strip" onclick="resumeReading(${n.id})">
       <div class="continue-cover">
@@ -1024,21 +1020,23 @@ function renderContinueSection() {
         <div class="continue-sub">Chapter ${prog.chapter} of ${n.chapters}</div>
         <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${prog.pct}%"></div></div>
       </div>
-      <button class="continue-btn">Resume â†’</button>
+      <button class="continue-btn">Resume &rarr;</button>
     </div>`;
   }).join('');
 }
+
+// FIX 7: Use String comparison for ID matching
 function resumeReading(novelId) {
-  const n = NOVELS.find(x => x.id === novelId);
+  const n = NOVELS.find(x => String(x.id) === String(novelId));
   if (!n) return;
   currentNovel   = n;
   currentChapter = state.progress[novelId] ? state.progress[novelId].chapter : 1;
   renderReaderView(); showView('reader');
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 //  GENRE + MOOD FILTERS
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 function getFilteredNovels() {
   let novels = NOVELS;
   if (activeGenre !== 'All' && activeGenre !== 'All Genres')
@@ -1096,9 +1094,9 @@ function clearFilters() {
   buildHomeGrids(NOVELS);
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 //  AGE GATE
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 function confirmAge() {
   const cb = document.getElementById('age-confirm');
   if (!cb.checked) { showToast('Please tick the checkbox to confirm your age'); return; }
@@ -1116,9 +1114,9 @@ function closeAgeGate() {
   document.querySelector('#genre-bar-inner .genre-tab').classList.add('active');
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 //  TASTE PICKER
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 function showTastePicker() {
   selectedTastes = [...state.tasteGenres];
   document.querySelectorAll('.taste-option').forEach(el => {
@@ -1131,7 +1129,7 @@ function updateTasteCount() {
   const msg  = document.getElementById('taste-count-msg');
   const btn  = document.getElementById('taste-done-btn');
   const n    = selectedTastes.length;
-  msg.textContent = n < 3 ? `Select ${3 - n} more` : n === 3 ? 'âœ“ Perfect! Ready to go.' : `${n} selected (3 is ideal)`;
+  msg.textContent = n < 3 ? `Select ${3 - n} more` : n === 3 ? '\u2713 Perfect! Ready to go.' : `${n} selected (3 is ideal)`;
   const ok = n >= 1;
   btn.disabled = !ok;
   btn.style.opacity = ok ? '1' : '0.4';
@@ -1157,9 +1155,9 @@ document.querySelectorAll('.taste-option').forEach(el => {
   });
 });
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 //  SEARCH
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 function handleSearch(val) {
   const clear = document.getElementById('search-clear');
   const drop  = document.getElementById('search-drop');
@@ -1179,7 +1177,7 @@ function handleSearch(val) {
           <div class="search-result-cover">${coverHtml(n, 'novel-cover-bg')}</div>
           <div>
             <div class="search-result-title">${escapeHtml(n.title)}</div>
-            <div class="search-result-sub">${escapeHtml(n.author)} Â· ${escapeHtml(n.genre)}</div>
+            <div class="search-result-sub">${escapeHtml(n.author)} &middot; ${escapeHtml(n.genre)}</div>
           </div>
         </div>`).join('');
     }
@@ -1200,13 +1198,22 @@ document.addEventListener('click', e => {
   }
 });
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 //  EROTIC REQUEST PAGE
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+//  FIX 2: Checks ageVerified before rendering content
+// ═══════════════════════════════════════════════════════
 function showEroticRequestPage() {
+  // FIX 2: Age gate guard - must verify age before seeing erotic page
+  if (!state.ageVerified) {
+    pendingGenreEl    = document.querySelector('.genre-tab.active');
+    pendingGenreValue = 'Erotic';
+    document.getElementById('age-gate-overlay').classList.add('active');
+    return;
+  }
+
   const grid = document.getElementById('recommended-grid');
   const header = document.getElementById('recommended-title');
-  if (header) header.textContent = 'ðŸ”ž Erotic Content';
+  if (header) header.textContent = '\uD83D\uDD1E Erotic Content';
   ['trending-header','trending-grid','latest-header','latest-grid'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
@@ -1215,17 +1222,17 @@ function showEroticRequestPage() {
   grid.innerHTML = `
     <div style="grid-column:1/-1">
       <div class="erotic-request-wrap">
-        <div class="erotic-icon">ðŸ”ž</div>
-        <div class="erotic-title">Erotic Stories â€” Request a Novel</div>
+        <div class="erotic-icon">\uD83D\uDD1E</div>
+        <div class="erotic-title">Erotic Stories &mdash; Request a Novel</div>
         <p class="erotic-sub">
           We do not host erotic content directly on PickBook, but you can request a specific erotic story below.
           Our team will source and send it to you privately via WhatsApp.
           All requests are for readers <strong>18 years and older only</strong>.
         </p>
         <div class="erotic-form" id="erotic-form">
-          <label>ðŸ“– Story title or description *</label>
-          <textarea id="erotic-story-desc" placeholder="e.g. 'A steamy romance between a CEO and her assistant' or a specific book titleâ€¦"></textarea>
-          <label>ðŸŽ­ Genre / Vibe</label>
+          <label>\uD83D\uDCD6 Story title or description *</label>
+          <textarea id="erotic-story-desc" placeholder="e.g. 'A steamy romance between a CEO and her assistant' or a specific book title&hellip;"></textarea>
+          <label>\uD83C\uDFAD Genre / Vibe</label>
           <select id="erotic-genre-pick">
             <option value="">-- Choose one --</option>
             <option>Steamy Romance</option>
@@ -1236,71 +1243,80 @@ function showEroticRequestPage() {
             <option>Contemporary Adult</option>
             <option>Other / Surprise me</option>
           </select>
-          <label>ðŸ“ž Your WhatsApp number *</label>
+          <label>\uD83D\uDCDE Your WhatsApp number *</label>
           <input type="tel" id="erotic-phone" placeholder="+234 800 000 0000">
-          <label>ðŸ“ Any other notes (optional)</label>
-          <input type="text" id="erotic-notes" placeholder="Language, length, specific authorsâ€¦">
+          <label>\uD83D\uDCDD Any other notes (optional)</label>
+          <input type="text" id="erotic-notes" placeholder="Language, length, specific authors&hellip;">
           <div class="erotic-disclaimer">
-            ðŸ”ž By submitting this request you confirm you are <strong>18 years or older</strong>.
+            \uD83D\uDD1E By submitting this request you confirm you are <strong>18 years or older</strong>.
             Requests are reviewed manually. You will be contacted only via WhatsApp.
           </div>
           <button class="erotic-submit-btn" onclick="submitEroticRequest()">
-            <span>ðŸ“²</span> Send Request via WhatsApp
+            <span>\uD83D\uDCF2</span> Send Request via WhatsApp
           </button>
           <div style="text-align:center;margin-top:0.8rem">
-            <span class="erotic-wa-badge">ðŸ’¬ Replies via WhatsApp Â· 09042427548</span>
+            <span class="erotic-wa-badge">\uD83D\uDCAC Replies via WhatsApp &middot; 09042427548</span>
           </div>
         </div>
       </div>
     </div>`;
 }
 
+// FIX 8: Phone number validation added
 function submitEroticRequest() {
   const desc  = document.getElementById('erotic-story-desc').value.trim();
   const genre = document.getElementById('erotic-genre-pick').value;
   const phone = document.getElementById('erotic-phone').value.trim();
   const notes = document.getElementById('erotic-notes').value.trim();
-  if (!desc) { showToast('Please describe the story you want'); return; }
+
+  if (!desc)  { showToast('Please describe the story you want'); return; }
   if (!phone) { showToast('Please enter your WhatsApp number'); return; }
+
+  // FIX 8: Validate phone number format
+  const phoneClean = phone.replace(/[\s\-().+]/g, '');
+  if (!/^[0-9]{7,15}$/.test(phoneClean)) {
+    showToast('Please enter a valid phone number (e.g. +2348069904015)');
+    return;
+  }
+
   const msg = encodeURIComponent(
-    `*PickBook Erotic Story Request* ðŸ”ž\n\n` +
-    `ðŸ“– Story: ${desc}\n` +
-    `ðŸŽ­ Genre: ${genre || 'Not specified'}\n` +
-    `ðŸ“ž My Number: ${phone}\n` +
-    `ðŸ“ Notes: ${notes || 'None'}\n\n` +
+    `*PickBook Erotic Story Request* \uD83D\uDD1E\n\n` +
+    `\uD83D\uDCD6 Story: ${desc}\n` +
+    `\uD83C\uDFAD Genre: ${genre || 'Not specified'}\n` +
+    `\uD83D\uDCDE My Number: ${phone}\n` +
+    `\uD83D\uDCDD Notes: ${notes || 'None'}\n\n` +
     `_I confirm I am 18+ years old._`
   );
   window.open(`https://wa.me/2349042427548?text=${msg}`, '_blank');
-  showToast('âœ… Opening WhatsApp to send your request!');
+  showToast('Opening WhatsApp to send your request!');
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 //  GRID RENDERER
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 function renderGrid(el, novels) {
   if (!el) return;
   if (!novels || !novels.length) {
-    el.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">ðŸ”</div><p>No novels match this filter.<br>Try a different genre or mood.</p></div>`;
+    el.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">\uD83D\uDD0D</div><p>No novels match this filter.<br>Try a different genre or mood.</p></div>`;
     return;
   }
   el.innerHTML = novels.map(n => {
     const onShelf   = isOnShelf(n.id);
     const srcShort  = (n.source || '').replace(' (standardebooks.org)','').replace(' (feedbooks.com)','');
-
     return `<div class="novel-card" onclick="showDetail(${n.id})">
       <div class="novel-cover">
         ${coverHtml(n)}
         <div class="novel-cover-overlay"></div>
-        <div class="novel-rating">â˜… ${n.rating}</div>
+        <div class="novel-rating">\u2605 ${n.rating}</div>
         <button class="novel-shelf-btn ${onShelf ? 'on-shelf' : ''}"
           onclick="event.stopPropagation();toggleShelf(${n.id})"
-          title="${onShelf ? 'Remove from shelf' : 'Add to shelf'}">${onShelf ? 'âœ“' : '+'}</button>
+          title="${onShelf ? 'Remove from shelf' : 'Add to shelf'}">${onShelf ? '\u2713' : '+'}</button>
       </div>
       <div class="novel-info">
         <div class="novel-title-sm">${escapeHtml(n.title)}</div>
         <div class="novel-author-sm">${escapeHtml(n.author)}</div>
         <span class="novel-tag">${escapeHtml(n.tags[0] || n.genre)}</span>
-        <div><span class="source-pill" title="${escapeHtml(n.source || '')}">ðŸ“š ${escapeHtml(srcShort)}</span></div>
+        <div><span class="source-pill" title="${escapeHtml(n.source || '')}">\uD83D\uDCDA ${escapeHtml(srcShort)}</span></div>
       </div>
     </div>`;
   }).join('');
@@ -1319,7 +1335,7 @@ function buildHomeGrids(novels) {
     if (tasted.length) recommended = tasted;
   }
   const title = document.getElementById('recommended-title');
-  if (title) title.textContent = (!isFiltered && state.tasteGenres.length > 0) ? 'âœ¨ Recommended For You' : (isFiltered ? `âœ¨ ${activeGenre === 'All Genres' ? 'Browse' : activeGenre}` : 'âœ¨ Browse');
+  if (title) title.textContent = (!isFiltered && state.tasteGenres.length > 0) ? '\u2728 Recommended For You' : (isFiltered ? `\u2728 ${activeGenre === 'All Genres' ? 'Browse' : activeGenre}` : '\u2728 Browse');
 
   const grid = document.getElementById('recommended-grid');
   if (grid) {
@@ -1351,11 +1367,12 @@ function buildHomeGrids(novels) {
   }
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 //  DETAIL VIEW
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 function showDetail(novelId) {
-  const n = NOVELS.find(x => x.id === novelId);
+  // FIX 7: Use String comparison for safe ID matching
+  const n = NOVELS.find(x => String(x.id) === String(novelId));
   if (!n) return;
   currentNovel   = n;
   currentChapter = 1;
@@ -1367,7 +1384,6 @@ function showDetail(novelId) {
   document.getElementById('detail-license').textContent = n.license || 'Public Domain';
   document.getElementById('detail-rating-text').textContent = `${n.rating} / 5`;
 
-  // FIX: render cover into parent .detail-cover wrapper to avoid outerHTML losing the id
   const detailCoverWrapper = document.querySelector('#detail-view .detail-cover');
   if (detailCoverWrapper) {
     const gradient = n.bg || COVER_GRADIENTS[0];
@@ -1383,12 +1399,22 @@ function showDetail(novelId) {
   tagsEl.innerHTML = n.tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('') +
     `<span class="tag">${escapeHtml(n.genre)}</span>`;
 
-  const chapList = document.getElementById('chapter-list-items');
-  chapList.innerHTML = Array.from({length: Math.min(n.chapters, 50)}, (_, i) => {
-    const num = i + 1;
-    const key = `${n.id}_${num}`;
+  // FIX 6: Render chapter list with pagination for novels > 50 chapters
+  renderChapterList(n, 0);
+
+  updateDetailShelfBtn();
+  showView('detail');
+}
+
+// FIX 6: Paginated chapter list renderer
+function renderChapterList(novel, offset) {
+  const total = novel.chapters;
+  const end   = Math.min(offset + CHAPTER_PAGE_SIZE, total);
+  const items = Array.from({ length: end - offset }, (_, i) => {
+    const num  = offset + i + 1;
+    const key  = `${novel.id}_${num}`;
     const read = state.chaptersRead.includes(key);
-    const cached = !n.cachedChapters || num <= n.cachedChapters;
+    const cached = !novel.cachedChapters || num <= novel.cachedChapters;
     const meta = cached
       ? `${Math.floor(800 + (num * 137) % 700)} words ${read ? '<span class="chapter-read-badge">Read</span>' : '<span class="chapter-read-badge">Cached</span>'}`
       : `Continue on source <span class="chapter-source-badge">Open</span>`;
@@ -1399,8 +1425,24 @@ function showDetail(novelId) {
     </div>`;
   }).join('');
 
-  updateDetailShelfBtn();
-  showView('detail');
+  const loadMoreBtn = end < total
+    ? `<div class="chapter-load-more">
+        <button class="btn-secondary" onclick="renderChapterList(currentNovel, ${end})">
+          Load More Chapters (${total - end} remaining)
+        </button>
+      </div>`
+    : '';
+
+  const chapList = document.getElementById('chapter-list-items');
+  if (!chapList) return;
+  if (offset === 0) {
+    chapList.innerHTML = items + loadMoreBtn;
+  } else {
+    // Remove existing load-more button then append new items + new button
+    const existing = chapList.querySelector('.chapter-load-more');
+    if (existing) existing.remove();
+    chapList.insertAdjacentHTML('beforeend', items + loadMoreBtn);
+  }
 }
 
 function startReading()      { if (currentNovel) openChapter(1); }
@@ -1425,9 +1467,9 @@ function openChapter(num) {
   showView('reader');
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 //  GENRE SCROLL
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 function scrollGenre(dir) {
   const bar = document.getElementById('genre-bar-inner');
   bar.scrollBy({ left: dir * 200, behavior: 'smooth' });
@@ -1443,9 +1485,9 @@ function updateGenreScrollBtns() {
 }
 document.getElementById('genre-bar-inner').addEventListener('scroll', updateGenreScrollBtns);
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 //  READER VIEW
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 function renderReaderView() {
   if (!currentNovel) return;
   const n = currentNovel;
@@ -1472,30 +1514,19 @@ function renderReaderView() {
   document.getElementById('reader-body').innerHTML = `
     <div class="chapter-loading" id="chapter-loading-indicator">
       <div class="spinner"></div>
-      <div>Loading Chapter ${ch}â€¦</div>
+      <div>Loading Chapter ${ch}&hellip;</div>
     </div>`;
 
   document.getElementById('reader-body').style.fontSize = state.fontSize + 'rem';
 
   loadChapterContent(n, ch);
 
-  // "You may also like" grid
   const similar = NOVELS.filter(x => x.id !== n.id && x.genre === n.genre).slice(0, 4);
   renderGrid(document.getElementById('also-like-grid'), similar);
 }
 
-function generateChapterContent(novel, chapter) {
-  // Placeholder chapter content â€” replace with real fetch from novel.download
-  const seed = novel.id * 100 + chapter;
-  const paragraphs = [
-    `Chapter ${chapter} of <em>${escapeHtml(novel.title)}</em>.`,
-    `The story continues, drawing the reader deeper into ${escapeHtml(novel.genre.toLowerCase())} territory.`,
-    `This is placeholder text. Connect your backend to serve real chapter content via the <code>download</code> URL.`,
-    `Novel ID: ${novel.id} Â· Source: ${escapeHtml(novel.source || 'Unknown')}`,
-  ];
-  return paragraphs.map(p => `<p>${p}</p>`).join('');
-}
-
+// FIX 4: Removed dead generateChapterContent() function entirely
+// FIX 5: Added console.error so errors are not silently swallowed
 async function loadChapterContent(novel, chapter) {
   const body = document.getElementById('reader-body');
   if (!body) return;
@@ -1515,7 +1546,9 @@ async function loadChapterContent(novel, chapter) {
 
     body.innerHTML = html || `<p>No chapter text is available for this story yet.</p>`;
   } catch (err) {
-    body.innerHTML = `<p>Could not load this chapter right now.</p>`;
+    // FIX 5: Log the error so it's visible in DevTools instead of silently failing
+    console.error(`[PickBook] Failed to load chapter ${chapter} for novel ${novel.id}:`, err);
+    body.innerHTML = `<p>Could not load this chapter right now. Please try again.</p>`;
   }
 
   body.style.fontSize = state.fontSize + 'rem';
@@ -1528,36 +1561,36 @@ function nextChapter() {
     return;
   }
   if (currentChapter < currentNovel.chapters) { currentChapter++; renderReaderView(); window.scrollTo(0, 0); }
-  else showToast('ðŸŽ‰ You\'ve finished this novel!');
+  else showToast('You\'ve finished this novel! \uD83C\uDF89');
 }
 function prevChapter() {
   if (!currentNovel || currentChapter <= 1) return;
   currentChapter--; renderReaderView(); window.scrollTo(0, 0);
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 //  READER ACTIONS
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 function toggleBookmark() {
   if (!currentNovel) return;
   const key = `${currentNovel.id}_${currentChapter}`;
   if (state.bookmarks[key]) { delete state.bookmarks[key]; showToast('Bookmark removed'); }
-  else { state.bookmarks[key] = true; showToast('ðŸ”– Bookmarked!'); }
+  else { state.bookmarks[key] = true; showToast('\uD83D\uDCD6 Bookmarked!'); }
   saveState();
   const btn = document.getElementById('bookmark-btn');
   if (btn) btn.classList.toggle('active', !!state.bookmarks[key]);
 }
-function rateChapter() { showToast('â˜… Thanks for rating!'); }
+function rateChapter() { showToast('\u2605 Thanks for rating!'); }
 function shareChapter() {
   const url  = window.location.href;
-  const text = `Reading "${currentNovel ? currentNovel.title : 'a novel'}" on PickBook â€” free novels online!`;
+  const text = `Reading "${currentNovel ? currentNovel.title : 'a novel'}" on PickBook - free novels online!`;
   if (navigator.share) navigator.share({ title: 'PickBook', text, url }).catch(() => {});
   else { navigator.clipboard && navigator.clipboard.writeText(url).catch(() => {}); showToast('Link copied!'); }
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 //  FONT SIZE
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 function changeFontSize(delta) {
   state.fontSize = Math.min(1.6, Math.max(0.85, state.fontSize + delta * 0.1));
   saveState();
@@ -1565,9 +1598,9 @@ function changeFontSize(delta) {
   if (body) body.style.fontSize = state.fontSize + 'rem';
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 //  TOAST
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 let toastTimer = null;
 function showToast(msg) {
   const t = document.getElementById('toast');
@@ -1576,15 +1609,27 @@ function showToast(msg) {
   toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 //  INIT
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══════════════════════════════════════════════════════
 (function init() {
   applyTheme();
   renderStreak();
   renderShelfCount();
   updateGenreScrollBtns();
   scheduleDonateNudge();
+
+  // FIX 9: Click-outside-to-close for all overlays
+  document.querySelectorAll('.overlay').forEach(overlay => {
+    overlay.addEventListener('click', e => {
+      if (e.target === overlay) overlay.classList.remove('active');
+    });
+  });
+
+  // FIX 3: Show taste picker on first visit (with slight delay for smooth UX)
+  if (!state.tastePicked) {
+    setTimeout(showTastePicker, 900);
+  }
 
   loadBooks();
 })();
