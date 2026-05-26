@@ -21,5 +21,8 @@ class Book(Base):
 
     language = Column(String)
 
-    # ADD THIS
     synopsis = Column(Text, nullable=True)
+
+    chapters_count = Column(Integer, nullable=True)
+
+    chapter_content = Column(Text, nullable=True)

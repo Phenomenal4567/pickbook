@@ -11,6 +11,10 @@ class Settings(BaseSettings):
     plausible_domain: str = "pickbook.com"
     admin_token: str = "dev-admin-token"
 
+    # Scraper feature flags
+    use_playwright: bool = False
+    nf_enrich_details: bool = False  # legacy flag — kept for .env compatibility
+
     @property
     def origins_list(self) -> List[str]:
         return [o.strip() for o in self.allowed_origins.split(",")]

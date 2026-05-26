@@ -1,3 +1,11 @@
+
+import asyncio
+import sys
+
+# Playwright on Windows requires ProactorEventLoop
+# because it launches browser subprocesses internally.
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 from contextlib import asynccontextmanager
 from pathlib import Path
 from fastapi import FastAPI, Request, Header, HTTPException, Depends
@@ -10,7 +18,7 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from app.core.config import settings
 from app.core.limiter import limiter
-from app.core.database import engine, Base
+from app.core.database import engine, Base, ensure_database_schema
 from app.author_portal.routes import router as author_router
 from app.admin.routes import router as admin_router
 from app.ingest.routes import router as ingest_router
@@ -29,6 +37,7 @@ async def lifespan(app: FastAPI):
     Safer than @app.on_event in multi-worker / production deployments.
     """
     Base.metadata.create_all(bind=engine)
+    ensure_database_schema()
     yield
     # Add any teardown logic here (e.g. close connection pools)
 

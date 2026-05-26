@@ -1,6 +1,6 @@
-import os
+from pathlib import PurePath, PureWindowsPath
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Request
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel
 import bleach
 
 from app.core.limiter import limiter
@@ -38,10 +38,13 @@ async def submit_novel(
     if not consent:
         raise HTTPException(status_code=400, detail="Consent required.")
 
-    # Bug fix: a filename with no dot (or only a leading dot) would raise IndexError.
-    # Also catches path-traversal attempts like "../../etc/passwd".
-    original_name = os.path.basename(file.filename or "")
-    if "." not in original_name:
+    original_name = PureWindowsPath(file.filename or "").name
+    original_name = PurePath(original_name).name
+
+    if not original_name or original_name in {".", ".."}:
+        raise HTTPException(status_code=400, detail="Invalid filename.")
+
+    if "." not in original_name.strip("."):
         raise HTTPException(status_code=400, detail="File must have an extension.")
 
     extension = "." + original_name.rsplit(".", 1)[-1].lower()
