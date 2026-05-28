@@ -2,7 +2,16 @@ from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import declarative_base, sessionmaker
 from app.core.config import settings
 
-engine = create_engine(settings.database_url)
+connect_args = {}
+
+if settings.database_url.startswith("postgres"):
+    connect_args["sslmode"] = settings.database_sslmode
+
+engine = create_engine(
+    settings.database_url,
+    connect_args=connect_args,
+    pool_pre_ping=True,
+)
 
 SessionLocal = sessionmaker(
     autocommit=False,
@@ -16,33 +25,39 @@ Base = declarative_base()
 def ensure_database_schema() -> None:
     """Apply small additive schema fixes for existing deployments."""
     inspector = inspect(engine)
-    if not inspector.has_table("books"):
-        return
-
-    existing_columns = {
-        column["name"]
-        for column in inspector.get_columns("books")
-    }
-
     dialect = engine.dialect.name
     text_type = "TEXT" if dialect != "mysql" else "LONGTEXT"
 
-    missing_columns = []
+    if inspector.has_table("books"):
+        existing_columns = {
+            column["name"]
+            for column in inspector.get_columns("books")
+        }
 
-    if "synopsis" not in existing_columns:
-        missing_columns.append(("synopsis", text_type))
+        missing_columns = []
 
-    if "chapters_count" not in existing_columns:
-        missing_columns.append(("chapters_count", "INTEGER"))
+        if "synopsis" not in existing_columns:
+            missing_columns.append(("synopsis", text_type))
 
-    if "chapter_content" not in existing_columns:
-        missing_columns.append(("chapter_content", text_type))
+        if "chapters_count" not in existing_columns:
+            missing_columns.append(("chapters_count", "INTEGER"))
 
-    if not missing_columns:
-        return
+        if "chapter_content" not in existing_columns:
+            missing_columns.append(("chapter_content", text_type))
 
-    with engine.begin() as connection:
-        for name, column_type in missing_columns:
-            connection.execute(
-                text(f"ALTER TABLE books ADD COLUMN {name} {column_type}")
-            )
+        with engine.begin() as connection:
+            for name, column_type in missing_columns:
+                connection.execute(
+                    text(f"ALTER TABLE books ADD COLUMN {name} {column_type}")
+                )
+
+    if inspector.has_table("profiles"):
+        profile_columns = {
+            column["name"]
+            for column in inspector.get_columns("profiles")
+        }
+        if "subscription_expiry" not in profile_columns:
+            with engine.begin() as connection:
+                connection.execute(
+                    text("ALTER TABLE profiles ADD COLUMN subscription_expiry TIMESTAMP")
+                )

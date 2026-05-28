@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PickBook Admin Tools</title>
+<style>
+  :root {
+    --bg: #120f0d;
+    --panel: #201915;
+    --panel2: #2c231e;
+    --text: #f5eee8;
+    --muted: #b49d90;
+    --accent: #d4a853;
+    --border: rgba(212, 168, 83, 0.24);
+    --danger: #d75f5f;
+    --success: #64c18b;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  main { max-width: 1040px; margin: 0 auto; padding: 32px 20px 56px; }
+  header { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 24px; }
+  h1 { margin: 0; font-size: 30px; line-height: 1.1; }
+  p { color: var(--muted); margin: 8px 0 0; }
+  .grid { display: grid; grid-template-columns: minmax(280px, 380px) 1fr; gap: 18px; align-items: start; }
+  section { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 18px; }
+  h2 { font-size: 18px; margin: 0 0 14px; }
+  label { display: block; color: var(--muted); font-size: 13px; margin: 12px 0 6px; }
+  input, select { width: 100%; border: 1px solid var(--border); background: var(--panel2); color: var(--text); border-radius: 7px; padding: 10px 11px; font-size: 14px; }
+  button { border: 0; border-radius: 7px; background: var(--accent); color: #160f08; font-weight: 700; padding: 10px 14px; cursor: pointer; }
+  button.secondary { background: var(--panel2); border: 1px solid var(--border); color: var(--text); }
+  button.danger { background: var(--danger); color: #fff; }
+  button:disabled { opacity: 0.55; cursor: not-allowed; }
+  .actions { display: flex; gap: 10px; margin-top: 16px; }
+  .status { min-height: 22px; margin: 14px 0 0; color: var(--muted); font-size: 14px; }
+  .status.ok { color: var(--success); }
+  .status.err { color: var(--danger); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; border-bottom: 1px solid var(--border); padding: 10px 8px; vertical-align: top; }
+  th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .empty { color: var(--muted); padding: 18px 8px; }
+  .token-row { display: flex; gap: 10px; align-items: end; }
+  .token-row label { flex: 1; margin-top: 0; }
+  @media (max-width: 780px) {
+    header, .grid, .token-row { display: block; }
+    .grid { grid-template-columns: 1fr; }
+    section { margin-bottom: 16px; }
+    .token-row button { margin-top: 10px; width: 100%; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>PickBook Admin Tools</h1>
+      <p>Create coupons and backfill chapters. API calls still require your admin token.</p>
+    </div>
+    <a href="/" style="color:var(--accent)">Back to app</a>
+  </header>
+
+  <section style="margin-bottom:18px">
+    <div class="token-row">
+      <label>Admin token
+        <input id="admin-token" type="password" placeholder="Paste ADMIN_TOKEN">
+      </label>
+      <button class="secondary" onclick="saveToken()">Save Token</button>
+      <button onclick="loadCoupons()">Load Coupons</button>
+    </div>
+  </section>
+
+  <div class="grid">
+    <section>
+      <h2>Create Coupon</h2>
+      <label>Code
+        <input id="code" type="text" placeholder="WELCOME30">
+      </label>
+      <label>Discount type
+        <select id="discount-type">
+          <option value="free_days">Free days</option>
+          <option value="percent">Percent</option>
+          <option value="fixed_amount">Fixed amount</option>
+        </select>
+      </label>
+      <label>Discount value
+        <input id="discount-value" type="number" min="0" value="30">
+      </label>
+      <label>Max uses
+        <input id="max-uses" type="number" min="1" value="1">
+      </label>
+      <label>Expiry date
+        <input id="expiry-date" type="datetime-local">
+      </label>
+      <div class="actions">
+        <button onclick="createCoupon()">Create Coupon</button>
+        <button class="secondary" onclick="resetForm()">Reset</button>
+      </div>
+      <div class="status" id="create-status"></div>
+    </section>
+
+    <section>
+      <h2>Coupons</h2>
+      <div id="coupon-list" class="empty">Enter token, then load coupons.</div>
+    </section>
+
+    <section>
+      <h2>Chapter Backfill</h2>
+      <label>Source
+        <select id="backfill-source">
+          <option value="anystories">Anystories</option>
+          <option value="alphanovel">Alphanovel</option>
+        </select>
+      </label>
+      <label>Books to process
+        <input id="backfill-limit" type="number" min="1" max="50" value="2">
+      </label>
+      <label>Max chapters per book
+        <input id="backfill-max-chapters" type="number" min="1" max="1000" value="25">
+      </label>
+      <div class="actions">
+        <button id="backfill-start-btn" onclick="backfillChapters()">Backfill Chapters</button>
+        <button id="backfill-stop-btn" class="danger" onclick="stopBackfill()" disabled>Stop</button>
+      </div>
+      <div class="status" id="backfill-status"></div>
+      <div id="backfill-results" class="empty">Run a backfill to see results.</div>
+    </section>
+  </div>
+</main>
+
+<script>
+  const tokenInput = document.getElementById('admin-token');
+  tokenInput.value = localStorage.getItem('pb_admin_token') || '';
+
+  function token() {
+    return tokenInput.value.trim();
+  }
+
+  function saveToken() {
+    localStorage.setItem('pb_admin_token', token());
+    setStatus('create-status', 'Token saved in this browser.', true);
+  }
+
+  function setStatus(id, message, ok) {
+    const el = document.getElementById(id);
+    el.textContent = message || '';
+    el.className = 'status ' + (ok ? 'ok' : 'err');
+  }
+
+  function headers() {
+    return {
+      'Content-Type': 'application/json',
+      'X-Admin-Token': token()
+    };
+  }
+
+  function resetForm() {
+    document.getElementById('code').value = '';
+    document.getElementById('discount-type').value = 'free_days';
+    document.getElementById('discount-value').value = '30';
+    document.getElementById('max-uses').value = '1';
+    document.getElementById('expiry-date').value = '';
+    setStatus('create-status', '', true);
+  }
+
+  async function createCoupon() {
+    if (!token()) {
+      setStatus('create-status', 'Admin token is required.', false);
+      return;
+    }
+
+    const expiryValue = document.getElementById('expiry-date').value;
+    const payload = {
+      code: document.getElementById('code').value.trim(),
+      discount_type: document.getElementById('discount-type').value,
+      discount_value: Number(document.getElementById('discount-value').value || 0),
+      max_uses: Number(document.getElementById('max-uses').value || 1),
+      plan_target: 'standard',
+      expiry_date: expiryValue ? new Date(expiryValue).toISOString() : null
+    };
+
+    const res = await fetch('/admin/coupons', {
+      method: 'POST',
+      headers: headers(),
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      setStatus('create-status', data.detail || 'Could not create coupon.', false);
+      return;
+    }
+
+    setStatus('create-status', `Created ${data.code}.`, true);
+    resetForm();
+    loadCoupons();
+  }
+
+  async function loadCoupons() {
+    if (!token()) {
+      document.getElementById('coupon-list').innerHTML = '<div class="empty">Admin token is required.</div>';
+      return;
+    }
+
+    const res = await fetch('/admin/coupons', { headers: headers() });
+    const data = await res.json().catch(() => []);
+
+    if (!res.ok) {
+      document.getElementById('coupon-list').innerHTML = `<div class="empty">${data.detail || 'Could not load coupons.'}</div>`;
+      return;
+    }
+
+    if (!data.length) {
+      document.getElementById('coupon-list').innerHTML = '<div class="empty">No coupons yet.</div>';
+      return;
+    }
+
+    document.getElementById('coupon-list').innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Type</th>
+            <th>Value</th>
+            <th>Uses</th>
+            <th>Expiry</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.map(c => `
+            <tr>
+              <td><strong>${escapeHtml(c.code)}</strong></td>
+              <td>${escapeHtml(c.discount_type)}</td>
+              <td>${c.discount_value}</td>
+              <td>${c.used_count} / ${c.max_uses}</td>
+              <td>${c.expiry_date ? new Date(c.expiry_date).toLocaleString() : 'None'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  async function backfillChapters() {
+    if (!token()) {
+      setStatus('backfill-status', 'Admin token is required.', false);
+      return;
+    }
+
+    const limit = Number(document.getElementById('backfill-limit').value || 5);
+    const maxChapters = Number(document.getElementById('backfill-max-chapters').value || 25);
+    const source = document.getElementById('backfill-source').value;
+    document.getElementById('backfill-start-btn').disabled = true;
+    document.getElementById('backfill-stop-btn').disabled = false;
+    setStatus('backfill-status', 'Backfill running. Keep this tab open.', true);
+    document.getElementById('backfill-results').innerHTML = '<div class="empty">Working...</div>';
+
+    let res;
+    let data = {};
+
+    try {
+      res = await fetch(`/ingest/${source}/full-chapters?limit=${limit}&max_chapters=${maxChapters}`, {
+        method: 'POST',
+        headers: headers()
+      });
+      data = await res.json().catch(() => ({}));
+    } finally {
+      document.getElementById('backfill-start-btn').disabled = false;
+      document.getElementById('backfill-stop-btn').disabled = true;
+    }
+
+    if (!res || !res.ok) {
+      setStatus('backfill-status', data.detail || 'Backfill failed.', false);
+      return;
+    }
+
+    const prefix = data.stopped ? 'Stopped.' : 'Finished.';
+    setStatus('backfill-status', `${prefix} Fetched ${data.chapters_fetched || 0} chapters across ${data.books_checked || 0} books.`, true);
+    const rows = Array.isArray(data.results) ? data.results : [];
+    document.getElementById('backfill-results').innerHTML = rows.length ? `
+      <table>
+        <thead>
+          <tr>
+            <th>Book</th>
+            <th>Target</th>
+            <th>Before</th>
+            <th>After</th>
+            <th>Fetched</th>
+            <th>Note</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(row => `
+            <tr>
+              <td>${escapeHtml(row.title)}</td>
+              <td>${row.chapters_targeted}</td>
+              <td>${row.cached_before}</td>
+              <td>${row.cached_after}</td>
+              <td>${row.fetched}</td>
+              <td>${escapeHtml(row.note || '')}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    ` : '<div class="empty">No books were processed.</div>';
+  }
+
+  async function stopBackfill() {
+    if (!token()) {
+      setStatus('backfill-status', 'Admin token is required.', false);
+      return;
+    }
+
+    const source = document.getElementById('backfill-source').value;
+    const res = await fetch(`/ingest/${source}/full-chapters/stop`, {
+      method: 'POST',
+      headers: headers()
+    });
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      setStatus('backfill-status', data.detail || 'Could not stop backfill.', false);
+      return;
+    }
+
+    setStatus('backfill-status', 'Stop requested. Current chapter will finish first.', true);
+    document.getElementById('backfill-stop-btn').disabled = true;
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, ch => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    }[ch]));
+  }
+</script>
+</body>
+</html>

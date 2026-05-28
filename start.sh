@@ -19,4 +19,8 @@ if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; 
   done
 fi
 
+if command -v alembic >/dev/null 2>&1; then
+  alembic upgrade head
+fi
+
 uvicorn app.main:app --host 0.0.0.0 --port "$PORT"

@@ -65,6 +65,8 @@
   .streak-badge { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.3rem 0.7rem; font-size: 0.8rem; color: var(--accent); display: flex; align-items: center; gap: 4px; cursor: default; user-select: none; }
   .shelf-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.4rem 0.7rem; color: var(--text-muted); cursor: pointer; font-size: 0.82rem; transition: border-color 0.2s, color 0.2s; display: flex; align-items: center; gap: 5px; white-space: nowrap; }
   .shelf-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .nav-icon { line-height: 1; }
+  .nav-label { display: inline; }
   .shelf-count { background: var(--accent); color: var(--bg); font-size: 0.65rem; font-weight: 700; border-radius: 20px; padding: 1px 6px; display: none; }
   .shelf-count.visible { display: inline-block; }
   .donate-nav-btn { background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; border-radius: 8px; padding: 0.4rem 0.85rem; color: var(--bg); cursor: pointer; font-size: 0.82rem; font-family: var(--font-body); font-weight: 600; display: flex; align-items: center; gap: 5px; transition: opacity 0.2s, transform 0.15s; white-space: nowrap; }
@@ -251,6 +253,7 @@
   /* SHELF */
   #shelf-view { display: none; }
   .shelf-header { font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--text); }
+  #downloads-view { display: none; }
 
   /* DETAIL */
   #detail-view { display: none; }
@@ -301,11 +304,12 @@
   .chapter-item { display: flex; align-items: center; padding: 0.7rem 0; border-bottom: 1px solid var(--border); cursor: pointer; gap: 1rem; transition: color 0.2s; }
   .chapter-item:hover { color: var(--accent); }
   .chapter-item.read { opacity: 0.6; }
-  .chapter-item.external { opacity: 0.82; }
+  .chapter-item.pending { opacity: 0.82; }
   .chapter-num { color: var(--text-muted); font-size: 0.8rem; width: 30px; flex-shrink: 0; }
   .chapter-name { flex: 1; font-size: 0.9rem; }
   .chapter-meta { font-size: 0.75rem; color: var(--text-muted); flex-shrink: 0; }
   .chapter-read-badge { font-size: 0.65rem; color: var(--success); margin-left: 4px; }
+  .chapter-cache-badge { font-size: 0.65rem; color: var(--text-muted); margin-left: 4px; }
   .chapter-source-badge { font-size: 0.65rem; color: var(--accent); margin-left: 4px; }
   .attribution-box { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: var(--radius); padding: 0.75rem 1rem; font-size: 0.78rem; color: var(--text-muted); margin-top: 1rem; }
 
@@ -389,13 +393,27 @@
 
   /* Chapter load-more */
   .chapter-load-more { text-align: center; padding: 1rem 0; }
+  .plan-pill { border: 1px solid var(--border2); border-radius: 8px; padding: 0.35rem 0.7rem; color: var(--accent); font-size: 0.78rem; white-space: nowrap; }
+  .upgrade-modal .price { color: var(--accent); font-family: var(--font-display); font-size: 2rem; margin: 0.4rem 0; }
+  .upgrade-list { list-style: none; margin: 1rem 0; color: var(--text); font-size: 0.9rem; }
+  .upgrade-list li { padding: 0.25rem 0; color: var(--text-muted); }
+  .upgrade-list li strong { color: var(--text); }
+  .coupon-row { display: flex; gap: 0.5rem; margin: 0.75rem 0; }
+  .coupon-row input { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 0.55rem 0.75rem; font-family: var(--font-body); }
+  .download-badge { display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; font-size: 0.65rem; color: var(--success); }
 
   @media (max-width: 640px) {
     .detail-cover { width: 110px; } .detail-title { font-size: 1.4rem; }
     .novel-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
-    nav { padding: 0 1rem; } .streak-badge { display: none; }
-    .shelf-btn span:not(.shelf-count) { display: none; }
+    nav { padding: 0 0.65rem; gap: 0.55rem; }
+    .logo { font-size: 1.25rem; }
+    .search-wrap input { padding-left: 2rem; font-size: 0.82rem; }
+    .nav-actions { gap: 0.35rem; }
+    .streak-badge { display: none; }
+    .shelf-btn, .theme-btn { min-width: 34px; height: 34px; justify-content: center; padding: 0.35rem 0.5rem; font-size: 0.82rem; }
+    .shelf-btn .nav-label { display: none; }
     .donate-nav-btn .donate-label { display: none; }
+    .plan-pill { display: none; }
   }
 </style>
 </head>
@@ -439,6 +457,26 @@
     <button class="btn-primary" id="taste-done-btn" style="width:100%;margin-top:0.5rem;opacity:0.4;cursor:not-allowed" disabled onclick="confirmTastePicker()">Let's Go &rarr;</button>
     <!-- FIX 1: Added dismiss button so users are never trapped in this overlay -->
     <button class="btn-secondary" style="width:100%;margin-top:0.5rem" onclick="document.getElementById('taste-picker-overlay').classList.remove('active')">Maybe Later</button>
+  </div>
+</div>
+
+<!-- UPGRADE MODAL -->
+<div class="overlay" id="upgrade-overlay">
+  <div class="modal upgrade-modal">
+    <h2>Upgrade to Standard</h2>
+    <p id="upgrade-reason">Unlimited full novel access, offline chapters, unlimited shelf space, premium themes, and daily streak rewards.</p>
+    <div class="price">&#8358;2,500 <span style="font-size:0.85rem;color:var(--text-muted);font-family:var(--font-body)">/ month</span></div>
+    <ul class="upgrade-list">
+      <li><strong>Full access</strong> to cached premium chapters</li>
+      <li><strong>Offline downloads</strong> for whole novels</li>
+      <li><strong>Unlimited shelf</strong> space</li>
+    </ul>
+    <div class="coupon-row">
+      <input id="coupon-code" type="text" placeholder="Promo code">
+      <button class="btn-secondary" onclick="applyCoupon()">Apply</button>
+    </div>
+    <button class="btn-primary" style="width:100%" onclick="startCheckout()">Upgrade Now</button>
+    <button class="btn-secondary" style="width:100%;margin-top:0.5rem" onclick="closeUpgrade()">Maybe Later</button>
   </div>
 </div>
 
@@ -488,8 +526,11 @@
     <div class="search-results-drop" id="search-drop"></div>
   </div>
   <div class="nav-actions">
+    <button class="shelf-btn" onclick="openUpgrade('Standard unlocks full chapters and offline reading.')" title="Upgrade"><span class="nav-icon">&#9733;</span><span class="nav-label">Upgrade</span></button>
+    <div class="plan-pill" id="plan-pill">Free</div>
     <div class="streak-badge" id="streak-badge">&#128293; <span id="streak-count">0</span> day streak</div>
-    <button class="shelf-btn" onclick="showView('shelf')">&#128218; <span>My Shelf</span><span class="shelf-count" id="shelf-count-badge">0</span></button>
+    <button class="shelf-btn" onclick="showView('downloads')" title="Downloads"><span class="nav-icon">&#11015;</span><span class="nav-label">Downloads</span><span class="shelf-count" id="download-count-badge">0</span></button>
+    <button class="shelf-btn" onclick="showView('shelf')" title="My Shelf"><span class="nav-icon">&#128218;</span><span class="nav-label">My Shelf</span><span class="shelf-count" id="shelf-count-badge">0</span></button>
     <button class="donate-nav-btn" onclick="openDonate()">&#10084;&#65039; <span class="donate-label">Donate</span></button>
     <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">&#9728;&#65039;</button>
   </div>
@@ -578,6 +619,18 @@
   </main>
 </div>
 
+<!-- DOWNLOADS VIEW -->
+<div id="downloads-view" style="display:none">
+  <div class="view-back-bar">
+    <button class="view-back-btn" onclick="showView('home')"><span class="arrow">&larr;</span> Browse</button>
+    <span class="view-back-crumb">Downloaded Novels</span>
+  </div>
+  <main>
+    <h1 class="shelf-header">&#11015; Downloaded Novels</h1>
+    <div class="novel-grid" id="downloads-grid"></div>
+  </main>
+</div>
+
 <!-- DETAIL VIEW -->
 <div id="detail-view" style="display:none">
   <div class="view-back-bar">
@@ -597,6 +650,7 @@
         <div class="detail-actions">
           <button class="btn-primary" onclick="startReading()">Read Now</button>
           <button class="btn-secondary" id="shelf-toggle-btn" onclick="toggleShelf()">+ My Shelf</button>
+          <button class="btn-secondary" onclick="downloadCurrentNovel()">Download</button>
         </div>
         <div class="attribution-box">
           &#128204; Sourced from: <strong style="color:var(--text)" id="detail-source"></strong><br>
@@ -758,6 +812,12 @@ let state = {
   fontSize:     LS.get('pb_font_size', 1.1),
   milestones:   LS.get('pb_milestones', []),
   nudgeDone:    LS.get('pb_nudge_done', false),
+  userId:        LS.get('pb_user_id', null),
+  userEmail:     LS.get('pb_user_email', null),
+  plan:          LS.get('pb_plan', 'free'),
+  subscriptionExpiry: LS.get('pb_subscription_expiry', null),
+  couponCode:    LS.get('pb_coupon_code', ''),
+  downloads:     LS.get('pb_downloads', {}),
 };
 
 // FIX 10: Use a Set for O(1) shelf lookups instead of O(n) array.includes()
@@ -780,6 +840,9 @@ function saveState() {
     'pb_streak_count': state.streakCount, 'pb_age_verified': state.ageVerified,
     'pb_font_size': state.fontSize, 'pb_milestones': state.milestones,
     'pb_nudge_done': state.nudgeDone,
+    'pb_user_id': state.userId, 'pb_user_email': state.userEmail,
+    'pb_plan': state.plan, 'pb_subscription_expiry': state.subscriptionExpiry,
+    'pb_coupon_code': state.couponCode, 'pb_downloads': state.downloads,
   };
   Object.entries(keys).forEach(([k, v]) => LS.set(k, v));
 }
@@ -824,6 +887,116 @@ function scheduleDonateNudge() {
 function dismissNudge() {
   document.getElementById('donate-nudge').classList.remove('show');
   state.nudgeDone = true; saveState();
+}
+
+// ═══════════════════════════════════════════════════════
+//  PLAN / CHECKOUT
+// ═══════════════════════════════════════════════════════
+function authHeaders() {
+  return state.userId ? { 'Authorization': `Bearer ${state.userId}` } : {};
+}
+function isStandard() {
+  if (state.plan !== 'standard') return false;
+  if (!state.subscriptionExpiry) return true;
+  return new Date(state.subscriptionExpiry).getTime() > Date.now();
+}
+function renderPlan() {
+  const pill = document.getElementById('plan-pill');
+  if (pill) pill.textContent = isStandard() ? 'Standard' : 'Free';
+}
+function renderDownloadCount() {
+  const badge = document.getElementById('download-count-badge');
+  if (!badge) return;
+  const count = Object.keys(state.downloads || {}).length;
+  badge.textContent = count;
+  badge.classList.toggle('visible', count > 0);
+}
+async function ensureLocalProfile() {
+  if (state.userId) return state.userId;
+  const email = window.prompt('Enter your email to create your PickBook account:');
+  if (!email) return null;
+  const res = await fetch('/api/auth/signup', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    showToast(err.detail || 'Could not create account');
+    return null;
+  }
+  const profile = await res.json();
+  state.userId = profile.id;
+  state.userEmail = profile.email;
+  state.plan = profile.current_plan || 'free';
+  saveState();
+  renderPlan();
+  return state.userId;
+}
+function openUpgrade(reason) {
+  const reasonEl = document.getElementById('upgrade-reason');
+  if (reasonEl && reason) reasonEl.textContent = reason;
+  document.getElementById('upgrade-overlay').classList.add('active');
+}
+function closeUpgrade() {
+  document.getElementById('upgrade-overlay').classList.remove('active');
+}
+async function applyCoupon() {
+  const userId = await ensureLocalProfile();
+  if (!userId) return;
+  const code = document.getElementById('coupon-code').value.trim();
+  if (!code) { showToast('Enter a promo code first'); return; }
+  const res = await fetch('/api/coupon/validate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId, code, planType: 'standard' })
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { showToast(data.detail || 'Promo code could not be applied'); return; }
+  state.couponCode = code.toUpperCase();
+  saveState();
+  showToast(`Promo code ${state.couponCode} applied`);
+}
+async function startCheckout() {
+  const userId = await ensureLocalProfile();
+  if (!userId) return;
+  const res = await fetch('/api/checkout/initialize', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      userId,
+      email: state.userEmail,
+      planType: 'standard',
+      couponCode: state.couponCode || document.getElementById('coupon-code').value.trim() || null
+    })
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { showToast(data.detail || 'Checkout could not start'); return; }
+  if (data.status === 'activated') {
+    state.plan = 'standard';
+    state.subscriptionExpiry = new Date(Date.now() + 30 * 86400000).toISOString();
+    saveState(); renderPlan(); closeUpgrade();
+    showToast(data.message || 'Standard unlocked');
+    return;
+  }
+  if (data.authorization_url) window.location.href = data.authorization_url;
+}
+async function downloadCurrentNovel() {
+  if (!currentNovel) return;
+  const userId = await ensureLocalProfile();
+  if (!userId) return;
+  if (!isStandard()) {
+    openUpgrade('Offline reading is a Standard feature. Download this novel for ₦2,500/month.');
+    return;
+  }
+  const res = await fetch(`/api/novels/${currentNovel.id}/download`, { headers: authHeaders() });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { showToast(data.detail || 'Download is not available yet'); return; }
+  state.downloads[currentNovel.id] = { savedAt: new Date().toISOString(), payload: data };
+  saveState();
+  showToast('Novel saved for offline reading');
+  renderDownloadCount();
+  buildHomeGrids(getFilteredNovels());
 }
 
 // ═══════════════════════════════════════════════════════
@@ -877,7 +1050,7 @@ async function loadBooks() {
 // ═══════════════════════════════════════════════════════
 //  VIEWS
 // ═══════════════════════════════════════════════════════
-const VIEWS = ['home-view','detail-view','reader-view','shelf-view'];
+const VIEWS = ['home-view','detail-view','reader-view','shelf-view','downloads-view'];
 
 function showView(v) {
   VIEWS.forEach(id => {
@@ -889,6 +1062,7 @@ function showView(v) {
   document.getElementById('mood-filter-bar').classList.toggle('hidden', hideFilters);
   document.getElementById('source-filter-bar').classList.toggle('hidden', hideFilters);
   if (v === 'shelf') renderShelfView();
+  if (v === 'downloads') renderDownloadsView();
   window.scrollTo(0, 0);
 }
 
@@ -918,6 +1092,24 @@ function updateStreak() {
   state.streakDate = today; saveState(); renderStreak(); checkMilestones();
 }
 function renderStreak() { const el = document.getElementById('streak-count'); if (el) el.textContent = state.streakCount; }
+async function pingStreak(bookId, chapter) {
+  if (!state.userId) return;
+  try {
+    const res = await fetch('/api/streak/ping', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({ book_id: bookId, chapter })
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    state.streakCount = data.streak_count || state.streakCount;
+    state.streakDate = data.last_read_date || state.streakDate;
+    saveState(); renderStreak();
+    if (data.milestone) showToast(`You hit a ${data.milestone}-day streak reward!`);
+  } catch (err) {
+    console.warn('[PickBook] streak ping failed', err);
+  }
+}
 
 // ═══════════════════════════════════════════════════════
 //  MILESTONES
@@ -954,6 +1146,11 @@ function toggleShelf(novelId) {
   if (id === null) return;
   const idx = state.shelf.indexOf(id);
   if (idx === -1) {
+    if (!isStandard() && state.shelf.length >= 3) {
+      showToast('You have reached your 3-book shelf limit.');
+      openUpgrade('Standard readers get unlimited shelf space for ₦2,500/month.');
+      return;
+    }
     state.shelf.push(id);
     shelfSet.add(id);
     showToast('\uD83D\uDCDA Added to your shelf!');
@@ -985,6 +1182,16 @@ function updateDetailShelfBtn() {
   const on = isOnShelf(currentNovel.id);
   btn.textContent = on ? '\u2713 On My Shelf' : '+ My Shelf';
   btn.classList.toggle('on-shelf', on);
+}
+function renderDownloadsView() {
+  const grid = document.getElementById('downloads-grid');
+  if (!grid) return;
+  const ids = Object.keys(state.downloads || {}).map(id => Number(id));
+  if (!ids.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">&#11015;</div><p>No downloaded novels yet.<br>Download a novel to read it offline.</p><br><button class="btn-primary" onclick="showView('home')" style="margin-top:0.5rem">Browse Novels</button></div>`;
+    return;
+  }
+  renderGrid(grid, NOVELS.filter(n => ids.includes(Number(n.id))));
 }
 function renderShelfView() {
   const grid = document.getElementById('shelf-grid');
@@ -1303,6 +1510,7 @@ function renderGrid(el, novels) {
   el.innerHTML = novels.map(n => {
     const onShelf   = isOnShelf(n.id);
     const srcShort  = (n.source || '').replace(' (standardebooks.org)','').replace(' (feedbooks.com)','');
+    const downloaded = !!state.downloads[n.id];
     return `<div class="novel-card" onclick="showDetail(${n.id})">
       <div class="novel-cover">
         ${coverHtml(n)}
@@ -1317,6 +1525,7 @@ function renderGrid(el, novels) {
         <div class="novel-author-sm">${escapeHtml(n.author)}</div>
         <span class="novel-tag">${escapeHtml(n.tags[0] || n.genre)}</span>
         <div><span class="source-pill" title="${escapeHtml(n.source || '')}">\uD83D\uDCDA ${escapeHtml(srcShort)}</span></div>
+        ${downloaded ? '<div class="download-badge">Saved offline</div>' : ''}
       </div>
     </div>`;
   }).join('');
@@ -1414,11 +1623,12 @@ function renderChapterList(novel, offset) {
     const num  = offset + i + 1;
     const key  = `${novel.id}_${num}`;
     const read = state.chaptersRead.includes(key);
-    const cached = !novel.cachedChapters || num <= novel.cachedChapters;
-    const meta = cached
-      ? `${Math.floor(800 + (num * 137) % 700)} words ${read ? '<span class="chapter-read-badge">Read</span>' : '<span class="chapter-read-badge">Cached</span>'}`
-      : `Continue on source <span class="chapter-source-badge">Open</span>`;
-    return `<div class="chapter-item ${read ? 'read' : ''} ${cached ? '' : 'external'}" onclick="openChapter(${num})">
+    const cached = num <= novel.cachedChapters;
+    const status = read
+      ? '<span class="chapter-read-badge">Read</span>'
+      : (cached ? '<span class="chapter-read-badge">Ready</span>' : '<span class="chapter-cache-badge">Loads in app</span>');
+    const meta = `${Math.floor(800 + (num * 137) % 700)} words ${status}`;
+    return `<div class="chapter-item ${read ? 'read' : ''} ${cached ? '' : 'pending'}" onclick="openChapter(${num})">
       <span class="chapter-num">${num}</span>
       <span class="chapter-name">Chapter ${num}</span>
       <span class="chapter-meta">${meta}</span>
@@ -1446,22 +1656,7 @@ function renderChapterList(novel, offset) {
 }
 
 function startReading()      { if (currentNovel) openChapter(1); }
-function externalChapterUrl(novel, chapter) {
-  if (!novel || !novel.download) return '#';
-  if ((novel.source || '').toLowerCase() === 'anystories') {
-    return `${novel.download.replace(/\/$/, '')}/chapters/${chapter}`;
-  }
-  return novel.download;
-}
-function continueOnSource(novel, chapter) {
-  const url = externalChapterUrl(novel, chapter);
-  if (url && url !== '#') window.open(url, '_blank', 'noopener');
-}
 function openChapter(num) {
-  if (currentNovel && currentNovel.cachedChapters > 0 && num > currentNovel.cachedChapters) {
-    continueOnSource(currentNovel, num);
-    return;
-  }
   currentChapter = num;
   renderReaderView();
   showView('reader');
@@ -1532,16 +1727,18 @@ async function loadChapterContent(novel, chapter) {
   if (!body) return;
 
   try {
-    const res = await fetch(`/ingest/books/${novel.id}/chapters/${chapter}`);
+    const res = await fetch(`/ingest/books/${novel.id}/chapters/${chapter}`, { headers: authHeaders() });
     if (!res.ok) throw new Error('HTTP ' + res.status);
 
     const data = await res.json();
     let html = data.html || '';
 
-    if (!data.available) {
-      const sourceHref = data.source_chapter_url || data.source_url || externalChapterUrl(novel, chapter);
-      html = `<p>PickBook only has the public preview chapters cached for this story. Chapter ${chapter} should be continued on the original source.</p>
-        <p><a class="btn-primary" href="${escapeHtml(sourceHref)}" target="_blank" rel="noopener">Continue on source</a></p>`;
+    if (data.available) {
+      novel.cachedChapters = Math.max(Number(novel.cachedChapters || 0), chapter);
+      pingStreak(novel.id, chapter);
+    } else {
+      html = `<p>Chapter ${chapter} is not available in PickBook yet.</p>
+        <p>We are keeping readers inside PickBook and expanding the local library as chapters become available.</p>`;
     }
 
     body.innerHTML = html || `<p>No chapter text is available for this story yet.</p>`;
@@ -1556,10 +1753,6 @@ async function loadChapterContent(novel, chapter) {
 
 function nextChapter() {
   if (!currentNovel) return;
-  if (currentNovel.cachedChapters > 0 && currentChapter + 1 > currentNovel.cachedChapters) {
-    continueOnSource(currentNovel, currentChapter + 1);
-    return;
-  }
   if (currentChapter < currentNovel.chapters) { currentChapter++; renderReaderView(); window.scrollTo(0, 0); }
   else showToast('You\'ve finished this novel! \uD83C\uDF89');
 }
@@ -1616,6 +1809,8 @@ function showToast(msg) {
   applyTheme();
   renderStreak();
   renderShelfCount();
+  renderDownloadCount();
+  renderPlan();
   updateGenreScrollBtns();
   scheduleDonateNudge();
 

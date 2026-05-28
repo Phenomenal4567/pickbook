@@ -22,6 +22,8 @@ from app.core.database import engine, Base, ensure_database_schema
 from app.author_portal.routes import router as author_router
 from app.admin.routes import router as admin_router
 from app.ingest.routes import router as ingest_router
+from app.payments.routes import router as payments_router
+from app.features.routes import router as features_router
 
 # Absolute path to this file's directory (app/)
 # Prevents broken paths when the working directory differs from the project root
@@ -104,6 +106,16 @@ app.include_router(author_router)
 # admin_router is protected globally — every route requires a valid token
 app.include_router(admin_router, dependencies=[Depends(verify_admin)])
 app.include_router(ingest_router)
+app.include_router(payments_router)
+app.include_router(features_router)
+
+
+@app.get("/admin/tools", response_class=HTMLResponse)
+async def public_admin_tools(request: Request):
+    return templates.TemplateResponse(
+        "admin_tools.html",
+        {"request": request},
+    )
 
 # =========================================================
 # HOMEPAGE

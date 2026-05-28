@@ -25,6 +25,7 @@ from app.models.book import Book
 router = APIRouter(prefix="/ingest", tags=["Ingestion"])
 
 USE_PLAYWRIGHT = settings.use_playwright
+BACKFILL_STOP_REQUESTS: set[str] = set()
 
 HEADERS = {
     "User-Agent": (
@@ -239,16 +240,37 @@ def save_books(db, books: list[dict]) -> int:
                 "chapters_count",
             ):
                 new_value = b.get(field)
+                current_value = getattr(existing_book, field, None)
 
                 should_replace = (
                     b.get("source") == "anystories"
-                    and is_bad_listing_title
-                    and field in ("cover", "synopsis")
+                    and (
+                        (
+                            is_bad_listing_title
+                            and field in ("cover", "synopsis")
+                        )
+                        or (
+                            field == "cover"
+                            and new_value != getattr(existing_book, field, None)
+                        )
+                    )
                 )
+
+                if field == "chapters_count" and new_value:
+                    should_replace = should_replace or (
+                        not current_value
+                        or int(new_value) > int(current_value)
+                    )
+
+                if field == "chapter_content" and new_value:
+                    should_replace = should_replace or (
+                        _cached_chapter_count(new_value)
+                        > _cached_chapter_count(current_value)
+                    )
 
                 if new_value and (
                     should_replace
-                    or not getattr(existing_book, field, None)
+                    or not current_value
                 ):
                     setattr(existing_book, field, new_value)
                     changed = True
@@ -840,7 +862,7 @@ def _parse_as_chapter(
         return None
 
     html_content = _plain_to_paragraphs(
-        "\n\n".join(paragraphs[:80])
+        "\n\n".join(paragraphs)
     )
 
     if len(BeautifulSoup(html_content, "html.parser").get_text()) < 120:
@@ -855,7 +877,7 @@ def _parse_as_chapter(
 def _parse_as_details(
     html: str,
     detail_url: str,
-    max_public_chapters: int = 2,
+    max_public_chapters: int | None = None,
 ) -> dict:
 
     soup = BeautifulSoup(
@@ -894,9 +916,24 @@ def _parse_as_details(
             chapters_match.group(1)
         )
 
-    chapters = []
+    chapter_limit = settings.max_chapters_per_book
 
-    for chapter_number in range(1, max_public_chapters + 1):
+    if max_public_chapters is not None:
+        chapter_limit = min(
+            chapter_limit,
+            max_public_chapters,
+        )
+
+    if chapters_count:
+        chapter_limit = min(
+            chapter_limit,
+            chapters_count,
+        )
+
+    chapters = []
+    misses = 0
+
+    for chapter_number in range(1, chapter_limit + 1):
         try:
             chapter_html = fetch(
                 f"{detail_url.rstrip('/')}/chapters/{chapter_number}"
@@ -906,6 +943,9 @@ def _parse_as_details(
                 f"[anystories chapter ERROR] "
                 f"{detail_url} chapter {chapter_number}: {e}"
             )
+            misses += 1
+            if not chapters_count and misses >= 3:
+                break
             continue
 
         chapter = _parse_as_chapter(
@@ -915,6 +955,11 @@ def _parse_as_details(
 
         if chapter:
             chapters.append(chapter)
+            misses = 0
+        else:
+            misses += 1
+            if not chapters_count and misses >= 3:
+                break
 
         time.sleep(0.2)
 
@@ -933,6 +978,7 @@ def _parse_as_details(
 
 def _enrich_as_books_with_details(
     books: list[dict],
+    max_public_chapters: int | None = None,
 ) -> list[dict]:
 
     for book in books:
@@ -941,6 +987,7 @@ def _enrich_as_books_with_details(
             details = _parse_as_details(
                 detail_html,
                 book["download"],
+                max_public_chapters=max_public_chapters,
             )
 
             for key, value in details.items():
@@ -986,18 +1033,292 @@ def _cached_chapter_count(
     except json.JSONDecodeError:
         return 0
 
-    return len(chapters) if isinstance(chapters, list) else 0
+    if not isinstance(chapters, list):
+        return 0
+
+    return sum(
+        1
+        for chapter in chapters
+        if isinstance(chapter, dict) and chapter.get("html")
+    )
+
+
+def _load_chapters_from_book(
+    book: Book,
+) -> list[dict]:
+
+    if not book.chapter_content:
+        return []
+
+    try:
+        chapters = json.loads(book.chapter_content)
+    except json.JSONDecodeError:
+        return []
+
+    return chapters if isinstance(chapters, list) else []
+
+
+def _store_chapter(
+    db,
+    book: Book,
+    chapter_number: int,
+    chapter: dict,
+) -> None:
+
+    chapters = _load_chapters_from_book(book)
+    index = chapter_number - 1
+
+    while len(chapters) <= index:
+        missing_number = len(chapters) + 1
+        chapters.append(
+            {
+                "title": f"Chapter {missing_number}",
+                "html": "",
+            }
+        )
+
+    chapters[index] = {
+        "title": chapter.get("title") or f"Chapter {chapter_number}",
+        "html": _clean_chapter_html(chapter.get("html") or ""),
+    }
+
+    book.chapter_content = json.dumps(
+        chapters,
+        ensure_ascii=False,
+    )
+
+    if (
+        not book.chapters_count
+        or book.chapters_count < chapter_number
+    ):
+        book.chapters_count = chapter_number
+
+    db.add(book)
+    db.commit()
+
+
+def _fetch_chapter_from_source(
+    book: Book,
+    chapter_number: int,
+) -> dict | None:
+
+    source = (book.source or "").lower()
+
+    if source == "anystories" and book.download:
+        try:
+            html = fetch(
+                _source_chapter_url(
+                    book,
+                    chapter_number,
+                )
+            )
+        except RequestException as e:
+            print(
+                f"[chapter fetch ERROR] "
+                f"{book.download} chapter {chapter_number}: {e}"
+            )
+            return None
+
+        return _parse_as_chapter(
+            html,
+            chapter_number,
+        )
+
+    if source == "alphanovel" and book.download:
+        try:
+            details = _parse_alpha_details(
+                fetch(book.download)
+            )
+        except RequestException as e:
+            print(
+                f"[chapter fetch ERROR] "
+                f"{book.download}: {e}"
+            )
+            return None
+
+        raw_chapters = details.get("chapter_content")
+
+        if not raw_chapters:
+            return None
+
+        try:
+            chapters = json.loads(raw_chapters)
+        except json.JSONDecodeError:
+            return None
+
+        index = chapter_number - 1
+
+        if 0 <= index < len(chapters):
+            return chapters[index]
+
+    return None
+
+
+def _cache_book_chapters(
+    db,
+    book: Book,
+    max_chapters: int | None = None,
+    force: bool = False,
+    stop_key: str | None = None,
+) -> dict:
+
+    target = max_chapters or settings.max_chapters_per_book
+
+    if book.chapters_count:
+        target = min(
+            target,
+            book.chapters_count,
+        )
+
+    cached_before = _cached_chapter_count(
+        book.chapter_content
+    )
+    fetched = 0
+    unavailable = 0
+    stopped = False
+    note = None
+
+    if (book.source or "").lower() == "alphanovel" and book.download:
+        try:
+            details = _parse_alpha_details(
+                fetch(book.download)
+            )
+        except RequestException as e:
+            print(
+                f"[chapter backfill ERROR] "
+                f"{book.download}: {e}"
+            )
+            details = {}
+
+        raw_chapters = details.get("chapter_content")
+
+        if raw_chapters:
+            try:
+                alpha_chapters = json.loads(raw_chapters)
+            except json.JSONDecodeError:
+                alpha_chapters = []
+
+            if isinstance(alpha_chapters, list):
+                exposed = len(alpha_chapters)
+
+                for chapter_number, chapter in enumerate(
+                    alpha_chapters[:target],
+                    start=1,
+                ):
+                    if stop_key and stop_key in BACKFILL_STOP_REQUESTS:
+                        stopped = True
+                        break
+
+                    chapters = _load_chapters_from_book(book)
+                    index = chapter_number - 1
+
+                    if (
+                        not force
+                        and 0 <= index < len(chapters)
+                        and isinstance(chapters[index], dict)
+                        and chapters[index].get("html")
+                    ):
+                        continue
+
+                    if not isinstance(chapter, dict) or not chapter.get("html"):
+                        unavailable += 1
+                        continue
+
+                    _store_chapter(
+                        db,
+                        book,
+                        chapter_number,
+                        chapter,
+                    )
+                    db.refresh(book)
+                    fetched += 1
+
+                if exposed < target:
+                    note = (
+                        f"Alphanovel page exposed {exposed} chapter(s); "
+                        "no additional chapter HTML was present in the page data."
+                    )
+
+                return {
+                    "book_id": book.id,
+                    "title": book.title,
+                    "chapters_targeted": target,
+                    "cached_before": cached_before,
+                    "cached_after": _cached_chapter_count(
+                        book.chapter_content
+                    ),
+                    "fetched": fetched,
+                    "unavailable": unavailable,
+                    "stopped": stopped,
+                    "note": note,
+                }
+        else:
+            note = (
+                "Alphanovel did not expose chapter HTML in the fetched page data."
+            )
+
+    for chapter_number in range(1, target + 1):
+        if stop_key and stop_key in BACKFILL_STOP_REQUESTS:
+            stopped = True
+            break
+
+        chapters = _load_chapters_from_book(book)
+        index = chapter_number - 1
+
+        if (
+            not force
+            and 0 <= index < len(chapters)
+            and isinstance(chapters[index], dict)
+            and chapters[index].get("html")
+        ):
+            continue
+
+        chapter = _fetch_chapter_from_source(
+            book,
+            chapter_number,
+        )
+
+        if not chapter or not chapter.get("html"):
+            unavailable += 1
+            continue
+
+        _store_chapter(
+            db,
+            book,
+            chapter_number,
+            chapter,
+        )
+        db.refresh(book)
+        fetched += 1
+        time.sleep(0.2)
+
+    return {
+        "book_id": book.id,
+        "title": book.title,
+        "chapters_targeted": target,
+        "cached_before": cached_before,
+        "cached_after": _cached_chapter_count(
+            book.chapter_content
+        ),
+        "fetched": fetched,
+        "unavailable": unavailable,
+        "stopped": stopped,
+        "note": note,
+    }
 
 
 # =========================================================
 # PLAYWRIGHT FETCH
 # =========================================================
 
-async def _async_fetch_as(slug: str) -> str:
+async def _async_fetch_as(
+    slug: str,
+    page_number: int = 1,
+) -> str:
 
     url = (
         f"https://www.anystories.app/genre/"
-        f"{slug}?order=score&page=1"
+        f"{slug}?order=score&page={page_number}"
     )
 
     async with async_playwright() as p:
@@ -1100,6 +1421,8 @@ async def _async_fetch_as(slug: str) -> str:
 def scrape_as_playwright(
     slug: str,
     genre: str,
+    page_number: int = 1,
+    max_public_chapters: int | None = None,
 ) -> list[dict]:
 
     if not PLAYWRIGHT_AVAILABLE:
@@ -1113,7 +1436,10 @@ def scrape_as_playwright(
     try:
 
         html = asyncio.run(
-            _async_fetch_as(slug)
+            _async_fetch_as(
+                slug,
+                page_number=page_number,
+            )
         )
 
         soup = BeautifulSoup(
@@ -1133,7 +1459,8 @@ def scrape_as_playwright(
             )
 
         return _enrich_as_books_with_details(
-            books
+            books,
+            max_public_chapters=max_public_chapters,
         )
 
     except Exception as e:
@@ -1156,11 +1483,13 @@ def scrape_as_playwright(
 def scrape_as_static(
     slug: str,
     genre: str,
+    page_number: int = 1,
+    max_public_chapters: int | None = None,
 ) -> list[dict]:
 
     url = (
         f"https://www.anystories.app/genre/"
-        f"{slug}?order=score&page=1"
+        f"{slug}?order=score&page={page_number}"
     )
 
     html = fetch(url)
@@ -1176,13 +1505,16 @@ def scrape_as_static(
     )
 
     return _enrich_as_books_with_details(
-        books
+        books,
+        max_public_chapters=max_public_chapters,
     )
 
 
 def scrape_alpha_static(
     slug: str,
     genre: str,
+    page_number: int = 1,
+    max_public_chapters: int | None = None,
 ) -> list[dict]:
 
     url = f"{ALPHA_BASE_URL}/novels/{slug}"
@@ -1228,6 +1560,8 @@ def _run_ingest_pipeline(
     genres: list[tuple[str, str]],
     scrape_fn,
     batch_size: int = 50,
+    pages_per_genre: int = 1,
+    max_public_chapters: int | None = None,
 ) -> dict:
 
     total = 0
@@ -1237,46 +1571,49 @@ def _run_ingest_pipeline(
     with get_db() as db:
 
         for slug, genre in genres:
+            for page_number in range(1, pages_per_genre + 1):
 
-            try:
+                try:
 
-                books = scrape_fn(
-                    slug,
-                    genre,
-                )
-
-                batch_buffer.extend(books)
-
-                print(
-                    f"[{source_name}] "
-                    f"{genre}: "
-                    f"{len(books)} scraped"
-                )
-
-                if (
-                    len(batch_buffer)
-                    >= batch_size
-                ):
-
-                    added = _bulk_save_books(
-                        db,
-                        batch_buffer,
+                    books = scrape_fn(
+                        slug,
+                        genre,
+                        page_number=page_number,
+                        max_public_chapters=max_public_chapters,
                     )
 
-                    total += added
+                    batch_buffer.extend(books)
 
-                    batch_buffer = []
+                    print(
+                        f"[{source_name}] "
+                        f"{genre} page {page_number}: "
+                        f"{len(books)} scraped"
+                    )
 
-            except Exception as e:
+                    if (
+                        len(batch_buffer)
+                        >= batch_size
+                    ):
 
-                print(
-                    f"[{source_name} ERROR] "
-                    f"{genre}: {e}"
-                )
+                        added = _bulk_save_books(
+                            db,
+                            batch_buffer,
+                        )
 
-            delay = random.randint(1, 3)
+                        total += added
 
-            time.sleep(delay)
+                        batch_buffer = []
+
+                except Exception as e:
+
+                    print(
+                        f"[{source_name} ERROR] "
+                        f"{genre} page {page_number}: {e}"
+                    )
+
+                delay = random.randint(1, 3)
+
+                time.sleep(delay)
 
         if batch_buffer:
 
@@ -1296,6 +1633,8 @@ def _run_ingest_pipeline(
             if USE_PLAYWRIGHT
             else "static"
         ),
+        "pages_per_genre": pages_per_genre,
+        "chapters_per_book": max_public_chapters,
     }
 
 
@@ -1303,7 +1642,10 @@ def _run_ingest_pipeline(
 # INGEST HELPERS
 # =========================================================
 
-def _run_anystories_ingest():
+def _run_anystories_ingest(
+    pages_per_genre: int | None = None,
+    max_public_chapters: int | None = None,
+):
 
     if USE_PLAYWRIGHT and PLAYWRIGHT_AVAILABLE:
         scrape_fn = scrape_as_playwright
@@ -1314,6 +1656,12 @@ def _run_anystories_ingest():
         "anystories",
         AS_GENRES,
         scrape_fn,
+        pages_per_genre=pages_per_genre or settings.anystories_pages_per_genre,
+        max_public_chapters=(
+            settings.initial_chapters_per_book
+            if max_public_chapters is None
+            else max_public_chapters
+        ),
     )
 
 
@@ -1335,9 +1683,135 @@ def _run_alphanovel_ingest():
     dependencies=[Depends(_require_admin)],
 )
 @limiter.limit("5/minute")
-def ingest_anystories(request: Request):
+def ingest_anystories(
+    request: Request,
+    pages_per_genre: int | None = Query(None, ge=1, le=20),
+    chapters_per_book: int | None = Query(None, ge=0, le=1000),
+):
 
-    return _run_anystories_ingest()
+    return _run_anystories_ingest(
+        pages_per_genre=pages_per_genre,
+        max_public_chapters=chapters_per_book,
+    )
+
+
+@router.post(
+    "/{source}/full-chapters",
+    dependencies=[Depends(_require_admin)],
+)
+@limiter.limit("12/hour")
+def backfill_source_full_chapters(
+    source: str,
+    request: Request,
+    limit: int = Query(5, ge=1, le=50),
+    max_chapters: int | None = Query(25, ge=1, le=1000),
+    force: bool = Query(False),
+):
+
+    source = source.lower().strip()
+
+    if source not in {"anystories", "alphanovel"}:
+        raise HTTPException(
+            status_code=400,
+            detail="Source must be anystories or alphanovel.",
+        )
+
+    stop_key = f"{source}:full-chapters"
+    BACKFILL_STOP_REQUESTS.discard(stop_key)
+    results = []
+    stopped = False
+
+    with get_db() as db:
+        books = (
+            db.query(Book)
+            .filter(Book.source == source)
+            .order_by(Book.id.desc())
+            .limit(limit)
+            .all()
+        )
+
+        for book in books:
+            if stop_key in BACKFILL_STOP_REQUESTS:
+                stopped = True
+                break
+
+            if not book.download:
+                continue
+
+            result = _cache_book_chapters(
+                db,
+                book,
+                max_chapters=max_chapters,
+                force=force,
+                stop_key=stop_key,
+            )
+            results.append(result)
+
+            if result.get("stopped"):
+                stopped = True
+                break
+
+    if stopped:
+        BACKFILL_STOP_REQUESTS.discard(stop_key)
+
+    return {
+        "status": "stopped" if stopped else "success",
+        "source": source,
+        "books_checked": len(results),
+        "chapters_fetched": sum(
+            item["fetched"]
+            for item in results
+        ),
+        "stopped": stopped,
+        "results": results,
+    }
+
+
+@router.post(
+    "/{source}/full-chapters/stop",
+    dependencies=[Depends(_require_admin)],
+)
+@limiter.limit("30/hour")
+def stop_source_full_chapters(
+    source: str,
+    request: Request,
+):
+
+    source = source.lower().strip()
+
+    if source not in {"anystories", "alphanovel"}:
+        raise HTTPException(
+            status_code=400,
+            detail="Source must be anystories or alphanovel.",
+        )
+
+    BACKFILL_STOP_REQUESTS.add(f"{source}:full-chapters")
+
+    return {
+        "status": "stop_requested",
+        "source": source,
+    }
+
+
+@router.post(
+    "/anystories/full-chapters",
+    dependencies=[Depends(_require_admin)],
+)
+@limiter.limit("12/hour")
+def backfill_anystories_full_chapters(
+    request: Request,
+    limit: int = Query(5, ge=1, le=50),
+    max_chapters: int | None = Query(25, ge=1, le=1000),
+    force: bool = Query(False),
+):
+
+    return backfill_source_full_chapters(
+        source="anystories",
+        request=request,
+        limit=limit,
+        max_chapters=max_chapters,
+        force=force,
+    )
 
 
 @router.get(
@@ -1379,6 +1853,7 @@ def get_books(
     q: str = Query(None),
     genre: str = Query(None),
     source: str = Query(None),
+    limit: int = Query(1000, ge=1, le=5000),
 ):
 
     with get_db() as db:
@@ -1409,7 +1884,7 @@ def get_books(
                 Book.source == source
             )
 
-        books = query.order_by(Book.id.desc()).limit(500).all()
+        books = query.order_by(Book.id.desc()).limit(limit).all()
 
     return [
         {
@@ -1475,30 +1950,45 @@ def get_book_chapter(
                 detail="Book not found",
             )
 
-        chapters = []
-
-        if book.chapter_content:
-            try:
-                chapters = json.loads(book.chapter_content)
-            except json.JSONDecodeError:
-                chapters = []
+        chapters = _load_chapters_from_book(book)
 
         index = chapter_number - 1
 
         if 0 <= index < len(chapters):
             chapter = chapters[index]
 
+            if isinstance(chapter, dict) and chapter.get("html"):
+                return {
+                    "book_id": book.id,
+                    "chapter": chapter_number,
+                    "title": chapter.get("title") or f"Chapter {chapter_number}",
+                    "html": chapter.get("html") or "",
+                    "available": True,
+                    "cached": True,
+                    "source": book.source,
+                }
+
+        fetched_chapter = _fetch_chapter_from_source(
+            book,
+            chapter_number,
+        )
+
+        if fetched_chapter and fetched_chapter.get("html"):
+            _store_chapter(
+                db,
+                book,
+                chapter_number,
+                fetched_chapter,
+            )
+
             return {
                 "book_id": book.id,
                 "chapter": chapter_number,
-                "title": chapter.get("title") or f"Chapter {chapter_number}",
-                "html": chapter.get("html") or "",
+                "title": fetched_chapter.get("title") or f"Chapter {chapter_number}",
+                "html": fetched_chapter.get("html") or "",
                 "available": True,
-                "source_url": book.download,
-                "source_chapter_url": _source_chapter_url(
-                    book,
-                    chapter_number,
-                ),
+                "cached": False,
+                "source": book.source,
             }
 
         return {
@@ -1506,13 +1996,10 @@ def get_book_chapter(
             "chapter": chapter_number,
             "title": f"Chapter {chapter_number}",
             "html": (
-                "<p>This chapter is not available in the local PickBook "
-                "cache yet.</p>"
+                "<p>This chapter is not available in PickBook yet. "
+                "Please try another chapter while we expand the library.</p>"
             ),
             "available": False,
-            "source_url": book.download,
-            "source_chapter_url": _source_chapter_url(
-                book,
-                chapter_number,
-            ),
+            "cached": False,
+            "source": book.source,
         }
