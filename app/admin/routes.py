@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from app.core.limiter import limiter
 from app.core.database import SessionLocal
-from app.models.book import Coupon
+from app.models.book import Coupon, CouponClaim
 
 # Auth is applied globally in main.py via Depends(verify_admin) on include_router.
 # Do NOT add a second auth dependency here — it causes double-checking and
@@ -103,3 +103,23 @@ def list_coupons(request: Request):
             }
             for coupon in coupons
         ]
+
+
+@router.delete("/coupons/{coupon_id}")
+@limiter.limit("30/minute")
+def delete_coupon(coupon_id: int, request: Request):
+    with SessionLocal() as db:
+        coupon = db.query(Coupon).filter(Coupon.id == coupon_id).first()
+        if not coupon:
+            raise HTTPException(status_code=404, detail="Coupon not found.")
+
+        code = coupon.code
+        db.query(CouponClaim).filter(CouponClaim.coupon_id == coupon.id).delete()
+        db.delete(coupon)
+        db.commit()
+
+        return {
+            "status": "deleted",
+            "id": coupon_id,
+            "code": code,
+        }

@@ -60,6 +60,15 @@
   .search-result-sub { font-size: 0.75rem; color: var(--text-muted); }
   .search-no-results { padding: 1rem; text-align: center; color: var(--text-muted); font-size: 0.88rem; }
   .nav-actions { margin-left: auto; display: flex; align-items: center; gap: 0.75rem; }
+  .mobile-nav-tools { display: none; align-items: center; gap: 0.45rem; margin-left: auto; }
+  .menu-btn, .mobile-theme-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); width: 38px; height: 38px; align-items: center; justify-content: center; font-size: 1.05rem; cursor: pointer; }
+  .menu-btn { display: none; font-size: 1.2rem; }
+  .mobile-theme-btn { display: none; }
+  .mobile-menu-panel { display: none; position: relative; z-index: 99; background: var(--surface); border-bottom: 1px solid var(--border); padding: 0.65rem 0.75rem; box-shadow: 0 12px 24px rgba(0,0,0,0.18); }
+  .mobile-menu-panel.open { display: none; }
+  .mobile-menu-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
+  .mobile-menu-item { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 0.65rem 0.75rem; font-family: var(--font-body); font-size: 0.86rem; text-align: left; cursor: pointer; }
+  .mobile-menu-item strong { display: block; color: var(--accent); font-size: 0.72rem; font-weight: 600; margin-bottom: 1px; }
   .theme-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.4rem 0.7rem; color: var(--text-muted); cursor: pointer; font-size: 1rem; transition: border-color 0.2s; display: flex; align-items: center; }
   .theme-btn:hover { border-color: var(--accent); color: var(--accent); }
   .streak-badge { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.3rem 0.7rem; font-size: 0.8rem; color: var(--accent); display: flex; align-items: center; gap: 4px; cursor: default; user-select: none; }
@@ -89,6 +98,10 @@
   .donate-cta { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.5; }
   .donate-close-btn { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 0.55rem 1.5rem; color: var(--text-muted); cursor: pointer; font-family: var(--font-body); font-size: 0.88rem; transition: border-color 0.2s, color 0.2s; width: 100%; }
   .donate-close-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .donate-form { text-align: left; margin: 1rem 0; }
+  .donate-form label { display: block; color: var(--text-muted); font-size: 0.78rem; margin: 0.8rem 0 0.3rem; }
+  .donate-form input { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); padding: 0.65rem 0.8rem; font-family: var(--font-body); font-size: 0.95rem; }
+  .donate-notice { background: rgba(212,168,83,0.08); border: 1px solid var(--border); border-radius: 8px; padding: 0.7rem 0.85rem; color: var(--text-muted); font-size: 0.78rem; line-height: 1.5; margin-top: 0.8rem; }
 
   /* DONATE NUDGE */
   .donate-nudge { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 400; background: var(--surface); border: 1px solid var(--accent); border-radius: var(--radius-lg); padding: 1.1rem 1.3rem; max-width: 310px; box-shadow: 0 12px 36px rgba(0,0,0,0.55); opacity: 0; transform: translateY(20px); transition: opacity 0.4s, transform 0.4s; pointer-events: none; }
@@ -254,6 +267,19 @@
   #shelf-view { display: none; }
   .shelf-header { font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--text); }
   #downloads-view { display: none; }
+  #webnovel-view, #features-view { display: none; }
+  .hub-hero { border: 1px solid var(--border2); border-radius: var(--radius); padding: 1.2rem; margin-bottom: 1.5rem; background: var(--surface); display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: center; }
+  .hub-title { font-family: var(--font-display); font-size: 1.55rem; line-height: 1.2; color: var(--text); }
+  .hub-copy { color: var(--text-muted); font-size: 0.9rem; max-width: 680px; margin-top: 0.35rem; }
+  .hub-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: flex-end; }
+  .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.85rem; margin-bottom: 1.5rem; }
+  .feature-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; min-height: 120px; }
+  .feature-kicker { color: var(--accent); font-size: 0.76rem; margin-bottom: 0.35rem; }
+  .feature-value { font-family: var(--font-display); font-size: 1.45rem; color: var(--text); line-height: 1.2; }
+  .feature-note { color: var(--text-muted); font-size: 0.82rem; margin-top: 0.35rem; }
+  .streak-dots { display: grid; grid-template-columns: repeat(14, 1fr); gap: 5px; margin-top: 0.9rem; }
+  .streak-dot { aspect-ratio: 1; border-radius: 5px; background: var(--surface2); border: 1px solid var(--border); }
+  .streak-dot.active { background: var(--accent); border-color: var(--accent); }
 
   /* DETAIL */
   #detail-view { display: none; }
@@ -395,25 +421,45 @@
   .chapter-load-more { text-align: center; padding: 1rem 0; }
   .plan-pill { border: 1px solid var(--border2); border-radius: 8px; padding: 0.35rem 0.7rem; color: var(--accent); font-size: 0.78rem; white-space: nowrap; }
   .upgrade-modal .price { color: var(--accent); font-family: var(--font-display); font-size: 2rem; margin: 0.4rem 0; }
+  .plan-options { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin: 0.9rem 0; }
+  .plan-option { text-align: left; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; color: var(--text); cursor: pointer; font-family: var(--font-body); }
+  .plan-option.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .plan-option strong { display: block; font-size: 0.92rem; }
+  .plan-option span { display: block; color: var(--text-muted); font-size: 0.76rem; margin-top: 2px; }
   .upgrade-list { list-style: none; margin: 1rem 0; color: var(--text); font-size: 0.9rem; }
   .upgrade-list li { padding: 0.25rem 0; color: var(--text-muted); }
   .upgrade-list li strong { color: var(--text); }
   .coupon-row { display: flex; gap: 0.5rem; margin: 0.75rem 0; }
   .coupon-row input { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 0.55rem 0.75rem; font-family: var(--font-body); }
   .download-badge { display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; font-size: 0.65rem; color: var(--success); }
+  .thanks-panel, .referral-panel { background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius); padding: 1.4rem; max-width: 680px; }
+  .thanks-title, .referral-title { font-family: var(--font-display); color: var(--accent); font-size: 1.7rem; margin-bottom: 0.45rem; }
+  .thanks-copy, .referral-copy { color: var(--text-muted); line-height: 1.75; margin-bottom: 1rem; }
+  .referral-code-row { display: flex; gap: 0.6rem; align-items: center; margin: 1rem 0; flex-wrap: wrap; }
+  .referral-code { background: var(--surface2); border: 1px dashed var(--accent); border-radius: 8px; color: var(--accent); padding: 0.65rem 0.85rem; font-weight: 700; letter-spacing: 0.06em; }
 
   @media (max-width: 640px) {
     .detail-cover { width: 110px; } .detail-title { font-size: 1.4rem; }
     .novel-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
-    nav { padding: 0 0.65rem; gap: 0.55rem; }
+    nav { height: auto; padding: 0.55rem 0.75rem 0.7rem; gap: 0.55rem; flex-wrap: wrap; align-items: center; }
     .logo { font-size: 1.25rem; }
+    .search-wrap { order: 3; flex: 0 0 100%; max-width: none; }
+    .search-results-drop { max-height: 260px; }
     .search-wrap input { padding-left: 2rem; font-size: 0.82rem; }
-    .nav-actions { gap: 0.35rem; }
+    .mobile-nav-tools { display: flex; order: 2; }
+    .menu-btn, .mobile-theme-btn { display: inline-flex; }
+    .mobile-menu-panel.open { display: block; }
+    .nav-actions { display: none; }
     .streak-badge { display: none; }
     .shelf-btn, .theme-btn { min-width: 34px; height: 34px; justify-content: center; padding: 0.35rem 0.5rem; font-size: 0.82rem; }
     .shelf-btn .nav-label { display: none; }
-    .donate-nav-btn .donate-label { display: none; }
+    .donate-nav-btn { display: none; }
     .plan-pill { display: none; }
+    .genre-bar { padding: 0 0.75rem; }
+    .mood-filter-bar, .source-filter-bar { padding: 0.55rem 0.75rem; }
+    .hub-hero { grid-template-columns: 1fr; }
+    .hub-actions { justify-content: flex-start; }
+    .streak-dots { grid-template-columns: repeat(10, 1fr); }
   }
 </style>
 </head>
@@ -452,11 +498,14 @@
       <div class="taste-option" data-genre="Historical Fiction"><span class="taste-emoji">&#128220;</span>Historical</div>
       <div class="taste-option" data-genre="Non Fiction"><span class="taste-emoji">&#128188;</span>Non Fiction</div>
       <div class="taste-option" data-genre="Paranormal"><span class="taste-emoji">&#128065;&#65039;</span>Paranormal</div>
+      <div class="taste-option" data-genre="Light Novel"><span class="taste-emoji">&#9889;</span>Light Novel</div>
+      <div class="taste-option" data-genre="Web Novel"><span class="taste-emoji">&#128220;</span>Web Novel</div>
+      <div class="taste-option" data-genre="Progression Fantasy"><span class="taste-emoji">&#128200;</span>Progression</div>
     </div>
     <p id="taste-count-msg" style="color:var(--accent);font-size:0.82rem;text-align:center;">Select 3 genres</p>
     <button class="btn-primary" id="taste-done-btn" style="width:100%;margin-top:0.5rem;opacity:0.4;cursor:not-allowed" disabled onclick="confirmTastePicker()">Let's Go &rarr;</button>
     <!-- FIX 1: Added dismiss button so users are never trapped in this overlay -->
-    <button class="btn-secondary" style="width:100%;margin-top:0.5rem" onclick="document.getElementById('taste-picker-overlay').classList.remove('active')">Maybe Later</button>
+    <button class="btn-secondary" style="width:100%;margin-top:0.5rem" onclick="skipTastePicker()">Maybe Later</button>
   </div>
 </div>
 
@@ -465,7 +514,17 @@
   <div class="modal upgrade-modal">
     <h2>Upgrade to Standard</h2>
     <p id="upgrade-reason">Unlimited full novel access, offline chapters, unlimited shelf space, premium themes, and daily streak rewards.</p>
-    <div class="price">&#8358;2,500 <span style="font-size:0.85rem;color:var(--text-muted);font-family:var(--font-body)">/ month</span></div>
+    <div class="price" id="upgrade-price">&#8358;2,500 <span style="font-size:0.85rem;color:var(--text-muted);font-family:var(--font-body)">/ month</span></div>
+    <div class="plan-options">
+      <button class="plan-option active" data-months="1" onclick="selectPlanOffer(this, 1)">
+        <strong>Monthly</strong>
+        <span>&#8358;2,500 for 1 month</span>
+      </button>
+      <button class="plan-option" data-months="5" onclick="selectPlanOffer(this, 5)">
+        <strong>5 + 1 free</strong>
+        <span>Pay 5 months, get 6</span>
+      </button>
+    </div>
     <ul class="upgrade-list">
       <li><strong>Full access</strong> to cached premium chapters</li>
       <li><strong>Offline downloads</strong> for whole novels</li>
@@ -488,18 +547,14 @@
       <h2>Support PickBook</h2>
     </div>
     <p class="donate-sub">PickBook is completely free and ad-free. If you've been enjoying your reading here, a small donation helps keep the lights on and new books coming. Every naira counts!</p>
-    <div class="donate-account">
-      <div class="acct-row"><span class="acct-label">Bank</span><span class="acct-value">OPay</span></div>
-      <div class="acct-row"><span class="acct-label">Account Name</span><span class="acct-value">Adelakun Abdulsalam</span></div>
-      <div class="acct-row">
-        <span class="acct-label">Account Number</span>
-        <span style="display:flex;align-items:center;gap:6px">
-          <span class="acct-value acct-number">8069904015</span>
-          <button class="copy-btn" onclick="copyAcct()">Copy</button>
-        </span>
-      </div>
+    <div class="donate-form">
+      <label>Donation amount</label>
+      <input id="donation-amount" type="number" min="500" step="100" placeholder="Minimum ₦500">
+      <label>Email for Paystack receipt</label>
+      <input id="donation-email" type="email" placeholder="you@example.com">
+      <div class="donate-notice">Minimum donation is &#8358;500. Paystack transaction charges will be deducted from the amount donated, so you only enter what you want to give.</div>
     </div>
-    <p class="donate-cta">Transfer any amount via your banking app. Thank you from the bottom of our hearts &#128591;</p>
+    <button class="btn-primary" style="width:100%" onclick="startDonation()">Donate with Paystack</button>
     <button class="donate-close-btn" onclick="closeDonate()">Maybe Later</button>
   </div>
 </div>
@@ -526,6 +581,8 @@
     <div class="search-results-drop" id="search-drop"></div>
   </div>
   <div class="nav-actions">
+    <button class="shelf-btn" onclick="showWebNovelTab()" title="Web Novels"><span class="nav-icon">&#9889;</span><span class="nav-label">Web Novels</span></button>
+    <button class="shelf-btn" onclick="showView('features')" title="Progress"><span class="nav-icon">&#9673;</span><span class="nav-label">Progress</span></button>
     <button class="shelf-btn" onclick="openUpgrade('Standard unlocks full chapters and offline reading.')" title="Upgrade"><span class="nav-icon">&#9733;</span><span class="nav-label">Upgrade</span></button>
     <div class="plan-pill" id="plan-pill">Free</div>
     <div class="streak-badge" id="streak-badge">&#128293; <span id="streak-count">0</span> day streak</div>
@@ -534,7 +591,23 @@
     <button class="donate-nav-btn" onclick="openDonate()">&#10084;&#65039; <span class="donate-label">Donate</span></button>
     <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">&#9728;&#65039;</button>
   </div>
+  <div class="mobile-nav-tools">
+    <button class="mobile-theme-btn" id="mobile-theme-btn" onclick="toggleTheme()" aria-label="Switch theme">&#9728;&#65039;</button>
+    <button class="menu-btn" id="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Open menu">&#9776;</button>
+  </div>
 </nav>
+
+<div class="mobile-menu-panel" id="mobile-menu-panel">
+  <div class="mobile-menu-grid">
+    <button class="mobile-menu-item" onclick="mobileMenuAction(() => openUpgrade('Standard unlocks full chapters and offline reading.'))"><strong>Plan</strong>Subscription</button>
+    <button class="mobile-menu-item" onclick="mobileMenuAction(() => showView('downloads'))"><strong>Offline</strong>Downloads</button>
+    <button class="mobile-menu-item" onclick="mobileMenuAction(() => showView('shelf'))"><strong>Library</strong>My Shelf</button>
+    <button class="mobile-menu-item" onclick="mobileMenuAction(openDonate)"><strong>Support</strong>Donate</button>
+    <button class="mobile-menu-item" onclick="mobileMenuAction(() => showView('referral'))"><strong>Bonus</strong>Referral Offer</button>
+    <button class="mobile-menu-item" onclick="mobileMenuAction(() => showView('features'))"><strong>Progress</strong>Streaks</button>
+    <button class="mobile-menu-item" onclick="mobileMenuAction(showWebNovelTab)"><strong>Browse</strong>Web Novels</button>
+  </div>
+</div>
 
 <!-- GENRE TABS -->
 <div class="genre-bar-wrap" id="genre-bar">
@@ -578,6 +651,9 @@
   <button class="source-chip active" onclick="selectSource(this,'All')">All Sources</button>
   <button class="source-chip" onclick="selectSource(this,'anystories')">Anystories</button>
   <button class="source-chip" onclick="selectSource(this,'alphanovel')">AlphaNovel</button>
+  <button class="source-chip" onclick="selectSource(this,'lightnovelworld')">LightNovelWorld</button>
+  <button class="source-chip" onclick="selectSource(this,'freewebnovel')">FreeWebNovel</button>
+  <button class="source-chip" onclick="selectSource(this,'royalroad')">Royal Road</button>
 </div>
 
 <!-- HOME VIEW -->
@@ -604,6 +680,116 @@
     <div class="novel-grid" id="trending-grid"></div>
     <div class="section-header" id="latest-header"><h2 class="section-title">&#127381; Latest Added</h2></div>
     <div class="novel-grid" id="latest-grid"></div>
+  </main>
+</div>
+
+<!-- DONATION THANKS VIEW -->
+<div id="donation-thanks-view" style="display:none">
+  <div class="view-back-bar">
+    <button class="view-back-btn" onclick="showView('home')"><span class="arrow">&larr;</span> Browse</button>
+    <span class="view-back-crumb">Donation received</span>
+  </div>
+  <main>
+    <div class="thanks-panel">
+      <div class="thanks-title">Thank You for Supporting PickBook</div>
+      <p class="thanks-copy">Your donation helps keep PickBook light, readable, and growing. We see the kindness behind it, and we are grateful.</p>
+      <p class="thanks-copy" id="donation-thanks-amount"></p>
+      <div class="hub-actions">
+        <button class="btn-primary" onclick="showView('home')">Keep Reading</button>
+        <button class="btn-secondary" onclick="showView('referral')">Share PickBook</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- REFERRAL VIEW -->
+<div id="referral-view" style="display:none">
+  <div class="view-back-bar">
+    <button class="view-back-btn" onclick="showView('home')"><span class="arrow">&larr;</span> Browse</button>
+    <span class="view-back-crumb">Referral offer</span>
+  </div>
+  <main>
+    <div class="referral-panel">
+      <div class="referral-title">Invite Friends, Unlock Bonus Days</div>
+      <p class="referral-copy">Share PickBook with a friend. When they join through your link, they can claim a 3-day Standard boost after your own account has an active Standard plan or completed payment. Friendly, but protected from self-referrals.</p>
+      <div class="referral-code-row">
+        <span class="referral-code" id="referral-code">PICKBOOK</span>
+        <button class="btn-secondary" onclick="copyReferralLink()">Copy Link</button>
+        <button class="btn-secondary" onclick="shareReferral()">Share</button>
+      </div>
+      <p class="referral-copy">Your code is for friends. If you opened PickBook from someone else's referral link, you can claim the 3-day boost here.</p>
+      <div class="hub-actions">
+        <button class="btn-primary" id="referral-claim-btn" onclick="claimReferralBoost()">Claim Friend Boost</button>
+        <button class="btn-secondary" onclick="openUpgrade('Referral friends get a warmer start with Standard. You can upgrade whenever you are ready.')">View Standard</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- WEB NOVELS VIEW -->
+<div id="webnovel-view" style="display:none">
+  <div class="view-back-bar">
+    <button class="view-back-btn" onclick="showView('home')"><span class="arrow">&larr;</span> Browse</button>
+    <span class="view-back-crumb">Light novels, web novels, and Royal Road</span>
+  </div>
+  <main>
+    <div class="hub-hero">
+      <div>
+        <h1 class="hub-title">Web Novels</h1>
+        <p class="hub-copy">LightNovelWorld, FreeWebNovel, and Royal Road stories live here inside PickBook, with the same shelf, downloads, reading progress, and subscription access.</p>
+      </div>
+      <div class="hub-actions">
+        <button class="btn-primary" onclick="openUpgrade('Standard keeps web novels available offline with unlimited shelf space.')">Upgrade</button>
+        <button class="btn-secondary" onclick="showView('features')">Streak Progress</button>
+      </div>
+    </div>
+    <div class="novel-grid" id="webnovel-grid"></div>
+  </main>
+</div>
+
+<!-- FEATURES VIEW -->
+<div id="features-view" style="display:none">
+  <div class="view-back-bar">
+    <button class="view-back-btn" onclick="showView('home')"><span class="arrow">&larr;</span> Browse</button>
+    <span class="view-back-crumb">Progress and perks</span>
+  </div>
+  <main>
+    <div class="hub-hero">
+      <div>
+        <h1 class="hub-title">Your PickBook Progress</h1>
+        <p class="hub-copy">Track your streak, keep a clean shelf, download novels for offline reading, and unlock Standard when you want more room.</p>
+      </div>
+      <div class="hub-actions">
+        <button class="btn-primary" onclick="openUpgrade('Standard unlocks offline downloads, unlimited shelf space, premium themes, and streak rewards.')">Subscription</button>
+        <button class="btn-secondary" onclick="showView('downloads')">Downloads</button>
+      </div>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-kicker">Reading streak</div>
+        <div class="feature-value"><span id="feature-streak-count">0</span> days</div>
+        <div class="feature-note">Read a chapter each day to keep it alive.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-kicker">Shelf</div>
+        <div class="feature-value"><span id="feature-shelf-count">0</span> saved</div>
+        <div class="feature-note">Free readers keep 3 books. Standard removes the cap.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-kicker">Downloads</div>
+        <div class="feature-value"><span id="feature-download-count">0</span> offline</div>
+        <div class="feature-note">Download cached novels with Standard.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-kicker">Plan</div>
+        <div class="feature-value" id="feature-plan">Free</div>
+        <div class="feature-note" id="feature-plan-note">Upgrade when you are ready for offline reading.</div>
+      </div>
+    </div>
+    <section>
+      <div class="section-header"><h2 class="section-title">Recent Streak Progress</h2></div>
+      <div class="streak-dots" id="streak-dots"></div>
+    </section>
   </main>
 </div>
 
@@ -711,6 +897,7 @@
     <a href="#">About</a>
     <a href="#" onclick="showTastePicker()">Preferences</a>
     <a href="#" onclick="openDonate()">&#10084;&#65039; Donate</a>
+    <a href="#" onclick="showView('referral')">Referral Offer</a>
     <a href="https://wa.me/2349042427548?text=PickBook%20Feedback%3A%20" target="_blank">&#128172; Feedback</a>
     <a href="#">Submit a Novel</a>
   </div>
@@ -751,6 +938,14 @@ const COVER_GRADIENTS = [
 ];
 
 const CHAPTER_PAGE_SIZE = 50;
+const WEB_NOVEL_SOURCES = new Set(['lightnovelworld', 'freewebnovel', 'royalroad']);
+const SOURCE_LABELS = {
+  anystories: 'Anystories',
+  alphanovel: 'AlphaNovel',
+  lightnovelworld: 'LightNovelWorld',
+  freewebnovel: 'FreeWebNovel',
+  royalroad: 'Royal Road'
+};
 
 // ═══════════════════════════════════════════════════════
 //  HELPERS
@@ -815,7 +1010,13 @@ let state = {
   userId:        LS.get('pb_user_id', null),
   userEmail:     LS.get('pb_user_email', null),
   plan:          LS.get('pb_plan', 'free'),
+  selectedPlanMonths: LS.get('pb_selected_plan_months', 1),
   subscriptionExpiry: LS.get('pb_subscription_expiry', null),
+  subscriptionAlerts: LS.get('pb_subscription_alerts', {}),
+  referralCode:  LS.get('pb_referral_code', ''),
+  referredBy:     LS.get('pb_referred_by', ''),
+  lastDonation:   LS.get('pb_last_donation', null),
+  deviceFingerprint: LS.get('pb_device_fingerprint', null),
   couponCode:    LS.get('pb_coupon_code', ''),
   downloads:     LS.get('pb_downloads', {}),
 };
@@ -841,10 +1042,24 @@ function saveState() {
     'pb_font_size': state.fontSize, 'pb_milestones': state.milestones,
     'pb_nudge_done': state.nudgeDone,
     'pb_user_id': state.userId, 'pb_user_email': state.userEmail,
-    'pb_plan': state.plan, 'pb_subscription_expiry': state.subscriptionExpiry,
+    'pb_plan': state.plan, 'pb_selected_plan_months': state.selectedPlanMonths,
+    'pb_subscription_expiry': state.subscriptionExpiry,
+    'pb_subscription_alerts': state.subscriptionAlerts,
+    'pb_referral_code': state.referralCode,
+    'pb_referred_by': state.referredBy,
+    'pb_last_donation': state.lastDonation,
+    'pb_device_fingerprint': state.deviceFingerprint,
     'pb_coupon_code': state.couponCode, 'pb_downloads': state.downloads,
   };
   Object.entries(keys).forEach(([k, v]) => LS.set(k, v));
+}
+
+function getDeviceFingerprint() {
+  if (!state.deviceFingerprint) {
+    state.deviceFingerprint = 'fp_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    saveState();
+  }
+  return state.deviceFingerprint;
 }
 
 // ═══════════════════════════════════════════════════════
@@ -872,12 +1087,48 @@ function coverHtml(novel, cssClass = 'novel-cover-bg') {
 // ═══════════════════════════════════════════════════════
 //  DONATE
 // ═══════════════════════════════════════════════════════
-function openDonate()         { document.getElementById('donate-overlay').classList.add('active'); }
+function openDonate() {
+  const emailInput = document.getElementById('donation-email');
+  if (emailInput && state.userEmail && !emailInput.value) emailInput.value = state.userEmail;
+  document.getElementById('donate-overlay').classList.add('active');
+}
 function closeDonate()        { document.getElementById('donate-overlay').classList.remove('active'); }
 function openDonateFromNudge(){ dismissNudge(); openDonate(); }
-function copyAcct() {
-  if (navigator.clipboard) navigator.clipboard.writeText('8069904015').catch(() => {});
-  showToast('Account number copied!');
+async function startDonation() {
+  const amount = Number(document.getElementById('donation-amount').value || 0);
+  const email = (document.getElementById('donation-email').value || state.userEmail || '').trim();
+
+  if (amount < 500) {
+    showToast('Minimum donation is ₦500.');
+    return;
+  }
+  if (!email) {
+    showToast('Enter an email for your Paystack receipt.');
+    return;
+  }
+
+  const res = await fetch('/api/donation/initialize', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      amountNaira: amount,
+      email,
+      userId: state.userId || null
+    })
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    showToast(data.detail || 'Donation could not start.');
+    return;
+  }
+  state.lastDonation = { amount, startedAt: new Date().toISOString() };
+  saveState();
+  if (data.authorization_url) window.location.href = data.authorization_url;
+}
+function renderDonationThanks() {
+  const amount = state.lastDonation && state.lastDonation.amount;
+  const el = document.getElementById('donation-thanks-amount');
+  if (el) el.textContent = amount ? `Donation received: ₦${Number(amount).toLocaleString()}.` : '';
 }
 function scheduleDonateNudge() {
   if (state.nudgeDone) return;
@@ -887,6 +1138,80 @@ function scheduleDonateNudge() {
 function dismissNudge() {
   document.getElementById('donate-nudge').classList.remove('show');
   state.nudgeDone = true; saveState();
+}
+
+// ═══════════════════════════════════════════════════════
+//  MOBILE MENU + REFERRALS
+// ═══════════════════════════════════════════════════════
+function toggleMobileMenu() {
+  const panel = document.getElementById('mobile-menu-panel');
+  if (panel) panel.classList.toggle('open');
+}
+function closeMobileMenu() {
+  const panel = document.getElementById('mobile-menu-panel');
+  if (panel) panel.classList.remove('open');
+}
+function mobileMenuAction(fn) {
+  closeMobileMenu();
+  fn();
+}
+function currentReferralCode() {
+  if (state.referralCode) return state.referralCode;
+  if (state.userId) return 'PB' + String(state.userId).replace(/-/g, '').slice(0, 8).toUpperCase();
+  return 'PICKBOOK';
+}
+function referralLink() {
+  const url = new URL(window.location.origin + window.location.pathname);
+  url.searchParams.set('ref', currentReferralCode());
+  return url.toString();
+}
+function renderReferralView() {
+  const codeEl = document.getElementById('referral-code');
+  if (codeEl) codeEl.textContent = currentReferralCode();
+  const claimBtn = document.getElementById('referral-claim-btn');
+  if (claimBtn) {
+    claimBtn.disabled = !state.referredBy;
+    claimBtn.textContent = state.referredBy ? 'Claim Friend Boost' : 'Open a Friend Link First';
+  }
+}
+function copyReferralLink() {
+  const link = referralLink();
+  if (navigator.clipboard) navigator.clipboard.writeText(link).catch(() => {});
+  showToast('Referral link copied.');
+}
+function shareReferral() {
+  const link = referralLink();
+  const text = `Read free novels with me on PickBook. Use my referral link for bonus perks: ${link}`;
+  if (navigator.share) navigator.share({ title: 'PickBook Referral', text, url: link }).catch(() => {});
+  else if (navigator.clipboard) navigator.clipboard.writeText(text).catch(() => {});
+  showToast('Referral invite ready to share.');
+}
+async function claimReferralBoost() {
+  const userId = await ensureLocalProfile();
+  if (!userId) return;
+  const res = await fetch('/api/referral/claim', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      userId,
+      referralCode: state.referredBy || null,
+      fingerprint: getDeviceFingerprint()
+    })
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    showToast(data.detail || 'Could not claim referral boost.');
+    return;
+  }
+  if (data.referral_code) state.referralCode = data.referral_code;
+  if (data.subscription_expiry) {
+    state.plan = 'standard';
+    state.subscriptionExpiry = data.subscription_expiry;
+  }
+  saveState();
+  renderPlan();
+  renderReferralView();
+  showToast(data.message || 'Referral boost added.');
 }
 
 // ═══════════════════════════════════════════════════════
@@ -900,9 +1225,71 @@ function isStandard() {
   if (!state.subscriptionExpiry) return true;
   return new Date(state.subscriptionExpiry).getTime() > Date.now();
 }
+function subscriptionDaysLeft() {
+  if (!state.subscriptionExpiry) return null;
+  const ms = new Date(state.subscriptionExpiry).getTime() - Date.now();
+  if (!Number.isFinite(ms) || ms <= 0) return 0;
+  return Math.ceil(ms / 86400000);
+}
 function renderPlan() {
   const pill = document.getElementById('plan-pill');
   if (pill) pill.textContent = isStandard() ? 'Standard' : 'Free';
+}
+function checkSubscriptionReminder() {
+  if (!isStandard()) return;
+  const days = subscriptionDaysLeft();
+  if (![7, 5, 3].includes(days)) return;
+
+  const expiryKey = new Date(state.subscriptionExpiry).toISOString().slice(0, 10);
+  const alertKey = `${expiryKey}:${days}`;
+  if (state.subscriptionAlerts[alertKey]) return;
+
+  state.subscriptionAlerts[alertKey] = true;
+  saveState();
+  showToast(`Your Standard subscription remains ${days} day${days === 1 ? '' : 's'}.`);
+}
+async function handlePaymentReturn() {
+  const params = new URLSearchParams(window.location.search);
+  const reference = params.get('reference') || params.get('trxref');
+  if (!reference || window.location.pathname !== '/payment-success') return;
+
+  showToast('Confirming your payment...');
+
+  const verifyParams = new URLSearchParams({ reference });
+  const returnUserId = params.get('user_id') || state.userId;
+  const paidMonths = params.get('paid_months') || state.selectedPlanMonths || 1;
+  if (returnUserId) verifyParams.set('user_id', returnUserId);
+  verifyParams.set('paid_months', paidMonths);
+  if (params.get('kind')) verifyParams.set('kind', params.get('kind'));
+  if (params.get('amount')) verifyParams.set('amount', params.get('amount'));
+
+  try {
+    const res = await fetch(`/api/checkout/verify?${verifyParams.toString()}`);
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || 'Payment verification failed');
+
+    if (data.kind === 'donation') {
+      state.lastDonation = {
+        amount: data.amount_naira || (state.lastDonation && state.lastDonation.amount) || 0,
+        confirmedAt: new Date().toISOString()
+      };
+      saveState();
+      window.history.replaceState({}, document.title, '/');
+      showView('donation-thanks');
+      showToast('Thank you for donating.');
+      return;
+    }
+
+    state.plan = data.current_plan || 'standard';
+    if (data.subscription_expiry) state.subscriptionExpiry = data.subscription_expiry;
+    saveState();
+    renderPlan();
+    showToast('Payment confirmed. Standard is active.');
+    window.history.replaceState({}, document.title, '/');
+  } catch (err) {
+    console.error('[PickBook] Payment verification failed:', err);
+    showToast(err.message || 'Payment is still being confirmed.');
+  }
 }
 function renderDownloadCount() {
   const badge = document.getElementById('download-count-badge');
@@ -918,7 +1305,7 @@ async function ensureLocalProfile() {
   const res = await fetch('/api/auth/signup', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email })
+    body: JSON.stringify({ email, fingerprint: getDeviceFingerprint() })
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
@@ -929,6 +1316,8 @@ async function ensureLocalProfile() {
   state.userId = profile.id;
   state.userEmail = profile.email;
   state.plan = profile.current_plan || 'free';
+  state.subscriptionExpiry = profile.subscription_expiry || state.subscriptionExpiry;
+  state.referralCode = profile.referral_code || state.referralCode;
   saveState();
   renderPlan();
   return state.userId;
@@ -936,12 +1325,35 @@ async function ensureLocalProfile() {
 function openUpgrade(reason) {
   const reasonEl = document.getElementById('upgrade-reason');
   if (reasonEl && reason) reasonEl.textContent = reason;
+  const planBtn = document.querySelector(`.plan-option[data-months="${state.selectedPlanMonths === 5 ? 5 : 1}"]`);
+  if (planBtn) selectPlanOffer(planBtn, state.selectedPlanMonths);
   document.getElementById('upgrade-overlay').classList.add('active');
 }
 function closeUpgrade() {
   document.getElementById('upgrade-overlay').classList.remove('active');
 }
+function selectPlanOffer(el, months) {
+  state.selectedPlanMonths = months === 5 ? 5 : 1;
+  document.querySelectorAll('.plan-option').forEach(btn => btn.classList.remove('active'));
+  el.classList.add('active');
+  const price = document.getElementById('upgrade-price');
+  if (price) {
+    price.innerHTML = state.selectedPlanMonths === 5
+      ? '&#8358;12,500 <span style="font-size:0.85rem;color:var(--text-muted);font-family:var(--font-body)">/ 6 months</span>'
+      : '&#8358;2,500 <span style="font-size:0.85rem;color:var(--text-muted);font-family:var(--font-body)">/ month</span>';
+  }
+  if (state.selectedPlanMonths === 5) {
+    state.couponCode = '';
+    const couponInput = document.getElementById('coupon-code');
+    if (couponInput) couponInput.value = '';
+  }
+  saveState();
+}
 async function applyCoupon() {
+  if (state.selectedPlanMonths === 5) {
+    showToast('Promo codes are available on the monthly plan.');
+    return;
+  }
   const userId = await ensureLocalProfile();
   if (!userId) return;
   const code = document.getElementById('coupon-code').value.trim();
@@ -949,7 +1361,12 @@ async function applyCoupon() {
   const res = await fetch('/api/coupon/validate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userId, code, planType: 'standard' })
+    body: JSON.stringify({
+      userId,
+      code,
+      planType: 'standard',
+      fingerprint: getDeviceFingerprint()
+    })
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) { showToast(data.detail || 'Promo code could not be applied'); return; }
@@ -967,15 +1384,17 @@ async function startCheckout() {
       userId,
       email: state.userEmail,
       planType: 'standard',
-      couponCode: state.couponCode || document.getElementById('coupon-code').value.trim() || null
+      paidMonths: state.selectedPlanMonths || 1,
+      couponCode: state.couponCode || document.getElementById('coupon-code').value.trim() || null,
+      fingerprint: getDeviceFingerprint()
     })
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) { showToast(data.detail || 'Checkout could not start'); return; }
   if (data.status === 'activated') {
     state.plan = 'standard';
-    state.subscriptionExpiry = new Date(Date.now() + 30 * 86400000).toISOString();
-    saveState(); renderPlan(); closeUpgrade();
+    state.subscriptionExpiry = new Date(Date.now() + Number(data.free_days || 30) * 86400000).toISOString();
+    saveState(); renderPlan(); checkSubscriptionReminder(); closeUpgrade();
     showToast(data.message || 'Standard unlocked');
     return;
   }
@@ -1004,7 +1423,7 @@ async function downloadCurrentNovel() {
 // ═══════════════════════════════════════════════════════
 async function loadBooks() {
   try {
-    const res = await fetch('/ingest/books');
+    const res = await fetch('/ingest/books?limit=5000');
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     if (!Array.isArray(data) || data.length === 0) throw new Error('Empty catalogue');
@@ -1031,6 +1450,7 @@ async function loadBooks() {
 
     console.info(`[PickBook] Loaded ${NOVELS.length} books.`);
     document.getElementById('home-error').style.display = 'none';
+    updateFilterTabs();
   } catch (err) {
     console.error('[PickBook] API error:', err.message);
     const errDiv = document.getElementById('home-error');
@@ -1050,25 +1470,38 @@ async function loadBooks() {
 // ═══════════════════════════════════════════════════════
 //  VIEWS
 // ═══════════════════════════════════════════════════════
-const VIEWS = ['home-view','detail-view','reader-view','shelf-view','downloads-view'];
+const VIEWS = ['home-view','detail-view','reader-view','shelf-view','downloads-view','webnovel-view','features-view','donation-thanks-view','referral-view'];
 
 function showView(v) {
   VIEWS.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = (id === v + '-view') ? 'block' : 'none';
   });
-  const hideFilters = (v === 'reader' || v === 'detail');
+  const hideFilters = (v !== 'home');
   document.getElementById('genre-bar').classList.toggle('hidden', hideFilters);
   document.getElementById('mood-filter-bar').classList.toggle('hidden', hideFilters);
   document.getElementById('source-filter-bar').classList.toggle('hidden', hideFilters);
   if (v === 'shelf') renderShelfView();
   if (v === 'downloads') renderDownloadsView();
+  if (v === 'webnovel') renderWebNovelView();
+  if (v === 'features') renderFeaturesView();
+  if (v === 'donation-thanks') renderDonationThanks();
+  if (v === 'referral') renderReferralView();
+  closeMobileMenu();
   window.scrollTo(0, 0);
 }
 
 function goHome() {
   showView('home');
   buildHomeGrids(getFilteredNovels());
+}
+
+function showWebNovelTab() {
+  activeGenre = 'All';
+  activeMood = 'All';
+  activeSource = 'All';
+  updateFilterTabs();
+  showView('webnovel');
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1078,6 +1511,8 @@ function applyTheme() {
   document.documentElement.setAttribute('data-theme', state.theme);
   const btn = document.getElementById('theme-btn');
   if (btn) btn.textContent = state.theme === 'dark' ? '\u2600\uFE0F' : '\uD83C\uDF19';
+  const mobileBtn = document.getElementById('mobile-theme-btn');
+  if (mobileBtn) mobileBtn.textContent = state.theme === 'dark' ? '\u2600\uFE0F' : '\uD83C\uDF19';
 }
 function toggleTheme() { state.theme = state.theme === 'dark' ? 'light' : 'dark'; applyTheme(); saveState(); }
 
@@ -1203,6 +1638,51 @@ function renderShelfView() {
   renderGrid(grid, NOVELS.filter(n => isOnShelf(n.id)));
 }
 
+function webNovelPool() {
+  return NOVELS.filter(n => WEB_NOVEL_SOURCES.has((n.source || '').toLowerCase()));
+}
+
+function renderWebNovelView() {
+  const grid = document.getElementById('webnovel-grid');
+  if (!grid) return;
+  const novels = webNovelPool();
+  if (!novels.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">&#9889;</div><p>No web novels are loaded yet.<br>Ask an admin to ingest LightNovelWorld, FreeWebNovel, or Royal Road.</p></div>`;
+    return;
+  }
+  renderGrid(grid, novels.slice(0, 80));
+}
+
+async function renderFeaturesView() {
+  document.getElementById('feature-streak-count').textContent = state.streakCount;
+  document.getElementById('feature-shelf-count').textContent = state.shelf.length;
+  document.getElementById('feature-download-count').textContent = Object.keys(state.downloads || {}).length;
+  document.getElementById('feature-plan').textContent = isStandard() ? 'Standard' : 'Free';
+  const note = document.getElementById('feature-plan-note');
+  const days = subscriptionDaysLeft();
+  note.textContent = isStandard() && days !== null ? `${days} day${days === 1 ? '' : 's'} left on Standard.` : 'Upgrade when you are ready for offline reading.';
+
+  const dots = document.getElementById('streak-dots');
+  if (!dots) return;
+  dots.innerHTML = Array.from({ length: 28 }, (_, i) => `<span class="streak-dot ${i < Math.min(state.streakCount, 28) ? 'active' : ''}"></span>`).join('');
+
+  if (!state.userId) return;
+  try {
+    const res = await fetch('/api/streak/calendar', { headers: authHeaders() });
+    if (!res.ok) return;
+    const data = await res.json();
+    const activeDays = new Set((Array.isArray(data) ? data : []).map(row => row.date));
+    const today = new Date();
+    dots.innerHTML = Array.from({ length: 28 }, (_, i) => {
+      const d = new Date(today.getTime() - (27 - i) * 86400000);
+      const key = d.toISOString().slice(0, 10);
+      return `<span class="streak-dot ${activeDays.has(key) ? 'active' : ''}" title="${key}"></span>`;
+    }).join('');
+  } catch (err) {
+    console.warn('[PickBook] streak calendar failed', err);
+  }
+}
+
 // ═══════════════════════════════════════════════════════
 //  PROGRESS / CONTINUE READING
 // ═══════════════════════════════════════════════════════
@@ -1255,6 +1735,71 @@ function getFilteredNovels() {
   return novels;
 }
 
+function addGenreButton(bar, label, value) {
+  const btn = document.createElement('button');
+  btn.className = 'genre-tab';
+  if (activeGenre === value || (value === 'All' && (activeGenre === 'All' || activeGenre === 'All Genres'))) {
+    btn.classList.add('active');
+  }
+  btn.innerHTML = escapeHtml(label) + (ADULT_GENRES.has(value) ? ' <span class="age-badge">18+</span>' : '');
+  btn.onclick = () => selectGenre(btn, value);
+  bar.appendChild(btn);
+}
+
+function addMoodButton(bar, label, value) {
+  const btn = document.createElement('button');
+  btn.className = 'mood-chip';
+  btn.dataset.mood = value;
+  if (activeMood === value) btn.classList.add('active');
+  btn.textContent = label;
+  btn.onclick = () => selectMood(btn, value);
+  bar.appendChild(btn);
+}
+
+function updateFilterTabs() {
+  const genreBar = document.getElementById('genre-bar-inner');
+  if (genreBar) {
+    const genres = [...new Set(NOVELS.map(n => n.genre).filter(Boolean))]
+      .filter(g => NOVELS.some(n => n.genre === g))
+      .sort((a, b) => a.localeCompare(b));
+
+    if (activeGenre !== 'All' && activeGenre !== 'All Genres' && activeGenre !== 'Erotic' && !genres.includes(activeGenre)) {
+      activeGenre = 'All';
+    }
+
+    genreBar.innerHTML = '';
+    addGenreButton(genreBar, 'All Genres', 'All');
+    genres.forEach(genre => addGenreButton(genreBar, genre, genre));
+    addGenreButton(genreBar, 'Erotic', 'Erotic');
+  }
+
+  const moodBar = document.getElementById('mood-filter-bar');
+  if (moodBar) {
+    const pool = NOVELS.filter(n => {
+      const genreOk = activeGenre === 'All' || activeGenre === 'All Genres' || n.genre === activeGenre;
+      const sourceOk = activeSource === 'All' || (n.source || '').toLowerCase() === activeSource;
+      return genreOk && sourceOk;
+    });
+    const moodLabels = {
+      Dark: 'Dark & Brooding',
+      Light: 'Light-hearted',
+      Intense: 'Edge-of-seat',
+      Romantic: 'Slow Burn'
+    };
+    const available = Object.keys(moodLabels).filter(mood => pool.some(n => n.mood === mood));
+
+    if (activeMood !== 'All' && !available.includes(activeMood)) {
+      activeMood = 'All';
+    }
+
+    moodBar.innerHTML = '<span class="mood-label">Mood:</span>';
+    addMoodButton(moodBar, 'All Moods', 'All');
+    available.forEach(mood => addMoodButton(moodBar, moodLabels[mood], mood));
+  }
+
+  setTimeout(updateGenreScrollBtns, 0);
+}
+
 let pendingGenreEl    = null;
 let pendingGenreValue = null;
 
@@ -1275,6 +1820,7 @@ function selectGenre(el, genre) {
   document.querySelectorAll('.genre-tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   activeGenre = genre;
+  updateFilterTabs();
   buildHomeGrids(getFilteredNovels());
 }
 
@@ -1288,16 +1834,14 @@ function selectSource(el, source) {
   document.querySelectorAll('.source-chip').forEach(c => c.classList.remove('active'));
   el.classList.add('active');
   activeSource = source;
+  updateFilterTabs();
   buildHomeGrids(getFilteredNovels());
 }
 function clearFilters() {
   activeGenre = 'All'; activeMood = 'All'; activeSource = 'All';
-  document.querySelectorAll('.genre-tab').forEach(t => t.classList.remove('active'));
-  document.querySelector('#genre-bar-inner .genre-tab').classList.add('active');
-  document.querySelectorAll('.mood-chip').forEach(c => c.classList.remove('active'));
-  document.querySelector('.mood-chip').classList.add('active');
   document.querySelectorAll('.source-chip').forEach(c => c.classList.remove('active'));
   document.querySelector('.source-chip').classList.add('active');
+  updateFilterTabs();
   buildHomeGrids(NOVELS);
 }
 
@@ -1317,8 +1861,8 @@ function confirmAge() {
 function closeAgeGate() {
   document.getElementById('age-gate-overlay').classList.remove('active');
   pendingGenreEl = null; pendingGenreValue = null;
-  document.querySelectorAll('.genre-tab').forEach(t => t.classList.remove('active'));
-  document.querySelector('#genre-bar-inner .genre-tab').classList.add('active');
+  activeGenre = 'All';
+  updateFilterTabs();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1349,7 +1893,16 @@ function confirmTastePicker() {
   saveState();
   document.getElementById('taste-picker-overlay').classList.remove('active');
   buildHomeGrids(getFilteredNovels());
+  showView('features');
+  setTimeout(() => openUpgrade('Standard adds offline downloads, unlimited shelf space, premium themes, and streak rewards.'), 650);
   checkMilestones();
+}
+function skipTastePicker() {
+  state.tastePicked = true;
+  saveState();
+  document.getElementById('taste-picker-overlay').classList.remove('active');
+  showView('features');
+  setTimeout(() => openUpgrade('See what Standard unlocks whenever you are ready: offline downloads, unlimited shelf space, and streak rewards.'), 650);
 }
 document.querySelectorAll('.taste-option').forEach(el => {
   el.addEventListener('click', () => {
@@ -1509,7 +2062,7 @@ function renderGrid(el, novels) {
   }
   el.innerHTML = novels.map(n => {
     const onShelf   = isOnShelf(n.id);
-    const srcShort  = (n.source || '').replace(' (standardebooks.org)','').replace(' (feedbooks.com)','');
+    const srcShort  = SOURCE_LABELS[(n.source || '').toLowerCase()] || (n.source || '').replace(' (standardebooks.org)','').replace(' (feedbooks.com)','');
     const downloaded = !!state.downloads[n.id];
     return `<div class="novel-card" onclick="showDetail(${n.id})">
       <div class="novel-cover">
@@ -1589,7 +2142,7 @@ function showDetail(novelId) {
   document.getElementById('detail-title').textContent  = n.title;
   document.getElementById('detail-author').textContent = `by ${n.author}`;
   document.getElementById('detail-synopsis').textContent = n.synopsis || 'No synopsis available.';
-  document.getElementById('detail-source').textContent  = n.source || 'Unknown';
+  document.getElementById('detail-source').textContent  = SOURCE_LABELS[(n.source || '').toLowerCase()] || n.source || 'Unknown';
   document.getElementById('detail-license').textContent = n.license || 'Public Domain';
   document.getElementById('detail-rating-text').textContent = `${n.rating} / 5`;
 
@@ -1691,7 +2244,7 @@ function renderReaderView() {
   document.getElementById('reader-novel-title').textContent  = n.title;
   document.getElementById('reader-chapter-info').textContent = `Chapter ${ch} of ${n.chapters}`;
   document.getElementById('reader-crumb-title').textContent  = n.title;
-  document.getElementById('reader-attribution').textContent  = n.source || 'PickBook Library';
+  document.getElementById('reader-attribution').textContent  = SOURCE_LABELS[(n.source || '').toLowerCase()] || n.source || 'PickBook Library';
 
   const key = `${n.id}_${ch}`;
   if (!state.chaptersRead.includes(key)) { state.chaptersRead.push(key); saveState(); checkMilestones(); }
@@ -1806,11 +2359,18 @@ function showToast(msg) {
 //  INIT
 // ═══════════════════════════════════════════════════════
 (function init() {
+  const ref = new URLSearchParams(window.location.search).get('ref');
+  if (ref) {
+    state.referredBy = ref.trim().toUpperCase();
+    saveState();
+  }
   applyTheme();
   renderStreak();
   renderShelfCount();
   renderDownloadCount();
   renderPlan();
+  handlePaymentReturn();
+  checkSubscriptionReminder();
   updateGenreScrollBtns();
   scheduleDonateNudge();
 

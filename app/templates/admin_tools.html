@@ -35,8 +35,9 @@
   .status { min-height: 22px; margin: 14px 0 0; color: var(--muted); font-size: 14px; }
   .status.ok { color: var(--success); }
   .status.err { color: var(--danger); }
-  table { width: 100%; border-collapse: collapse; font-size: 14px; }
-  th, td { text-align: left; border-bottom: 1px solid var(--border); padding: 10px 8px; vertical-align: top; }
+  .table-wrap { width: 100%; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; table-layout: fixed; }
+  th, td { text-align: left; border-bottom: 1px solid var(--border); padding: 10px 8px; vertical-align: top; overflow-wrap: anywhere; word-break: break-word; }
   th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
   .empty { color: var(--muted); padding: 18px 8px; }
   .token-row { display: flex; gap: 10px; align-items: end; }
@@ -54,7 +55,7 @@
   <header>
     <div>
       <h1>PickBook Admin Tools</h1>
-      <p>Create coupons and backfill chapters. API calls still require your admin token.</p>
+      <p>Create coupons, run source ingest, and backfill chapters. API calls still require your admin token.</p>
     </div>
     <a href="/" style="color:var(--accent)">Back to app</a>
   </header>
@@ -104,11 +105,38 @@
     </section>
 
     <section>
+      <h2>Source Ingest</h2>
+      <p style="margin-bottom:12px">LightNovelWorld, FreeWebNovel, and Royal Road are now part of the PickBook story setup. After ingesting them, remember to run Chapter Backfill for those sources too.</p>
+      <label>Source
+        <select id="ingest-source">
+          <option value="lightnovelworld">LightNovelWorld</option>
+          <option value="freewebnovel">FreeWebNovel</option>
+          <option value="royalroad">Royal Road</option>
+          <option value="anystories">Anystories</option>
+          <option value="alphanovel">Alphanovel</option>
+        </select>
+      </label>
+      <label>Pages
+        <input id="ingest-pages" type="number" min="1" max="10" value="1">
+      </label>
+      <label>Preview chapters per book
+        <input id="ingest-chapters" type="number" min="0" max="100" value="2">
+      </label>
+      <div class="actions">
+        <button id="ingest-start-btn" onclick="runSourceIngest()">Run Ingest</button>
+      </div>
+      <div class="status" id="ingest-status"></div>
+    </section>
+
+    <section>
       <h2>Chapter Backfill</h2>
       <label>Source
         <select id="backfill-source">
           <option value="anystories">Anystories</option>
           <option value="alphanovel">Alphanovel</option>
+          <option value="lightnovelworld">LightNovelWorld</option>
+          <option value="freewebnovel">FreeWebNovel</option>
+          <option value="royalroad">Royal Road</option>
         </select>
       </label>
       <label>Books to process
@@ -116,6 +144,16 @@
       </label>
       <label>Max chapters per book
         <input id="backfill-max-chapters" type="number" min="1" max="1000" value="25">
+      </label>
+      <label>Exact story ID
+        <input id="backfill-book-id" type="number" min="1" placeholder="Optional book ID">
+      </label>
+      <label>Exact story title
+        <input id="backfill-title" type="text" placeholder="Optional title search">
+      </label>
+      <label style="display:flex;gap:8px;align-items:center;color:var(--muted)">
+        <input id="backfill-force" type="checkbox" style="width:auto">
+        Refill existing cached chapters
       </label>
       <div class="actions">
         <button id="backfill-start-btn" onclick="backfillChapters()">Backfill Chapters</button>
@@ -215,6 +253,7 @@
     }
 
     document.getElementById('coupon-list').innerHTML = `
+      <div class="table-wrap">
       <table>
         <thead>
           <tr>
@@ -223,6 +262,7 @@
             <th>Value</th>
             <th>Uses</th>
             <th>Expiry</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
@@ -233,11 +273,74 @@
               <td>${c.discount_value}</td>
               <td>${c.used_count} / ${c.max_uses}</td>
               <td>${c.expiry_date ? new Date(c.expiry_date).toLocaleString() : 'None'}</td>
+              <td><button class="danger" onclick="deleteCoupon(${c.id}, '${escapeAttr(c.code)}')">Delete</button></td>
             </tr>
           `).join('')}
         </tbody>
       </table>
+      </div>
     `;
+  }
+
+  async function runSourceIngest() {
+    if (!token()) {
+      setStatus('ingest-status', 'Admin token is required.', false);
+      return;
+    }
+
+    const source = document.getElementById('ingest-source').value;
+    const pages = Number(document.getElementById('ingest-pages').value || 1);
+    const chapters = Number(document.getElementById('ingest-chapters').value || 0);
+    const params = new URLSearchParams();
+
+    if (['lightnovelworld', 'freewebnovel', 'royalroad'].includes(source)) {
+      params.set('pages', String(pages));
+      params.set('chapters_per_book', String(chapters));
+    } else if (source === 'anystories') {
+      params.set('pages_per_genre', String(pages));
+      params.set('chapters_per_book', String(chapters));
+    }
+
+    document.getElementById('ingest-start-btn').disabled = true;
+    setStatus('ingest-status', 'Ingest running. Keep this tab open.', true);
+
+    let res;
+    let data = {};
+
+    try {
+      res = await fetch(`/ingest/${source}?${params.toString()}`, {
+        headers: headers()
+      });
+      data = await res.json().catch(() => ({}));
+    } finally {
+      document.getElementById('ingest-start-btn').disabled = false;
+    }
+
+    if (!res || !res.ok) {
+      setStatus('ingest-status', data.detail || 'Ingest failed.', false);
+      return;
+    }
+
+    setStatus('ingest-status', `Finished ${source}. Added ${data.count || 0} new stories. Now run Chapter Backfill for fuller reading.`, true);
+  }
+
+  async function deleteCoupon(id, code) {
+    if (!token()) {
+      document.getElementById('coupon-list').innerHTML = '<div class="empty">Admin token is required.</div>';
+      return;
+    }
+    if (!window.confirm(`Delete coupon ${code}? This removes used and unused records.`)) return;
+
+    const res = await fetch(`/admin/coupons/${id}`, {
+      method: 'DELETE',
+      headers: headers()
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      document.getElementById('coupon-list').insertAdjacentHTML('afterbegin', `<div class="empty">${escapeHtml(data.detail || 'Could not delete coupon.')}</div>`);
+      return;
+    }
+    loadCoupons();
   }
 
   async function backfillChapters() {
@@ -249,6 +352,16 @@
     const limit = Number(document.getElementById('backfill-limit').value || 5);
     const maxChapters = Number(document.getElementById('backfill-max-chapters').value || 25);
     const source = document.getElementById('backfill-source').value;
+    const bookId = document.getElementById('backfill-book-id').value.trim();
+    const title = document.getElementById('backfill-title').value.trim();
+    const force = document.getElementById('backfill-force').checked;
+    const params = new URLSearchParams({
+      limit: String(limit),
+      max_chapters: String(maxChapters),
+      force: String(force)
+    });
+    if (bookId) params.set('book_id', bookId);
+    if (title) params.set('title', title);
     document.getElementById('backfill-start-btn').disabled = true;
     document.getElementById('backfill-stop-btn').disabled = false;
     setStatus('backfill-status', 'Backfill running. Keep this tab open.', true);
@@ -258,7 +371,7 @@
     let data = {};
 
     try {
-      res = await fetch(`/ingest/${source}/full-chapters?limit=${limit}&max_chapters=${maxChapters}`, {
+      res = await fetch(`/ingest/${source}/full-chapters?${params.toString()}`, {
         method: 'POST',
         headers: headers()
       });
@@ -277,6 +390,7 @@
     setStatus('backfill-status', `${prefix} Fetched ${data.chapters_fetched || 0} chapters across ${data.books_checked || 0} books.`, true);
     const rows = Array.isArray(data.results) ? data.results : [];
     document.getElementById('backfill-results').innerHTML = rows.length ? `
+      <div class="table-wrap">
       <table>
         <thead>
           <tr>
@@ -301,6 +415,7 @@
           `).join('')}
         </tbody>
       </table>
+      </div>
     ` : '<div class="empty">No books were processed.</div>';
   }
 
@@ -334,6 +449,10 @@
       '"': '&quot;',
       "'": '&#039;'
     }[ch]));
+  }
+
+  function escapeAttr(value) {
+    return String(value ?? '').replace(/['\\]/g, '\\$&').replace(/[<>&"]/g, '');
   }
 </script>
 </body>

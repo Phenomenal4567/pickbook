@@ -18,7 +18,7 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from app.core.config import settings
 from app.core.limiter import limiter
-from app.core.database import engine, Base, ensure_database_schema
+from app.core.database import engine, initialize_database
 from app.author_portal.routes import router as author_router
 from app.admin.routes import router as admin_router
 from app.ingest.routes import router as ingest_router
@@ -38,8 +38,7 @@ async def lifespan(app: FastAPI):
     Runs once on startup (before yield) and once on shutdown (after yield).
     Safer than @app.on_event in multi-worker / production deployments.
     """
-    Base.metadata.create_all(bind=engine)
-    ensure_database_schema()
+    initialize_database()
     yield
     # Add any teardown logic here (e.g. close connection pools)
 
@@ -122,6 +121,14 @@ async def public_admin_tools(request: Request):
 # =========================================================
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
+    return templates.TemplateResponse(
+        "index.html",
+        {"request": request},
+    )
+
+
+@app.get("/payment-success", response_class=HTMLResponse)
+async def payment_success(request: Request):
     return templates.TemplateResponse(
         "index.html",
         {"request": request},

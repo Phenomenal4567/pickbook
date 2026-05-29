@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     allowed_origins: str = "http://localhost:3000"
     database_url: str = "postgresql://pickbook:pickbook@localhost:5432/pickbook"
     database_sslmode: str = "require"
+    local_database_fallback: bool = False
     redis_url: str = "redis://localhost:6379/0"
     plausible_domain: str = "pickbook.com"
     admin_token: str = "dev-admin-token"

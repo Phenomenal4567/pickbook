@@ -43,6 +43,14 @@ class Profile(Base):
 
     subscription_expiry = Column(DateTime(timezone=True), nullable=True)
 
+    referral_code = Column(String, unique=True, index=True, nullable=True)
+
+    referred_by = Column(String, nullable=True)
+
+    referral_bonus_claimed_at = Column(DateTime(timezone=True), nullable=True)
+
+    signup_fingerprint = Column(String, nullable=True, index=True)
+
     streak_count = Column(Integer, default=0, nullable=False)
 
     last_read_date = Column(Date, nullable=True)
@@ -86,6 +94,8 @@ class CouponClaim(Base):
     user_id = Column(String, nullable=False, index=True)
 
     coupon_id = Column(Integer, nullable=False, index=True)
+
+    fingerprint = Column(String, nullable=True, index=True)
 
     claimed_at = Column(DateTime(timezone=True), server_default=func.now())
 

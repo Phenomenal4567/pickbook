@@ -13,7 +13,7 @@ import requests
 from bs4 import BeautifulSoup
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from requests.exceptions import RequestException
-from sqlalchemy import or_
+from sqlalchemy import func, or_
 from sqlalchemy.exc import SQLAlchemyError
 from starlette.requests import Request
 
@@ -89,7 +89,7 @@ def normalize_text(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
-def _pick_img_src(img_tag) -> str | None:
+def _pick_img_src(img_tag, base_url: str | None = None) -> str | None:
     if img_tag is None:
         return None
 
@@ -108,7 +108,7 @@ def _pick_img_src(img_tag) -> str | None:
             value = "https:" + value
 
         if value.startswith("/"):
-            value = urljoin(ALPHA_BASE_URL, value)
+            value = urljoin(base_url or "https://alphanovel.io", value)
 
         if value.startswith("http"):
             return value
@@ -354,6 +354,41 @@ _ALPHA_NOVEL_PATH_RE = re.compile(
     r"^/novels/[^/]+/[^/]+",
     re.IGNORECASE,
 )
+
+
+# =========================================================
+# WEB NOVEL / LIGHT NOVEL SOURCES
+# =========================================================
+
+LIGHTNOVELWORLD_BASE_URL = "https://lightnovelworld.org"
+FREEWEBNOVEL_BASE_URL = "https://freewebnovel.io"
+ROYALROAD_BASE_URL = "https://www.royalroad.com"
+
+WEB_NOVEL_SOURCES = {
+    "lightnovelworld": {
+        "label": "LightNovelWorld",
+        "base_url": LIGHTNOVELWORLD_BASE_URL,
+        "paths": ["/genre-all/"],
+        "genre": "Light Novel",
+        "link_re": re.compile(r"^/novel/[^/?#]+/?$", re.IGNORECASE),
+    },
+    "freewebnovel": {
+        "label": "FreeWebNovel",
+        "base_url": FREEWEBNOVEL_BASE_URL,
+        "paths": ["/newest"],
+        "genre": "Web Novel",
+        "link_re": re.compile(r"^/(novel|book|webnovel)/[^/?#]+/?$", re.IGNORECASE),
+    },
+    "royalroad": {
+        "label": "Royal Road",
+        "base_url": ROYALROAD_BASE_URL,
+        "paths": ["/fictions/best-rated"],
+        "genre": "Progression Fantasy",
+        "link_re": re.compile(r"^/fiction/\d+/[^/?#]+/?$", re.IGNORECASE),
+    },
+}
+
+WEB_NOVEL_SOURCE_NAMES = set(WEB_NOVEL_SOURCES)
 
 
 # =========================================================
@@ -706,6 +741,318 @@ def _parse_alpha_details(
             chapters,
             ensure_ascii=False,
         ) if chapters else None,
+    }
+
+
+def _first_text(
+    root,
+    selectors: tuple[str, ...],
+) -> str | None:
+
+    for selector in selectors:
+        el = root.select_one(selector)
+        if not el:
+            continue
+
+        text = normalize_text(el.get_text(" ", strip=True))
+        if text:
+            return text
+
+    return None
+
+
+def _extract_author_from_text(text: str) -> str | None:
+
+    match = re.search(
+        r"(?:Author|by)\s*:?\s*([A-Za-z0-9 .,'_\-&]+)",
+        text or "",
+        re.IGNORECASE,
+    )
+
+    if not match:
+        return None
+
+    author = normalize_text(match.group(1))
+    author = re.split(
+        r"\s+(?:Genre|Status|Chapter|Updated|Rating)\b",
+        author,
+        maxsplit=1,
+    )[0]
+
+    return author[:150] if author else None
+
+
+def _clean_web_chapter_text(text: str) -> str:
+
+    text = normalize_text(text)
+
+    blocked_markers = (
+        "read this novel",
+        "read latest chapters",
+        "hosted on",
+        "visit lightnovelworld",
+        "freewebnovel",
+        "royal road",
+        "royalroad",
+        "all rights reserved",
+        "support the author",
+        "advertisement",
+        "please enable javascript",
+    )
+
+    lowered = text.lower()
+
+    if any(marker in lowered for marker in blocked_markers):
+        return ""
+
+    return text
+
+
+def _parse_web_chapter(
+    html: str,
+    chapter_number: int,
+) -> dict | None:
+
+    soup = BeautifulSoup(html, "html.parser")
+
+    for tag in soup(["script", "style", "noscript", "iframe", "svg", "form"]):
+        tag.decompose()
+
+    title = _first_text(
+        soup,
+        (
+            "h1",
+            "h2",
+            ".chapter-title",
+            ".fic-header h1",
+            ".chapter-content h1",
+        ),
+    ) or _meta_content(soup, "og:title", "twitter:title")
+
+    containers = soup.select(
+        ".chapter-content, .chapter-inner, .chapter, .text-left, "
+        ".fiction-content, #chapter-content, article, main"
+    )
+
+    paragraphs: list[str] = []
+    roots = containers or [soup]
+
+    for root in roots:
+        for el in root.find_all(["p", "div"]):
+            if el.find(["p", "div"]):
+                continue
+
+            text = _clean_web_chapter_text(el.get_text(" ", strip=True))
+
+            if len(text) < 35:
+                continue
+
+            paragraphs.append(text)
+
+        if len(paragraphs) >= 4:
+            break
+
+    if not paragraphs:
+        return None
+
+    html_content = _plain_to_paragraphs("\n\n".join(paragraphs))
+
+    if len(BeautifulSoup(html_content, "html.parser").get_text()) < 200:
+        return None
+
+    return {
+        "title": title or f"Chapter {chapter_number}",
+        "html": html_content,
+    }
+
+
+def _chapter_number_from_url(href: str) -> int:
+
+    match = re.search(
+        r"(?:chapter|ch)[-/]?(\d+)",
+        href or "",
+        re.IGNORECASE,
+    )
+
+    return int(match.group(1)) if match else 0
+
+
+def _parse_webnovel_listing(
+    html: str,
+    source: str,
+    genre: str,
+) -> list[dict]:
+
+    config = WEB_NOVEL_SOURCES[source]
+    base_url = config["base_url"]
+    link_re = config["link_re"]
+    soup = BeautifulSoup(html, "html.parser")
+    books: list[dict] = []
+    seen: set[str] = set()
+
+    for a in soup.select("a[href]"):
+        href = a.get("href", "").strip()
+        parsed_path = urlparse(href).path if href.startswith("http") else href
+
+        if not link_re.match(parsed_path):
+            continue
+
+        full_url = urljoin(base_url, href)
+        if full_url in seen:
+            continue
+
+        seen.add(full_url)
+
+        card = a
+        for _ in range(7):
+            if card.parent is None:
+                break
+            card = card.parent
+
+        img = a.find("img") or card.find("img")
+        title = normalize_text(
+            a.get("title")
+            or (img.get("alt") if img else "")
+            or a.get_text(" ", strip=True)
+        )
+
+        if len(title) < 2 or title.lower() in {"read", "novel", "chapter"}:
+            slug = parsed_path.rstrip("/").split("/")[-1]
+            title = re.sub(r"^\d+-", "", slug).replace("-", " ").title()
+
+        card_text = normalize_text(card.get_text(" ", strip=True))
+        author = _extract_author_from_text(card_text) or "Unknown"
+        synopsis = None
+
+        for el in card.find_all(["p", "div"]):
+            text = normalize_text(el.get_text(" ", strip=True))
+            if 70 <= len(text) <= 700 and title.lower() not in text.lower():
+                synopsis = text[:500]
+                break
+
+        books.append(
+            {
+                "source": source,
+                "title": title[:255],
+                "author": author,
+                "genre": genre,
+                "cover": _pick_img_src(img, base_url) if img else None,
+                "synopsis": synopsis,
+                "download": full_url,
+            }
+        )
+
+    print(f"[{source} parser] books parsed: {len(books)}")
+    return books
+
+
+def _parse_webnovel_details(
+    html: str,
+    detail_url: str,
+    source: str,
+    max_public_chapters: int | None = None,
+) -> dict:
+
+    config = WEB_NOVEL_SOURCES[source]
+    soup = BeautifulSoup(html, "html.parser")
+
+    title = _first_text(
+        soup,
+        (
+            "h1",
+            ".novel-title",
+            ".fic-title h1",
+            ".profile-info h1",
+            ".book-title",
+        ),
+    ) or _meta_content(soup, "og:title", "twitter:title")
+
+    author = _first_text(
+        soup,
+        (
+            ".author a",
+            ".fic-author",
+            ".fiction-info a[href*='/profile/']",
+            "a[href*='/author/']",
+        ),
+    )
+
+    page_text = normalize_text(soup.get_text(" ", strip=True))
+    author = author or _extract_author_from_text(page_text)
+
+    cover = _meta_content(soup, "og:image", "twitter:image")
+    if not cover:
+        img = soup.select_one(".cover img, .novel-cover img, .fic-header img, img")
+        cover = _pick_img_src(img, config["base_url"]) if img else None
+
+    synopsis = _meta_content(soup, "description", "og:description", "twitter:description")
+    if not synopsis:
+        synopsis = _first_text(
+            soup,
+            (
+                ".description",
+                ".summary",
+                ".synopsis",
+                ".fiction-description",
+                ".profile-info .margin-bottom-10",
+            ),
+        )
+
+    chapter_links = []
+    seen_chapters: set[str] = set()
+
+    for a in soup.select("a[href]"):
+        href = a.get("href", "").strip()
+        text = normalize_text(a.get_text(" ", strip=True))
+        combined = f"{href} {text}".lower()
+
+        if "chapter" not in combined and not re.search(r"/fiction/\d+/[^/]+/chapter/\d+", href):
+            continue
+
+        chapter_url = urljoin(config["base_url"], href)
+
+        if chapter_url in seen_chapters:
+            continue
+
+        seen_chapters.add(chapter_url)
+        chapter_links.append(
+            (
+                _chapter_number_from_url(href) or len(chapter_links) + 1,
+                chapter_url,
+            )
+        )
+
+    chapter_links.sort(key=lambda item: item[0])
+    chapters_count = len(chapter_links) or None
+    chapter_limit = settings.initial_chapters_per_book
+
+    if max_public_chapters is not None:
+        chapter_limit = min(chapter_limit, max_public_chapters)
+
+    chapters = []
+
+    for chapter_number, chapter_url in chapter_links[:chapter_limit]:
+        try:
+            chapter = _parse_web_chapter(
+                fetch(chapter_url),
+                chapter_number,
+            )
+        except RequestException as e:
+            print(f"[{source} chapter ERROR] {chapter_url}: {e}")
+            continue
+
+        if chapter:
+            chapters.append(chapter)
+
+        time.sleep(0.2)
+
+    return {
+        "title": title,
+        "author": author,
+        "cover": cover,
+        "synopsis": synopsis,
+        "chapters_count": chapters_count,
+        "chapter_content": json.dumps(chapters, ensure_ascii=False) if chapters else None,
     }
 
 
@@ -1151,6 +1498,61 @@ def _fetch_chapter_from_source(
         if 0 <= index < len(chapters):
             return chapters[index]
 
+    if source in WEB_NOVEL_SOURCES and book.download:
+        try:
+            detail_html = fetch(book.download)
+        except RequestException as e:
+            print(
+                f"[chapter fetch ERROR] "
+                f"{book.download}: {e}"
+            )
+            return None
+
+        config = WEB_NOVEL_SOURCES[source]
+        soup = BeautifulSoup(detail_html, "html.parser")
+        chapter_links = []
+        seen_chapters: set[str] = set()
+
+        for a in soup.select("a[href]"):
+            href = a.get("href", "").strip()
+            text = normalize_text(a.get_text(" ", strip=True))
+            combined = f"{href} {text}".lower()
+
+            if "chapter" not in combined and not re.search(
+                r"/fiction/\d+/[^/]+/chapter/\d+",
+                href,
+            ):
+                continue
+
+            chapter_url = urljoin(config["base_url"], href)
+
+            if chapter_url in seen_chapters:
+                continue
+
+            seen_chapters.add(chapter_url)
+            chapter_links.append(
+                (
+                    _chapter_number_from_url(href) or len(chapter_links) + 1,
+                    chapter_url,
+                )
+            )
+
+        chapter_links.sort(key=lambda item: item[0])
+        index = chapter_number - 1
+
+        if 0 <= index < len(chapter_links):
+            try:
+                return _parse_web_chapter(
+                    fetch(chapter_links[index][1]),
+                    chapter_number,
+                )
+            except RequestException as e:
+                print(
+                    f"[chapter fetch ERROR] "
+                    f"{chapter_links[index][1]}: {e}"
+                )
+                return None
+
     return None
 
 
@@ -1253,9 +1655,21 @@ def _cache_book_chapters(
                     "note": note,
                 }
         else:
-            note = (
-                "Alphanovel did not expose chapter HTML in the fetched page data."
-            )
+            return {
+                "book_id": book.id,
+                "title": book.title,
+                "chapters_targeted": target,
+                "cached_before": cached_before,
+                "cached_after": _cached_chapter_count(
+                    book.chapter_content
+                ),
+                "fetched": fetched,
+                "unavailable": target,
+                "stopped": stopped,
+                "note": (
+                    "Alphanovel did not expose chapter HTML in the fetched page data."
+                ),
+            }
 
     for chapter_number in range(1, target + 1):
         if stop_key and stop_key in BACKFILL_STOP_REQUESTS:
@@ -1551,6 +1965,45 @@ def scrape_alpha_static(
     return books
 
 
+def scrape_webnovel_static(
+    slug: str,
+    genre: str,
+    page_number: int = 1,
+    max_public_chapters: int | None = None,
+) -> list[dict]:
+
+    config = WEB_NOVEL_SOURCES[slug]
+    path = config["paths"][0]
+    separator = "&" if "?" in path else "?"
+    url = f"{config['base_url']}{path}{separator}page={page_number}"
+
+    html = fetch(url)
+    books = _parse_webnovel_listing(html, slug, genre)
+
+    for book in books:
+        try:
+            details = _parse_webnovel_details(
+                fetch(book["download"]),
+                book["download"],
+                slug,
+                max_public_chapters=max_public_chapters,
+            )
+
+            for key, value in details.items():
+                if value:
+                    book[key] = value
+
+        except RequestException as e:
+            print(
+                f"[{slug} detail ERROR] "
+                f"{book.get('title')}: {e}"
+            )
+
+        time.sleep(0.3)
+
+    return books
+
+
 # =========================================================
 # INGEST CORE
 # =========================================================
@@ -1674,6 +2127,32 @@ def _run_alphanovel_ingest():
     )
 
 
+def _run_webnovel_ingest(
+    source: str,
+    pages_per_source: int = 1,
+    max_public_chapters: int | None = None,
+):
+
+    source = source.lower().strip()
+
+    if source not in WEB_NOVEL_SOURCES:
+        raise HTTPException(status_code=400, detail="Unknown web novel source.")
+
+    config = WEB_NOVEL_SOURCES[source]
+
+    return _run_ingest_pipeline(
+        source,
+        [(source, config["genre"])],
+        scrape_webnovel_static,
+        pages_per_genre=pages_per_source,
+        max_public_chapters=(
+            settings.initial_chapters_per_book
+            if max_public_chapters is None
+            else max_public_chapters
+        ),
+    )
+
+
 # =========================================================
 # ROUTES
 # =========================================================
@@ -1706,14 +2185,18 @@ def backfill_source_full_chapters(
     limit: int = Query(5, ge=1, le=50),
     max_chapters: int | None = Query(25, ge=1, le=1000),
     force: bool = Query(False),
+    book_id: int | None = Query(None, ge=1),
+    title: str | None = Query(None),
 ):
 
     source = source.lower().strip()
 
-    if source not in {"anystories", "alphanovel"}:
+    allowed_sources = {"anystories", "alphanovel", *WEB_NOVEL_SOURCE_NAMES}
+
+    if source not in allowed_sources:
         raise HTTPException(
             status_code=400,
-            detail="Source must be anystories or alphanovel.",
+            detail="Source must be anystories, alphanovel, lightnovelworld, freewebnovel, or royalroad.",
         )
 
     stop_key = f"{source}:full-chapters"
@@ -1722,13 +2205,43 @@ def backfill_source_full_chapters(
     stopped = False
 
     with get_db() as db:
-        books = (
-            db.query(Book)
-            .filter(Book.source == source)
-            .order_by(Book.id.desc())
-            .limit(limit)
-            .all()
+        query = db.query(Book).filter(
+            Book.source == source,
+            Book.download.isnot(None),
         )
+
+        if book_id:
+            books = query.filter(Book.id == book_id).limit(1).all()
+        elif title:
+            books = (
+                query.filter(Book.title.ilike(f"%{title.strip()}%"))
+                .order_by(Book.id.desc())
+                .limit(limit)
+                .all()
+            )
+        else:
+            random_order = (
+                func.rand()
+                if db.bind and db.bind.dialect.name == "mysql"
+                else func.random()
+            )
+            candidates = (
+                query.order_by(random_order)
+                .limit(max(limit * 8, 40))
+                .all()
+            )
+            books = []
+
+            for candidate in candidates:
+                candidate_target = max_chapters or settings.max_chapters_per_book
+                if candidate.chapters_count:
+                    candidate_target = min(candidate_target, candidate.chapters_count)
+
+                if force or _cached_chapter_count(candidate.chapter_content) < candidate_target:
+                    books.append(candidate)
+
+                if len(books) >= limit:
+                    break
 
         for book in books:
             if stop_key in BACKFILL_STOP_REQUESTS:
@@ -1779,10 +2292,12 @@ def stop_source_full_chapters(
 
     source = source.lower().strip()
 
-    if source not in {"anystories", "alphanovel"}:
+    allowed_sources = {"anystories", "alphanovel", *WEB_NOVEL_SOURCE_NAMES}
+
+    if source not in allowed_sources:
         raise HTTPException(
             status_code=400,
-            detail="Source must be anystories or alphanovel.",
+            detail="Source must be anystories, alphanovel, lightnovelworld, freewebnovel, or royalroad.",
         )
 
     BACKFILL_STOP_REQUESTS.add(f"{source}:full-chapters")
@@ -1803,6 +2318,8 @@ def backfill_anystories_full_chapters(
     limit: int = Query(5, ge=1, le=50),
     max_chapters: int | None = Query(25, ge=1, le=1000),
     force: bool = Query(False),
+    book_id: int | None = Query(None, ge=1),
+    title: str | None = Query(None),
 ):
 
     return backfill_source_full_chapters(
@@ -1811,6 +2328,8 @@ def backfill_anystories_full_chapters(
         limit=limit,
         max_chapters=max_chapters,
         force=force,
+        book_id=book_id,
+        title=title,
     )
 
 
@@ -1825,6 +2344,60 @@ def ingest_alphanovel(request: Request):
 
 
 @router.get(
+    "/lightnovelworld",
+    dependencies=[Depends(_require_admin)],
+)
+@limiter.limit("5/minute")
+def ingest_lightnovelworld(
+    request: Request,
+    pages: int = Query(1, ge=1, le=10),
+    chapters_per_book: int | None = Query(None, ge=0, le=100),
+):
+
+    return _run_webnovel_ingest(
+        "lightnovelworld",
+        pages_per_source=pages,
+        max_public_chapters=chapters_per_book,
+    )
+
+
+@router.get(
+    "/freewebnovel",
+    dependencies=[Depends(_require_admin)],
+)
+@limiter.limit("5/minute")
+def ingest_freewebnovel(
+    request: Request,
+    pages: int = Query(1, ge=1, le=10),
+    chapters_per_book: int | None = Query(None, ge=0, le=100),
+):
+
+    return _run_webnovel_ingest(
+        "freewebnovel",
+        pages_per_source=pages,
+        max_public_chapters=chapters_per_book,
+    )
+
+
+@router.get(
+    "/royalroad",
+    dependencies=[Depends(_require_admin)],
+)
+@limiter.limit("5/minute")
+def ingest_royalroad(
+    request: Request,
+    pages: int = Query(1, ge=1, le=10),
+    chapters_per_book: int | None = Query(None, ge=0, le=100),
+):
+
+    return _run_webnovel_ingest(
+        "royalroad",
+        pages_per_source=pages,
+        max_public_chapters=chapters_per_book,
+    )
+
+
+@router.get(
     "/all",
     dependencies=[Depends(_require_admin)],
 )
@@ -1833,12 +2406,24 @@ def ingest_all(request: Request):
 
     anystories = _run_anystories_ingest()
     alphanovel = _run_alphanovel_ingest()
+    lightnovelworld = _run_webnovel_ingest("lightnovelworld")
+    freewebnovel = _run_webnovel_ingest("freewebnovel")
+    royalroad = _run_webnovel_ingest("royalroad")
 
     return {
         "status": "success",
         "anystories": anystories["count"],
         "alphanovel": alphanovel["count"],
-        "total": anystories["count"] + alphanovel["count"],
+        "lightnovelworld": lightnovelworld["count"],
+        "freewebnovel": freewebnovel["count"],
+        "royalroad": royalroad["count"],
+        "total": (
+            anystories["count"]
+            + alphanovel["count"]
+            + lightnovelworld["count"]
+            + freewebnovel["count"]
+            + royalroad["count"]
+        ),
     }
 
 
