@@ -26,6 +26,7 @@ router = APIRouter(prefix="/ingest", tags=["Ingestion"])
 
 USE_PLAYWRIGHT = settings.use_playwright
 BACKFILL_STOP_REQUESTS: set[str] = set()
+INGEST_STOP_REQUESTS: set[str] = set()
 
 HEADERS = {
     "User-Agent": (
@@ -178,7 +179,20 @@ def _plain_to_paragraphs(text: str) -> str:
     )
 
 
-def save_books(db, books: list[dict]) -> int:
+def _book_ingest_summary(book: Book, is_new: bool = False) -> dict:
+    return {
+        "id": book.id,
+        "title": book.title,
+        "source": book.source,
+        "is_new": is_new,
+        "cached_chapters": _cached_chapter_count(
+            getattr(book, "chapter_content", None)
+        ),
+        "chapters": getattr(book, "chapters_count", None),
+    }
+
+
+def save_books(db, books: list[dict]) -> dict:
 
     existing = {
         book.download: book
@@ -186,6 +200,7 @@ def save_books(db, books: list[dict]) -> int:
     }
 
     count = 0
+    touched_books: list[tuple[Book, bool]] = []
 
     for b in books:
 
@@ -278,6 +293,8 @@ def save_books(db, books: list[dict]) -> int:
             if changed:
                 db.add(existing_book)
 
+            touched_books.append((existing_book, False))
+
             continue
 
         book = Book(
@@ -294,25 +311,36 @@ def save_books(db, books: list[dict]) -> int:
         )
 
         db.add(book)
+        db.flush()
 
         existing[b["download"]] = book
+        touched_books.append((book, True))
 
         count += 1
 
     db.commit()
 
-    return count
+    return {
+        "count": count,
+        "books": [
+            _book_ingest_summary(
+                book,
+                is_new=is_new,
+            )
+            for book, is_new in touched_books
+        ],
+    }
 
 
-def _bulk_save_books(db, batch: list[dict]) -> int:
+def _bulk_save_books(db, batch: list[dict]) -> dict:
 
-    count = save_books(db, batch)
+    result = save_books(db, batch)
 
     print(
-        f"[bulk_save] batch={len(batch)} saved={count}"
+        f"[bulk_save] batch={len(batch)} saved={result['count']}"
     )
 
-    return count
+    return result
 
 
 # =========================================================
@@ -389,6 +417,15 @@ WEB_NOVEL_SOURCES = {
 }
 
 WEB_NOVEL_SOURCE_NAMES = set(WEB_NOVEL_SOURCES)
+
+
+def _web_novel_source_list_text() -> str:
+    labels = [
+        config["label"]
+        for config in WEB_NOVEL_SOURCES.values()
+    ]
+
+    return ", ".join(labels[:-1]) + f", or {labels[-1]}"
 
 
 # =========================================================
@@ -877,6 +914,56 @@ def _chapter_number_from_url(href: str) -> int:
     return int(match.group(1)) if match else 0
 
 
+def _chapter_number_from_text(text: str) -> int:
+    match = re.search(
+        r"\b(?:chapter\s*)?(\d{1,6})\s*[:.-]",
+        text or "",
+        re.IGNORECASE,
+    )
+
+    return int(match.group(1)) if match else 0
+
+
+def _extract_web_chapter_links(
+    html: str,
+    source: str,
+) -> list[tuple[int, str]]:
+    config = WEB_NOVEL_SOURCES[source]
+    soup = BeautifulSoup(html, "html.parser")
+    chapter_links = []
+    seen_chapters: set[str] = set()
+
+    for a in soup.select("a[href]"):
+        href = a.get("href", "").strip()
+        text = normalize_text(a.get_text(" ", strip=True))
+        combined = f"{href} {text}".lower()
+
+        if "chapter" not in combined and not re.search(
+            r"/fiction/\d+/[^/]+/chapter/\d+",
+            href,
+        ):
+            continue
+
+        chapter_url = urljoin(config["base_url"], href)
+
+        if chapter_url in seen_chapters:
+            continue
+
+        seen_chapters.add(chapter_url)
+        chapter_links.append(
+            (
+                _chapter_number_from_text(text)
+                or _chapter_number_from_url(href)
+                or len(chapter_links) + 1,
+                chapter_url,
+            )
+        )
+
+    chapter_links.sort(key=lambda item: item[0])
+
+    return chapter_links
+
+
 def _parse_webnovel_listing(
     html: str,
     source: str,
@@ -998,36 +1085,20 @@ def _parse_webnovel_details(
             ),
         )
 
-    chapter_links = []
-    seen_chapters: set[str] = set()
-
-    for a in soup.select("a[href]"):
-        href = a.get("href", "").strip()
-        text = normalize_text(a.get_text(" ", strip=True))
-        combined = f"{href} {text}".lower()
-
-        if "chapter" not in combined and not re.search(r"/fiction/\d+/[^/]+/chapter/\d+", href):
-            continue
-
-        chapter_url = urljoin(config["base_url"], href)
-
-        if chapter_url in seen_chapters:
-            continue
-
-        seen_chapters.add(chapter_url)
-        chapter_links.append(
-            (
-                _chapter_number_from_url(href) or len(chapter_links) + 1,
-                chapter_url,
-            )
-        )
-
-    chapter_links.sort(key=lambda item: item[0])
+    chapter_links = _extract_web_chapter_links(
+        html,
+        source,
+    )
     chapters_count = len(chapter_links) or None
-    chapter_limit = settings.initial_chapters_per_book
-
-    if max_public_chapters is not None:
-        chapter_limit = min(chapter_limit, max_public_chapters)
+    chapter_limit = (
+        settings.initial_chapters_per_book
+        if max_public_chapters is None
+        else max_public_chapters
+    )
+    chapter_limit = min(
+        settings.max_chapters_per_book,
+        chapter_limit,
+    )
 
     chapters = []
 
@@ -1508,36 +1579,10 @@ def _fetch_chapter_from_source(
             )
             return None
 
-        config = WEB_NOVEL_SOURCES[source]
-        soup = BeautifulSoup(detail_html, "html.parser")
-        chapter_links = []
-        seen_chapters: set[str] = set()
-
-        for a in soup.select("a[href]"):
-            href = a.get("href", "").strip()
-            text = normalize_text(a.get_text(" ", strip=True))
-            combined = f"{href} {text}".lower()
-
-            if "chapter" not in combined and not re.search(
-                r"/fiction/\d+/[^/]+/chapter/\d+",
-                href,
-            ):
-                continue
-
-            chapter_url = urljoin(config["base_url"], href)
-
-            if chapter_url in seen_chapters:
-                continue
-
-            seen_chapters.add(chapter_url)
-            chapter_links.append(
-                (
-                    _chapter_number_from_url(href) or len(chapter_links) + 1,
-                    chapter_url,
-                )
-            )
-
-        chapter_links.sort(key=lambda item: item[0])
+        chapter_links = _extract_web_chapter_links(
+            detail_html,
+            source,
+        )
         index = chapter_number - 1
 
         if 0 <= index < len(chapter_links):
@@ -1837,6 +1882,8 @@ def scrape_as_playwright(
     genre: str,
     page_number: int = 1,
     max_public_chapters: int | None = None,
+    max_books: int | None = None,
+    stop_key: str | None = None,
 ) -> list[dict]:
 
     if not PLAYWRIGHT_AVAILABLE:
@@ -1899,6 +1946,8 @@ def scrape_as_static(
     genre: str,
     page_number: int = 1,
     max_public_chapters: int | None = None,
+    max_books: int | None = None,
+    stop_key: str | None = None,
 ) -> list[dict]:
 
     url = (
@@ -1929,6 +1978,8 @@ def scrape_alpha_static(
     genre: str,
     page_number: int = 1,
     max_public_chapters: int | None = None,
+    max_books: int | None = None,
+    stop_key: str | None = None,
 ) -> list[dict]:
 
     url = f"{ALPHA_BASE_URL}/novels/{slug}"
@@ -1970,6 +2021,8 @@ def scrape_webnovel_static(
     genre: str,
     page_number: int = 1,
     max_public_chapters: int | None = None,
+    max_books: int | None = None,
+    stop_key: str | None = None,
 ) -> list[dict]:
 
     config = WEB_NOVEL_SOURCES[slug]
@@ -1980,7 +2033,13 @@ def scrape_webnovel_static(
     html = fetch(url)
     books = _parse_webnovel_listing(html, slug, genre)
 
+    if max_books is not None:
+        books = books[:max_books]
+
     for book in books:
+        if stop_key and stop_key in INGEST_STOP_REQUESTS:
+            break
+
         try:
             details = _parse_webnovel_details(
                 fetch(book["download"]),
@@ -2015,9 +2074,13 @@ def _run_ingest_pipeline(
     batch_size: int = 50,
     pages_per_genre: int = 1,
     max_public_chapters: int | None = None,
+    max_books_per_page: int | None = None,
+    stop_key: str | None = None,
 ) -> dict:
 
     total = 0
+    stopped = False
+    saved_books: list[dict] = []
 
     batch_buffer: list[dict] = []
 
@@ -2025,6 +2088,9 @@ def _run_ingest_pipeline(
 
         for slug, genre in genres:
             for page_number in range(1, pages_per_genre + 1):
+                if stop_key and stop_key in INGEST_STOP_REQUESTS:
+                    stopped = True
+                    break
 
                 try:
 
@@ -2033,9 +2099,14 @@ def _run_ingest_pipeline(
                         genre,
                         page_number=page_number,
                         max_public_chapters=max_public_chapters,
+                        max_books=max_books_per_page,
+                        stop_key=stop_key,
                     )
 
                     batch_buffer.extend(books)
+
+                    if stop_key and stop_key in INGEST_STOP_REQUESTS:
+                        stopped = True
 
                     print(
                         f"[{source_name}] "
@@ -2048,12 +2119,13 @@ def _run_ingest_pipeline(
                         >= batch_size
                     ):
 
-                        added = _bulk_save_books(
+                        save_result = _bulk_save_books(
                             db,
                             batch_buffer,
                         )
 
-                        total += added
+                        total += save_result["count"]
+                        saved_books.extend(save_result["books"])
 
                         batch_buffer = []
 
@@ -2068,19 +2140,31 @@ def _run_ingest_pipeline(
 
                 time.sleep(delay)
 
+                if stopped:
+                    break
+
+            if stopped:
+                break
+
         if batch_buffer:
 
-            added = _bulk_save_books(
+            save_result = _bulk_save_books(
                 db,
                 batch_buffer,
             )
 
-            total += added
+            total += save_result["count"]
+            saved_books.extend(save_result["books"])
+
+    if stopped and stop_key:
+        INGEST_STOP_REQUESTS.discard(stop_key)
 
     return {
-        "status": "success",
+        "status": "stopped" if stopped else "success",
         "source": source_name,
         "count": total,
+        "books": saved_books,
+        "stopped": stopped,
         "mode": (
             "playwright"
             if USE_PLAYWRIGHT
@@ -2088,6 +2172,7 @@ def _run_ingest_pipeline(
         ),
         "pages_per_genre": pages_per_genre,
         "chapters_per_book": max_public_chapters,
+        "max_books_per_page": max_books_per_page,
     }
 
 
@@ -2098,6 +2183,7 @@ def _run_ingest_pipeline(
 def _run_anystories_ingest(
     pages_per_genre: int | None = None,
     max_public_chapters: int | None = None,
+    stop_key: str | None = None,
 ):
 
     if USE_PLAYWRIGHT and PLAYWRIGHT_AVAILABLE:
@@ -2115,15 +2201,19 @@ def _run_anystories_ingest(
             if max_public_chapters is None
             else max_public_chapters
         ),
+        stop_key=stop_key,
     )
 
 
-def _run_alphanovel_ingest():
+def _run_alphanovel_ingest(
+    stop_key: str | None = None,
+):
 
     return _run_ingest_pipeline(
         "alphanovel",
         ALPHA_GENRES,
         scrape_alpha_static,
+        stop_key=stop_key,
     )
 
 
@@ -2131,6 +2221,8 @@ def _run_webnovel_ingest(
     source: str,
     pages_per_source: int = 1,
     max_public_chapters: int | None = None,
+    max_books_per_page: int | None = None,
+    stop_key: str | None = None,
 ):
 
     source = source.lower().strip()
@@ -2150,7 +2242,55 @@ def _run_webnovel_ingest(
             if max_public_chapters is None
             else max_public_chapters
         ),
+        max_books_per_page=max_books_per_page,
+        stop_key=stop_key,
     )
+
+
+def _run_all_webnovel_ingests(
+    pages_per_source: int = 1,
+    max_public_chapters: int | None = None,
+    max_books_per_page: int | None = None,
+    stop_key: str | None = None,
+) -> dict:
+    results = {
+        source: _run_webnovel_ingest(
+            source,
+            pages_per_source=pages_per_source,
+            max_public_chapters=max_public_chapters,
+            max_books_per_page=max_books_per_page,
+            stop_key=stop_key,
+        )
+        for source in WEB_NOVEL_SOURCES
+        if not stop_key or stop_key not in INGEST_STOP_REQUESTS
+    }
+    stopped = (
+        bool(stop_key and stop_key in INGEST_STOP_REQUESTS)
+        or any(item.get("stopped", False) for item in results.values())
+    )
+
+    if stopped and stop_key:
+        INGEST_STOP_REQUESTS.discard(stop_key)
+
+    return {
+        "status": "stopped" if stopped else "success",
+        "source": "webnovels",
+        "count": sum(item["count"] for item in results.values()),
+        "books": [
+            book
+            for result in results.values()
+            for book in result.get("books", [])
+        ],
+        "stopped": stopped,
+        "sources": results,
+        "pages_per_source": pages_per_source,
+        "chapters_per_book": (
+            settings.initial_chapters_per_book
+            if max_public_chapters is None
+            else max_public_chapters
+        ),
+        "max_books_per_page": max_books_per_page,
+    }
 
 
 # =========================================================
@@ -2171,7 +2311,124 @@ def ingest_anystories(
     return _run_anystories_ingest(
         pages_per_genre=pages_per_genre,
         max_public_chapters=chapters_per_book,
+        stop_key="anystories:ingest",
     )
+
+
+@router.get(
+    "/webnovels",
+    dependencies=[Depends(_require_admin)],
+)
+@limiter.limit("3/minute")
+def ingest_webnovels(
+    request: Request,
+    pages: int = Query(1, ge=1, le=10),
+    chapters_per_book: int | None = Query(None, ge=0, le=100),
+    max_books_per_page: int | None = Query(10, ge=1, le=100),
+):
+
+    return _run_all_webnovel_ingests(
+        pages_per_source=pages,
+        max_public_chapters=chapters_per_book,
+        max_books_per_page=max_books_per_page,
+        stop_key="webnovels:ingest",
+    )
+
+
+@router.post(
+    "/webnovels/stop",
+    dependencies=[Depends(_require_admin)],
+)
+@limiter.limit("30/hour")
+def stop_webnovel_ingest(
+    request: Request,
+):
+
+    INGEST_STOP_REQUESTS.add("webnovels:ingest")
+
+    for source in WEB_NOVEL_SOURCES:
+        INGEST_STOP_REQUESTS.add(f"{source}:ingest")
+
+    return {
+        "status": "stop_requested",
+        "source": "webnovels",
+        "sources": list(WEB_NOVEL_SOURCES),
+    }
+
+
+@router.post(
+    "/{source}/stop",
+    dependencies=[Depends(_require_admin)],
+)
+@limiter.limit("30/hour")
+def stop_source_ingest(
+    source: str,
+    request: Request,
+):
+
+    source = source.lower().strip()
+    allowed_sources = {"anystories", "alphanovel", *WEB_NOVEL_SOURCE_NAMES}
+
+    if source not in allowed_sources:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Source must be anystories, alphanovel, "
+                f"{_web_novel_source_list_text()}."
+            ),
+        )
+
+    INGEST_STOP_REQUESTS.add(f"{source}:ingest")
+
+    return {
+        "status": "stop_requested",
+        "source": source,
+    }
+
+
+@router.post(
+    "/webnovels/full-chapters",
+    dependencies=[Depends(_require_admin)],
+)
+@limiter.limit("6/hour")
+def backfill_webnovel_full_chapters(
+    request: Request,
+    limit: int = Query(2, ge=1, le=50),
+    max_chapters: int | None = Query(25, ge=1, le=1000),
+    force: bool = Query(False),
+):
+
+    results = {}
+    stopped = False
+
+    for source in WEB_NOVEL_SOURCES:
+        result = backfill_source_full_chapters(
+            source=source,
+            request=request,
+            limit=limit,
+            max_chapters=max_chapters,
+            force=force,
+        )
+        results[source] = result
+        stopped = stopped or result.get("stopped", False)
+
+        if stopped:
+            break
+
+    return {
+        "status": "stopped" if stopped else "success",
+        "source": "webnovels",
+        "books_checked": sum(
+            item.get("books_checked", 0)
+            for item in results.values()
+        ),
+        "chapters_fetched": sum(
+            item.get("chapters_fetched", 0)
+            for item in results.values()
+        ),
+        "stopped": stopped,
+        "sources": results,
+    }
 
 
 @router.post(
@@ -2196,7 +2453,10 @@ def backfill_source_full_chapters(
     if source not in allowed_sources:
         raise HTTPException(
             status_code=400,
-            detail="Source must be anystories, alphanovel, lightnovelworld, freewebnovel, or royalroad.",
+            detail=(
+                "Source must be anystories, alphanovel, "
+                f"{_web_novel_source_list_text()}."
+            ),
         )
 
     stop_key = f"{source}:full-chapters"
@@ -2281,6 +2541,25 @@ def backfill_source_full_chapters(
 
 
 @router.post(
+    "/webnovels/full-chapters/stop",
+    dependencies=[Depends(_require_admin)],
+)
+@limiter.limit("30/hour")
+def stop_webnovel_full_chapters(
+    request: Request,
+):
+
+    for source in WEB_NOVEL_SOURCES:
+        BACKFILL_STOP_REQUESTS.add(f"{source}:full-chapters")
+
+    return {
+        "status": "stop_requested",
+        "source": "webnovels",
+        "sources": list(WEB_NOVEL_SOURCES),
+    }
+
+
+@router.post(
     "/{source}/full-chapters/stop",
     dependencies=[Depends(_require_admin)],
 )
@@ -2297,7 +2576,10 @@ def stop_source_full_chapters(
     if source not in allowed_sources:
         raise HTTPException(
             status_code=400,
-            detail="Source must be anystories, alphanovel, lightnovelworld, freewebnovel, or royalroad.",
+            detail=(
+                "Source must be anystories, alphanovel, "
+                f"{_web_novel_source_list_text()}."
+            ),
         )
 
     BACKFILL_STOP_REQUESTS.add(f"{source}:full-chapters")
@@ -2340,7 +2622,9 @@ def backfill_anystories_full_chapters(
 @limiter.limit("5/minute")
 def ingest_alphanovel(request: Request):
 
-    return _run_alphanovel_ingest()
+    return _run_alphanovel_ingest(
+        stop_key="alphanovel:ingest",
+    )
 
 
 @router.get(
@@ -2352,12 +2636,15 @@ def ingest_lightnovelworld(
     request: Request,
     pages: int = Query(1, ge=1, le=10),
     chapters_per_book: int | None = Query(None, ge=0, le=100),
+    max_books_per_page: int | None = Query(10, ge=1, le=100),
 ):
 
     return _run_webnovel_ingest(
         "lightnovelworld",
         pages_per_source=pages,
         max_public_chapters=chapters_per_book,
+        max_books_per_page=max_books_per_page,
+        stop_key="lightnovelworld:ingest",
     )
 
 
@@ -2370,12 +2657,15 @@ def ingest_freewebnovel(
     request: Request,
     pages: int = Query(1, ge=1, le=10),
     chapters_per_book: int | None = Query(None, ge=0, le=100),
+    max_books_per_page: int | None = Query(10, ge=1, le=100),
 ):
 
     return _run_webnovel_ingest(
         "freewebnovel",
         pages_per_source=pages,
         max_public_chapters=chapters_per_book,
+        max_books_per_page=max_books_per_page,
+        stop_key="freewebnovel:ingest",
     )
 
 
@@ -2388,12 +2678,15 @@ def ingest_royalroad(
     request: Request,
     pages: int = Query(1, ge=1, le=10),
     chapters_per_book: int | None = Query(None, ge=0, le=100),
+    max_books_per_page: int | None = Query(10, ge=1, le=100),
 ):
 
     return _run_webnovel_ingest(
         "royalroad",
         pages_per_source=pages,
         max_public_chapters=chapters_per_book,
+        max_books_per_page=max_books_per_page,
+        stop_key="royalroad:ingest",
     )
 
 
@@ -2406,23 +2699,21 @@ def ingest_all(request: Request):
 
     anystories = _run_anystories_ingest()
     alphanovel = _run_alphanovel_ingest()
-    lightnovelworld = _run_webnovel_ingest("lightnovelworld")
-    freewebnovel = _run_webnovel_ingest("freewebnovel")
-    royalroad = _run_webnovel_ingest("royalroad")
+    webnovels = _run_all_webnovel_ingests()
 
     return {
         "status": "success",
         "anystories": anystories["count"],
         "alphanovel": alphanovel["count"],
-        "lightnovelworld": lightnovelworld["count"],
-        "freewebnovel": freewebnovel["count"],
-        "royalroad": royalroad["count"],
+        "webnovels": webnovels["count"],
+        "webnovel_sources": {
+            source: result["count"]
+            for source, result in webnovels["sources"].items()
+        },
         "total": (
             anystories["count"]
             + alphanovel["count"]
-            + lightnovelworld["count"]
-            + freewebnovel["count"]
-            + royalroad["count"]
+            + webnovels["count"]
         ),
     }
 

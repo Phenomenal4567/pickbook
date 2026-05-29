@@ -106,9 +106,10 @@
 
     <section>
       <h2>Source Ingest</h2>
-      <p style="margin-bottom:12px">LightNovelWorld, FreeWebNovel, and Royal Road are now part of the PickBook story setup. After ingesting them, remember to run Chapter Backfill for those sources too.</p>
+      <p style="margin-bottom:12px">LightNovelWorld, FreeWebNovel, and Royal Road are now part of the PickBook story setup. Use All Web Novel Sources to ingest them together, then run Chapter Backfill for the same source group.</p>
       <label>Source
         <select id="ingest-source">
+          <option value="webnovels">All Web Novel Sources</option>
           <option value="lightnovelworld">LightNovelWorld</option>
           <option value="freewebnovel">FreeWebNovel</option>
           <option value="royalroad">Royal Road</option>
@@ -122,16 +123,22 @@
       <label>Preview chapters per book
         <input id="ingest-chapters" type="number" min="0" max="100" value="2">
       </label>
+      <label>Max stories per source page
+        <input id="ingest-max-books" type="number" min="1" max="100" value="10">
+      </label>
       <div class="actions">
         <button id="ingest-start-btn" onclick="runSourceIngest()">Run Ingest</button>
+        <button id="ingest-stop-btn" class="danger" onclick="stopSourceIngest()" disabled>Stop</button>
       </div>
       <div class="status" id="ingest-status"></div>
+      <div id="ingest-results" class="empty">Run an ingest to see saved book IDs.</div>
     </section>
 
     <section>
       <h2>Chapter Backfill</h2>
       <label>Source
         <select id="backfill-source">
+          <option value="webnovels">All Web Novel Sources</option>
           <option value="anystories">Anystories</option>
           <option value="alphanovel">Alphanovel</option>
           <option value="lightnovelworld">LightNovelWorld</option>
@@ -291,18 +298,22 @@
     const source = document.getElementById('ingest-source').value;
     const pages = Number(document.getElementById('ingest-pages').value || 1);
     const chapters = Number(document.getElementById('ingest-chapters').value || 0);
+    const maxBooks = Number(document.getElementById('ingest-max-books').value || 10);
     const params = new URLSearchParams();
 
-    if (['lightnovelworld', 'freewebnovel', 'royalroad'].includes(source)) {
+    if (['webnovels', 'lightnovelworld', 'freewebnovel', 'royalroad'].includes(source)) {
       params.set('pages', String(pages));
       params.set('chapters_per_book', String(chapters));
+      params.set('max_books_per_page', String(maxBooks));
     } else if (source === 'anystories') {
       params.set('pages_per_genre', String(pages));
       params.set('chapters_per_book', String(chapters));
     }
 
     document.getElementById('ingest-start-btn').disabled = true;
+    document.getElementById('ingest-stop-btn').disabled = false;
     setStatus('ingest-status', 'Ingest running. Keep this tab open.', true);
+    document.getElementById('ingest-results').innerHTML = '<div class="empty">Working...</div>';
 
     let res;
     let data = {};
@@ -314,6 +325,7 @@
       data = await res.json().catch(() => ({}));
     } finally {
       document.getElementById('ingest-start-btn').disabled = false;
+      document.getElementById('ingest-stop-btn').disabled = true;
     }
 
     if (!res || !res.ok) {
@@ -321,7 +333,73 @@
       return;
     }
 
-    setStatus('ingest-status', `Finished ${source}. Added ${data.count || 0} new stories. Now run Chapter Backfill for fuller reading.`, true);
+    const prefix = data.stopped ? 'Stopped.' : 'Finished.';
+    setStatus('ingest-status', `${prefix} ${source} added ${data.count || 0} new stories. Now run Chapter Backfill for fuller reading.`, true);
+    renderIngestResults(data);
+  }
+
+  function renderIngestResults(data) {
+    let rows = Array.isArray(data.books) ? data.books : [];
+    if (!rows.length && data.sources && typeof data.sources === 'object') {
+      rows = Object.entries(data.sources).flatMap(([sourceName, sourceResult]) => {
+        const sourceRows = Array.isArray(sourceResult.books) ? sourceResult.books : [];
+        return sourceRows.map(row => ({ ...row, sourceName }));
+      });
+    }
+
+    document.getElementById('ingest-results').innerHTML = rows.length ? `
+      <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Book</th>
+            <th>Source</th>
+            <th>Chapters</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(row => `
+            <tr>
+              <td><strong>${row.id}</strong></td>
+              <td>${escapeHtml(row.title)}${row.is_new ? ' <span style="color:var(--success)">new</span>' : ''}</td>
+              <td>${escapeHtml(row.sourceName || row.source || '')}</td>
+              <td>${Number(row.cached_chapters || 0)} cached / ${escapeHtml(row.chapters || '?')}</td>
+              <td><button class="secondary" onclick="useBookIdForBackfill(${row.id})">Use ID</button></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      </div>
+    ` : '<div class="empty">No saved book IDs were returned.</div>';
+  }
+
+  function useBookIdForBackfill(bookId) {
+    document.getElementById('backfill-book-id').value = bookId;
+    setStatus('backfill-status', `Book ID ${bookId} added to Chapter Backfill.`, true);
+    document.getElementById('backfill-book-id').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  async function stopSourceIngest() {
+    if (!token()) {
+      setStatus('ingest-status', 'Admin token is required.', false);
+      return;
+    }
+
+    const source = document.getElementById('ingest-source').value;
+    const res = await fetch(`/ingest/${source}/stop`, {
+      method: 'POST',
+      headers: headers()
+    });
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      setStatus('ingest-status', data.detail || 'Could not stop ingest.', false);
+      return;
+    }
+
+    setStatus('ingest-status', 'Stop requested. Current story fetch will finish first.', true);
   }
 
   async function deleteCoupon(id, code) {
@@ -388,12 +466,19 @@
 
     const prefix = data.stopped ? 'Stopped.' : 'Finished.';
     setStatus('backfill-status', `${prefix} Fetched ${data.chapters_fetched || 0} chapters across ${data.books_checked || 0} books.`, true);
-    const rows = Array.isArray(data.results) ? data.results : [];
+    let rows = Array.isArray(data.results) ? data.results : [];
+    if (!rows.length && data.sources && typeof data.sources === 'object') {
+      rows = Object.entries(data.sources).flatMap(([sourceName, sourceResult]) => {
+        const sourceRows = Array.isArray(sourceResult.results) ? sourceResult.results : [];
+        return sourceRows.map(row => ({ ...row, sourceName }));
+      });
+    }
     document.getElementById('backfill-results').innerHTML = rows.length ? `
       <div class="table-wrap">
       <table>
         <thead>
           <tr>
+            <th>Source</th>
             <th>Book</th>
             <th>Target</th>
             <th>Before</th>
@@ -405,6 +490,7 @@
         <tbody>
           ${rows.map(row => `
             <tr>
+              <td>${escapeHtml(row.sourceName || source)}</td>
               <td>${escapeHtml(row.title)}</td>
               <td>${row.chapters_targeted}</td>
               <td>${row.cached_before}</td>
