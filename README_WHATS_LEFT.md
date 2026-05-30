@@ -21,9 +21,9 @@ http://127.0.0.1:8000/ingest/books
 - Updated source genre labels in ingestion:
   - Anystories `werewolf` now maps to `Werewolf`.
   - Anystories `dark-romance` maps to `Dark Romance`.
-  - AlphaNovel `werewolf` now maps to `Werewolf`.
-  - AlphaNovel `billionaire` now maps to `Billionaire`.
-  - AlphaNovel `ya-teen` now maps to `YA/Teen`.
+  - MoboReader `werewolf` now maps to `Werewolf`.
+  - MoboReader `billionaire` now maps to `Billionaire`.
+  - MoboReader `ya-teen` now maps to `YA/Teen`.
 - Updated the frontend genre filters and taste picker to include:
   - `Werewolf`
   - `Billionaire`
@@ -36,7 +36,7 @@ http://127.0.0.1:8000/ingest/books
   - public preview chapter caching where available
 - Fixed the Anystories listing parser so it uses each book link's own title/image metadata before falling back to broader page headings. This prevents repeated bad titles like `List of Dark Romance Novels to Read Online`.
 - Updated save logic so re-ingest can repair existing bad Anystories rows that already have those listing-page titles.
-- Added source filters in the frontend for `Anystories` and `AlphaNovel`, so Anystories books can be found directly.
+- Added source filters in the frontend for `Anystories` and `MoboReader`, so Anystories books can be found directly.
 - Updated the reader/chapter list so chapters cached in PickBook are marked `Cached`, while unavailable chapters show `Continue on source` instead of pretending they are readable locally.
 - Ran `scripts/repair_anystories_rows.py` to repair 79 existing bad Anystories titles, then reran it to polish possessive title formatting.
 - Added a file-open redirect guard in `index.html` so direct `file://` opens try to move to the local server.

@@ -6,55 +6,113 @@
 <title>PickBook Admin Tools</title>
 <style>
   :root {
-    --bg: #120f0d;
-    --panel: #201915;
-    --panel2: #2c231e;
+    --bg: #1A0E07;
+    --panel: #2E1810;
+    --panel2: #3D2318;
     --text: #f5eee8;
-    --muted: #b49d90;
+    --muted: #A88878;
     --accent: #d4a853;
+    --accent2: #C8956C;
     --border: rgba(212, 168, 83, 0.24);
+    --border-cool: rgba(212, 168, 83, 0.18);
     --danger: #d75f5f;
     --success: #64c18b;
+    --shadow: 0 18px 44px rgba(0,0,0,0.28);
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-  main { max-width: 1040px; margin: 0 auto; padding: 32px 20px 56px; }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(circle at top left, rgba(212,168,83,0.12), transparent 32rem),
+      linear-gradient(180deg, #241107 0%, var(--bg) 42%);
+    color: var(--text);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  main { max-width: 1120px; margin: 0 auto; padding: 32px 20px 56px; }
   header { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 24px; }
   h1 { margin: 0; font-size: 30px; line-height: 1.1; }
   p { color: var(--muted); margin: 8px 0 0; }
-  .grid { display: grid; grid-template-columns: minmax(280px, 380px) 1fr; gap: 18px; align-items: start; }
-  section { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 18px; }
+  .admin-shell-title { display: inline-flex; align-items: center; gap: 10px; }
+  .admin-shell-title::before { content: ""; width: 11px; height: 34px; border-radius: 4px; background: linear-gradient(180deg, var(--accent), var(--accent2)); display: inline-block; }
+  .back-link { color: var(--accent); text-decoration: none; border: 1px solid var(--border); border-radius: 999px; padding: 8px 12px; background: rgba(212,168,83,0.06); }
+  .back-link:hover { border-color: var(--accent); }
+  .grid { display: grid; grid-template-columns: minmax(280px, 380px) 1fr; gap: 14px; align-items: start; }
+  section {
+    background: rgba(46,24,16,0.94);
+    border: 1px solid var(--border-cool);
+    border-radius: 10px;
+    padding: 0;
+    overflow: hidden;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.03) inset;
+  }
   h2 { font-size: 18px; margin: 0 0 14px; }
   label { display: block; color: var(--muted); font-size: 13px; margin: 12px 0 6px; }
-  input, select { width: 100%; border: 1px solid var(--border); background: var(--panel2); color: var(--text); border-radius: 7px; padding: 10px 11px; font-size: 14px; }
-  button { border: 0; border-radius: 7px; background: var(--accent); color: #160f08; font-weight: 700; padding: 10px 14px; cursor: pointer; }
+  input, select {
+    width: 100%;
+    border: 1px solid rgba(212,168,83,0.22);
+    background: #1F100A;
+    color: var(--text);
+    border-radius: 8px;
+    padding: 10px 11px;
+    font-size: 14px;
+  }
+  input:focus, select:focus { outline: 2px solid rgba(212,168,83,0.25); border-color: var(--accent); }
+  button { border: 0; border-radius: 8px; background: var(--accent); color: #160f08; font-weight: 700; padding: 10px 14px; cursor: pointer; }
   button.secondary { background: var(--panel2); border: 1px solid var(--border); color: var(--text); }
   button.danger { background: var(--danger); color: #fff; }
+  button:hover { filter: brightness(1.05); }
   button:disabled { opacity: 0.55; cursor: not-allowed; }
-  .actions { display: flex; gap: 10px; margin-top: 16px; }
+  .actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
   .status { min-height: 22px; margin: 14px 0 0; color: var(--muted); font-size: 14px; }
   .status.ok { color: var(--success); }
   .status.err { color: var(--danger); }
   .full-span { grid-column: 1 / -1; }
   .metric-grid { display: grid; grid-template-columns: repeat(4, minmax(130px, 1fr)); gap: 10px; margin: 12px 0; }
-  .metric { background: var(--panel2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; min-height: 76px; }
+  .metric { background: rgba(61,35,24,0.92); border: 1px solid rgba(212,168,83,0.18); border-radius: 8px; padding: 12px; min-height: 76px; }
   .metric-label { color: var(--muted); font-size: 12px; line-height: 1.3; }
   .metric-value { color: var(--text); font-size: 20px; font-weight: 800; margin-top: 6px; overflow-wrap: anywhere; }
   .split-grid { display: grid; grid-template-columns: repeat(3, minmax(160px, 1fr)); gap: 12px; }
   .note { color: var(--muted); font-size: 13px; line-height: 1.5; margin-top: 10px; }
+  .how-it-works { background: rgba(61,35,24,0.92); border: 1px solid var(--border-cool); border-radius: 8px; margin-top: 14px; padding: 12px; }
+  .how-it-works h3 { font-size: 14px; margin: 0 0 8px; color: var(--text); }
+  .how-it-works ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: 13px; line-height: 1.55; }
+  .how-it-works li + li { margin-top: 5px; }
   .table-wrap { width: 100%; overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 14px; table-layout: fixed; }
   th, td { text-align: left; border-bottom: 1px solid var(--border); padding: 10px 8px; vertical-align: top; overflow-wrap: anywhere; word-break: break-word; }
   th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
   .empty { color: var(--muted); padding: 18px 8px; }
+  .token-card { margin-bottom: 18px; padding: 16px; background: linear-gradient(135deg, rgba(212,168,83,0.14), rgba(200,149,108,0.09)); box-shadow: var(--shadow); }
   .token-row { display: flex; gap: 10px; align-items: end; }
   .token-row label { flex: 1; margin-top: 0; }
+  .section-head {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 12px;
+    padding: 15px 17px;
+    border: 0;
+    border-bottom: 1px solid var(--border-cool);
+    background: linear-gradient(90deg, rgba(212,168,83,0.10), rgba(200,149,108,0.06));
+    color: var(--text);
+    text-align: left;
+  }
+  .section-head h2 { margin: 0; font-size: 16px; letter-spacing: 0.01em; }
+  .section-meta { color: var(--muted); font-size: 12px; margin-top: 3px; font-weight: 500; }
+  .section-chevron { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; background: rgba(255,255,255,0.06); color: var(--accent); transition: transform 0.2s; }
+  section.collapsed .section-chevron { transform: rotate(-90deg); }
+  .section-body { padding: 17px; }
+  section.collapsed .section-body { display: none; }
+  .admin-toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 14px; }
+  .admin-toolbar button { background: var(--panel2); color: var(--text); border: 1px solid var(--border-cool); padding: 8px 11px; }
   @media (max-width: 780px) {
     header, .grid, .token-row { display: block; }
     .grid { grid-template-columns: 1fr; }
     .metric-grid, .split-grid { grid-template-columns: 1fr; }
-    section { margin-bottom: 16px; }
+    section { margin-bottom: 12px; }
     .token-row button { margin-top: 10px; width: 100%; }
+    .back-link { display: inline-block; margin-top: 14px; }
   }
 </style>
 </head>
@@ -62,21 +120,30 @@
 <main>
   <header>
     <div>
-      <h1>PickBook Admin Tools</h1>
-      <p>Create coupons, run source ingest, and backfill chapters. API calls still require your admin token.</p>
+      <h1 class="admin-shell-title">PickBook Admin Tools</h1>
+      <p>Review submissions, moderate readers, manage payouts, coupons, ingest, and storage from one focused console.</p>
     </div>
-    <a href="/" style="color:var(--accent)">Back to app</a>
+    <a class="back-link" href="/">Back to app</a>
   </header>
 
-  <section style="margin-bottom:18px">
+  <section class="token-card" style="margin-bottom:18px">
     <div class="token-row">
       <label>Admin token
         <input id="admin-token" type="password" placeholder="Paste ADMIN_TOKEN">
       </label>
       <button class="secondary" onclick="saveToken()">Save Token</button>
       <button onclick="loadCoupons()">Load Coupons</button>
+      <button class="secondary" onclick="loadSourceSummary()">Load Sources</button>
     </div>
   </section>
+
+  <div class="admin-toolbar">
+    <button type="button" onclick="expandAdminSections()">Expand All</button>
+    <button type="button" onclick="collapseAdminSections()">Collapse All</button>
+    <button type="button" onclick="focusAdminSection('Author Review Queue')">Review Queue</button>
+    <button type="button" onclick="focusAdminSection('Author Withdrawals')">Withdrawals</button>
+    <button type="button" onclick="focusAdminSection('Source Ingest')">Ingest</button>
+  </div>
 
   <div class="grid">
     <section>
@@ -105,11 +172,32 @@
         <button class="secondary" onclick="resetForm()">Reset</button>
       </div>
       <div class="status" id="create-status"></div>
+      <div class="how-it-works">
+        <h3>How It Works</h3>
+        <ul>
+          <li>Promo codes work on the monthly Standard plan only.</li>
+          <li>Free days unlocks Standard immediately for the value entered.</li>
+          <li>Percent reduces the monthly price by that percentage.</li>
+          <li>Fixed amount subtracts that naira value from the monthly price.</li>
+          <li>Usage is counted only after activation or successful payment.</li>
+          <li>Each user and device can use the same code once.</li>
+        </ul>
+      </div>
     </section>
 
     <section>
       <h2>Coupons</h2>
       <div id="coupon-list" class="empty">Enter token, then load coupons.</div>
+    </section>
+
+    <section class="full-span">
+      <h2>Story Source Summary</h2>
+      <p style="margin-bottom:12px">Story counts by source, grouped by full, partial, or incomplete chapter ingest.</p>
+      <div class="actions">
+        <button onclick="loadSourceSummary()">Refresh Source Summary</button>
+      </div>
+      <div class="status" id="source-summary-status"></div>
+      <div id="source-summary-results" class="empty">Enter token, then load source summary.</div>
     </section>
 
     <section class="full-span">
@@ -132,13 +220,13 @@
           <input id="investor-cap-multiplier" type="number" min="1" max="10" step="0.1" value="2">
         </label>
         <label>Investor share %
-          <input id="investor-share-percent" type="number" min="0" max="100" step="0.1" value="15">
+          <input id="investor-share-percent" type="number" min="0" max="500" step="0.1" value="15">
         </label>
         <label>Already paid to investor
           <input id="investor-paid-to-date" type="number" min="0" value="0">
         </label>
         <label>Subscriber slots
-          <input id="investor-slots" type="number" min="0" max="100" value="2">
+          <input id="investor-slots" type="number" min="0" max="500" value="2">
         </label>
       </div>
       <div class="actions">
@@ -149,9 +237,66 @@
     </section>
 
     <section class="full-span">
-      <h2>Storage Trim</h2>
-      <p style="margin-bottom:12px">Remove rows from Royal Road, FreeWebNovel, and LightNovelWorld so those sources keep the target percentage of their current stored weight.</p>
+      <h2>Author Review Queue</h2>
+      <p style="margin-bottom:12px">Approve stories into the reader catalog or reject them with feedback authors can see.</p>
+      <label>Story status filter
+        <select id="story-status-filter">
+          <option value="pending_review">Pending review</option>
+          <option value="rejected">Rejected</option>
+          <option value="published">Published</option>
+          <option value="unpublished">Unpublished</option>
+          <option value="all">All statuses</option>
+        </select>
+      </label>
+      <div class="actions">
+        <button onclick="loadDashboard()">Load Dashboard Counts</button>
+        <button onclick="loadPendingStories()">Load Stories</button>
+      </div>
+      <div class="status" id="review-status"></div>
+      <div id="dashboard-counts" class="metric-grid"></div>
+      <div id="pending-story-list" class="empty">Enter token, then load pending stories.</div>
+    </section>
+
+    <section class="full-span">
+      <h2>Reader Comment Moderation</h2>
+      <p style="margin-bottom:12px">Reader comments stay hidden until approved here.</p>
+      <div class="actions">
+        <button onclick="loadPendingComments()">Load Pending Comments</button>
+      </div>
+      <div class="status" id="comment-status"></div>
+      <div id="pending-comment-list" class="empty">Enter token, then load pending comments.</div>
+    </section>
+
+    <section class="full-span">
+      <h2>Author Withdrawals</h2>
+      <p style="margin-bottom:12px">Review author withdrawal requests and mark manual bank payouts as paid or rejected.</p>
       <div class="split-grid">
+        <label>Minimum payout
+          <input id="minimum-payout" type="number" min="1" value="1000">
+        </label>
+      </div>
+      <div class="actions">
+        <button class="secondary" onclick="savePayoutSettings()">Save Payout Settings</button>
+        <button onclick="loadWithdrawals()">Load Withdrawals</button>
+        <button class="secondary" onclick="exportWithdrawals()">Export History</button>
+      </div>
+      <div class="status" id="withdrawal-status"></div>
+      <div id="withdrawal-list" class="empty">Enter token, then load withdrawals.</div>
+    </section>
+
+    <section class="full-span">
+      <h2>Storage Trim</h2>
+      <p style="margin-bottom:12px">Remove the largest stored rows from all sources or one selected source so the database keeps the target percentage of its current stored weight.</p>
+      <div class="split-grid">
+        <label>Source scope
+          <select id="trim-source">
+            <option value="all">All Sources</option>
+            <option value="anystories">Anystories</option>
+            <option value="lightnovelworld">LightNovelWorld</option>
+            <option value="freewebnovel">FreeWebNovel</option>
+            <option value="royalroad">Royal Road</option>
+          </select>
+        </label>
         <label>Target remaining %
           <input id="trim-target-percent" type="number" min="1" max="99" value="65">
         </label>
@@ -163,7 +308,7 @@
         </label>
       </div>
       <div class="actions">
-        <button onclick="trimWebnovelSources()">Run Storage Trim</button>
+        <button onclick="trimSources()">Run Storage Trim</button>
       </div>
       <div class="status" id="storage-status"></div>
       <div id="storage-results" class="empty">Preview first, then run delete if the numbers look right.</div>
@@ -181,25 +326,25 @@
 
     <section>
       <h2>Source Ingest</h2>
-      <p style="margin-bottom:12px">LightNovelWorld, FreeWebNovel, and Royal Road are now part of the PickBook story setup. Use All Web Novel Sources to ingest them together, then run Chapter Backfill for the same source group.</p>
+      <p style="margin-bottom:12px">Run every active source together, or target one source for a smaller check.</p>
       <label>Source
         <select id="ingest-source">
+          <option value="all">All Active Sources</option>
           <option value="webnovels">All Web Novel Sources</option>
           <option value="lightnovelworld">LightNovelWorld</option>
           <option value="freewebnovel">FreeWebNovel</option>
           <option value="royalroad">Royal Road</option>
-          <option value="anystories">Anystories</option>
-          <option value="alphanovel">Alphanovel</option>
+
         </select>
       </label>
       <label>Pages
         <input id="ingest-pages" type="number" min="1" max="10" value="1">
       </label>
       <label>Preview chapters per book
-        <input id="ingest-chapters" type="number" min="0" max="100" value="0">
+        <input id="ingest-chapters" type="number" min="0" max="500" value="0">
       </label>
       <label>Max stories per source page
-        <input id="ingest-max-books" type="number" min="1" max="100" value="10">
+        <input id="ingest-max-books" type="number" min="1" max="500" value="10">
       </label>
       <div class="actions">
         <button id="ingest-start-btn" onclick="runSourceIngest()">Run Ingest</button>
@@ -213,19 +358,18 @@
       <h2>Chapter Backfill</h2>
       <label>Source
         <select id="backfill-source">
+          <option value="all">All Active Sources</option>
           <option value="webnovels">All Web Novel Sources</option>
-          <option value="anystories">Anystories</option>
-          <option value="alphanovel">Alphanovel</option>
           <option value="lightnovelworld">LightNovelWorld</option>
           <option value="freewebnovel">FreeWebNovel</option>
           <option value="royalroad">Royal Road</option>
         </select>
       </label>
       <label>Books to process
-        <input id="backfill-limit" type="number" min="1" max="50" value="2">
+        <input id="backfill-limit" type="number" min="1" max="500" value="2">
       </label>
       <label>Max chapters per book
-        <input id="backfill-max-chapters" type="number" min="1" max="100" value="5">
+        <input id="backfill-max-chapters" type="number" min="1" max="500" value="5">
       </label>
       <label>Exact story ID
         <input id="backfill-book-id" type="number" min="1" placeholder="Optional book ID">
@@ -243,6 +387,27 @@
       </div>
       <div class="status" id="backfill-status"></div>
       <div id="backfill-results" class="empty">Run a backfill to see results.</div>
+    </section>
+
+    <section>
+      <h2>Ingest Chapters for Story</h2>
+      <p style="margin-bottom:12px">Fetch and cache all available chapters for a single story by ID. Use this to fully populate a specific book or top-up partially-cached chapters.</p>
+      <label>Story ID
+        <input id="single-book-id" type="number" min="1" placeholder="Book ID (required)">
+      </label>
+      <label>Max chapters
+        <input id="single-max-chapters" type="number" min="1" max="500" placeholder="Leave blank for server default">
+      </label>
+      <label style="display:flex;gap:8px;align-items:center;color:var(--muted)">
+        <input id="single-force" type="checkbox" style="width:auto">
+        Refill existing cached chapters
+      </label>
+      <div class="actions">
+        <button id="single-start-btn" onclick="runSingleBookIngest()">Ingest Chapters</button>
+        <button id="single-stop-btn" class="danger" onclick="stopSingleBookIngest()" disabled>Stop</button>
+      </div>
+      <div class="status" id="single-status"></div>
+      <div id="single-results" class="empty">Enter a story ID and click Ingest Chapters.</div>
     </section>
   </div>
 </main>
@@ -271,6 +436,61 @@
       'Content-Type': 'application/json',
       'X-Admin-Token': token()
     };
+  }
+
+  function adminSectionKey(title) {
+    return 'pb_admin_section_' + String(title || '').toLowerCase().replace(/[^a-z0-9]+/g, '_');
+  }
+
+  function enhanceAdminSections() {
+    document.querySelectorAll('.grid > section').forEach((section, index) => {
+      if (section.dataset.enhanced === 'true') return;
+      const h2 = section.querySelector(':scope > h2');
+      if (!h2) return;
+      const title = h2.textContent.trim();
+      const body = document.createElement('div');
+      body.className = 'section-body';
+      const head = document.createElement('button');
+      head.type = 'button';
+      head.className = 'section-head';
+      head.innerHTML = `<span><h2>${escapeHtml(title)}</h2><span class="section-meta">${section.classList.contains('full-span') ? 'Workflow panel' : 'Quick tool'}</span></span><span class="section-chevron">⌄</span>`;
+      h2.remove();
+      while (section.firstChild) body.appendChild(section.firstChild);
+      section.appendChild(head);
+      section.appendChild(body);
+      section.dataset.enhanced = 'true';
+      section.dataset.sectionTitle = title;
+      const saved = localStorage.getItem(adminSectionKey(title));
+      const shouldCollapse = saved ? saved === 'closed' : index > 2;
+      section.classList.toggle('collapsed', shouldCollapse);
+      head.addEventListener('click', () => {
+        section.classList.toggle('collapsed');
+        localStorage.setItem(adminSectionKey(title), section.classList.contains('collapsed') ? 'closed' : 'open');
+      });
+    });
+  }
+
+  function expandAdminSections() {
+    document.querySelectorAll('.grid > section').forEach(section => {
+      section.classList.remove('collapsed');
+      if (section.dataset.sectionTitle) localStorage.setItem(adminSectionKey(section.dataset.sectionTitle), 'open');
+    });
+  }
+
+  function collapseAdminSections() {
+    document.querySelectorAll('.grid > section').forEach(section => {
+      section.classList.add('collapsed');
+      if (section.dataset.sectionTitle) localStorage.setItem(adminSectionKey(section.dataset.sectionTitle), 'closed');
+    });
+  }
+
+  function focusAdminSection(title) {
+    const section = [...document.querySelectorAll('.grid > section')]
+      .find(item => item.dataset.sectionTitle === title);
+    if (!section) return;
+    section.classList.remove('collapsed');
+    localStorage.setItem(adminSectionKey(title), 'open');
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function resetForm() {
@@ -416,24 +636,317 @@
     `;
   }
 
-  async function trimWebnovelSources() {
+  async function loadSourceSummary() {
+    if (!token()) {
+      document.getElementById('source-summary-results').innerHTML = '<div class="empty">Admin token is required.</div>';
+      return;
+    }
+
+    setStatus('source-summary-status', 'Loading source summary...', true);
+    const res = await fetch('/admin/books/source-summary', { headers: headers() });
+    const data = await res.json().catch(() => []);
+
+    if (!res.ok) {
+      setStatus('source-summary-status', data.detail || 'Could not load source summary.', false);
+      return;
+    }
+
+    setStatus('source-summary-status', 'Source summary loaded.', true);
+    document.getElementById('source-summary-results').innerHTML = data.length ? `
+      <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Source</th>
+            <th>Total Stories</th>
+            <th>Full Ingest</th>
+            <th>Partial Ingest</th>
+            <th>Incomplete</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.map(row => `
+            <tr>
+              <td><strong>${escapeHtml(row.source)}</strong></td>
+              <td>${row.total}</td>
+              <td>${row.full}</td>
+              <td>${row.partial}</td>
+              <td>${row.incomplete}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      </div>
+    ` : '<div class="empty">No stories found.</div>';
+  }
+
+  async function loadDashboard() {
+    if (!token()) {
+      setStatus('review-status', 'Admin token is required.', false);
+      return;
+    }
+    const res = await fetch('/admin/dashboard', { headers: headers() });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setStatus('review-status', data.detail || 'Could not load dashboard.', false);
+      return;
+    }
+    setStatus('review-status', 'Dashboard counts loaded.', true);
+    document.getElementById('dashboard-counts').innerHTML = `
+      <div class="metric"><div class="metric-label">Pending stories</div><div class="metric-value">${data.pending_reviews || 0}</div></div>
+      <div class="metric"><div class="metric-label">Approved today</div><div class="metric-value">${data.approved_today || 0}</div></div>
+      <div class="metric"><div class="metric-label">Pending comments</div><div class="metric-value">${data.pending_comments || 0}</div></div>
+      <div class="metric"><div class="metric-label">Pending withdrawals</div><div class="metric-value">${data.pending_withdrawals || 0}</div></div>
+    `;
+  }
+
+  async function loadPendingStories() {
+    if (!token()) {
+      document.getElementById('pending-story-list').innerHTML = '<div class="empty">Admin token is required.</div>';
+      return;
+    }
+    const status = document.getElementById('story-status-filter')?.value || 'pending_review';
+    const res = await fetch(`/admin/stories?status=${encodeURIComponent(status)}`, { headers: headers() });
+    const data = await res.json().catch(() => []);
+    if (!res.ok) {
+      document.getElementById('pending-story-list').innerHTML = `<div class="empty">${escapeHtml(data.detail || 'Could not load stories.')}</div>`;
+      return;
+    }
+    if (!data.length) {
+      document.getElementById('pending-story-list').innerHTML = '<div class="empty">No stories found for this filter.</div>';
+      return;
+    }
+    document.getElementById('pending-story-list').innerHTML = `
+      <div class="table-wrap"><table>
+        <thead><tr><th>Story Preview</th><th>Author</th><th>Status</th><th>Feedback</th><th>Actions</th></tr></thead>
+        <tbody>${data.map(row => `
+          <tr>
+            <td>
+              ${row.cover ? `<img src="${escapeHtml(row.cover)}" alt="" style="width:54px;aspect-ratio:2/3;object-fit:cover;border-radius:6px;border:1px solid var(--border);float:left;margin:0 10px 8px 0">` : ''}
+              <strong>${escapeHtml(row.title)}</strong><br>${escapeHtml(row.synopsis || '')}
+              ${row.cover ? `<div style="clear:both;margin-top:8px"><a class="back-link" style="display:inline-block;padding:4px 8px;border-radius:6px" href="${escapeHtml(row.cover)}" target="_blank" rel="noopener">Open cover</a></div>` : ''}
+              <details style="margin-top:8px"><summary>Preview manuscript</summary><div class="note">${escapeHtml(row.preview || 'No manuscript preview stored for this submission.')}</div></details>
+            </td>
+            <td>${escapeHtml(row.author_name || row.author_email || row.author_id || '')}</td>
+            <td>${escapeHtml(row.status)}</td>
+            <td><input id="story-feedback-${row.story_id}" type="text" placeholder="Approval note or rejection reason"></td>
+            <td style="display:flex;gap:6px;flex-wrap:wrap">
+              <button onclick="approveStory(${row.story_id})">Approve</button>
+              <button class="danger" onclick="rejectStory(${row.story_id})">Reject</button>
+              <button class="secondary" onclick="loadStoryAudit(${row.story_id})">Audit</button>
+            </td>
+          </tr>
+        `).join('')}</tbody>
+      </table></div>
+      <div id="story-audit-results" class="empty">Select Audit on a story to view review history.</div>
+    `;
+  }
+
+  async function loadStoryAudit(storyId) {
+    const res = await fetch(`/admin/stories/${storyId}/audit`, { headers: headers() });
+    const data = await res.json().catch(() => []);
+    const target = document.getElementById('story-audit-results');
+    if (!target) return;
+    if (!res.ok) {
+      target.innerHTML = `<div class="empty">${escapeHtml(data.detail || 'Could not load audit trail.')}</div>`;
+      return;
+    }
+    target.innerHTML = data.length ? `
+      <div class="table-wrap"><table>
+        <thead><tr><th>When</th><th>Action</th><th>From</th><th>To</th><th>Admin</th><th>Note</th></tr></thead>
+        <tbody>${data.map(row => `<tr>
+          <td>${row.created_at ? new Date(row.created_at).toLocaleString() : ''}</td>
+          <td>${escapeHtml(row.action || '')}</td>
+          <td>${escapeHtml(row.from_status || '')}</td>
+          <td>${escapeHtml(row.to_status || '')}</td>
+          <td>${escapeHtml(row.admin_id || '')}</td>
+          <td>${escapeHtml(row.note || '')}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>
+    ` : '<div class="empty">No audit rows for this story yet.</div>';
+  }
+
+  async function approveStory(storyId) {
+    const feedback = document.getElementById(`story-feedback-${storyId}`)?.value || '';
+    const res = await fetch(`/admin/stories/${storyId}/approve`, {
+      method: 'POST',
+      headers: headers(),
+      body: JSON.stringify({ feedback })
+    });
+    const data = await res.json().catch(() => ({}));
+    setStatus('review-status', res.ok ? `Story ${storyId} approved.` : (data.detail || 'Could not approve story.'), res.ok);
+    if (res.ok) { loadPendingStories(); loadDashboard(); }
+  }
+
+  async function rejectStory(storyId) {
+    const feedback = document.getElementById(`story-feedback-${storyId}`)?.value.trim() || prompt('Rejection reason for the author') || '';
+    if (!feedback.trim()) {
+      setStatus('review-status', 'Rejection reason is required.', false);
+      return;
+    }
+    const res = await fetch(`/admin/stories/${storyId}/reject`, {
+      method: 'POST',
+      headers: headers(),
+      body: JSON.stringify({ feedback })
+    });
+    const data = await res.json().catch(() => ({}));
+    setStatus('review-status', res.ok ? `Story ${storyId} rejected.` : (data.detail || 'Could not reject story.'), res.ok);
+    if (res.ok) { loadPendingStories(); loadDashboard(); }
+  }
+
+  async function loadPendingComments() {
+    if (!token()) {
+      document.getElementById('pending-comment-list').innerHTML = '<div class="empty">Admin token is required.</div>';
+      return;
+    }
+    const res = await fetch('/admin/engagement/comments/pending', { headers: headers() });
+    const data = await res.json().catch(() => []);
+    if (!res.ok) {
+      document.getElementById('pending-comment-list').innerHTML = `<div class="empty">${escapeHtml(data.detail || 'Could not load comments.')}</div>`;
+      return;
+    }
+    if (!data.length) {
+      document.getElementById('pending-comment-list').innerHTML = '<div class="empty">No comments pending moderation.</div>';
+      return;
+    }
+    document.getElementById('pending-comment-list').innerHTML = `
+      <div class="table-wrap"><table>
+        <thead><tr><th>Content</th><th>Reader</th><th>Status</th><th>Rating</th><th>Comment</th><th>Moderation note</th><th>Actions</th></tr></thead>
+        <tbody>${data.map(row => `
+          <tr>
+            <td>${escapeHtml(row.content_title || '')}</td>
+            <td>${escapeHtml(row.reader || '')}</td>
+            <td>${escapeHtml(row.comment_status || '')}${row.report_count ? `<br><span style="color:var(--danger)">${row.report_count} report(s): ${escapeHtml(row.report_reason || '')}</span>` : ''}</td>
+            <td>${row.rating || ''}</td>
+            <td>${escapeHtml(row.comment || '')}</td>
+            <td><input id="comment-note-${row.id}" type="text" placeholder="Moderation note" value="${escapeHtml(row.moderation_note || '')}"></td>
+            <td style="display:flex;gap:6px;flex-wrap:wrap">
+              <button onclick="moderateComment(${row.id}, 'approve')">Approve</button>
+              <button class="danger" onclick="moderateComment(${row.id}, 'reject')">Reject</button>
+            </td>
+          </tr>
+        `).join('')}</tbody>
+      </table></div>
+    `;
+  }
+
+  async function moderateComment(id, decision) {
+    const res = await fetch(`/admin/engagement/comments/${id}/${decision}`, {
+      method: 'POST',
+      headers: headers(),
+      body: JSON.stringify({ moderation_note: document.getElementById(`comment-note-${id}`)?.value || '' })
+    });
+    const data = await res.json().catch(() => ({}));
+    setStatus('comment-status', res.ok ? `Comment ${decision}d.` : (data.detail || 'Could not moderate comment.'), res.ok);
+    if (res.ok) loadPendingComments();
+  }
+
+  async function loadWithdrawals() {
+    if (!token()) {
+      document.getElementById('withdrawal-list').innerHTML = '<div class="empty">Admin token is required.</div>';
+      return;
+    }
+    const res = await fetch('/admin/withdrawals', { headers: headers() });
+    const data = await res.json().catch(() => []);
+    if (!res.ok) {
+      document.getElementById('withdrawal-list').innerHTML = `<div class="empty">${escapeHtml(data.detail || 'Could not load withdrawals.')}</div>`;
+      return;
+    }
+    if (!data.length) {
+      document.getElementById('withdrawal-list').innerHTML = '<div class="empty">No withdrawal requests yet.</div>';
+      return;
+    }
+    if (data[0]?.minimum_payout_naira) {
+      document.getElementById('minimum-payout').value = data[0].minimum_payout_naira;
+    }
+    document.getElementById('withdrawal-list').innerHTML = `
+      <div class="table-wrap"><table>
+        <thead><tr><th>Author</th><th>Amount</th><th>Bank</th><th>Status</th><th>Admin note</th><th>Actions</th></tr></thead>
+        <tbody>${data.map(row => `
+          <tr>
+            <td>${escapeHtml(row.author_name || row.author_email || row.author_id || '')}</td>
+            <td>${money(row.amount_naira || 0)}</td>
+            <td>${escapeHtml([row.bank_name, row.bank_account_name, row.bank_account_number].filter(Boolean).join(' · '))}</td>
+            <td>${escapeHtml(row.status || '')}</td>
+            <td><input id="withdrawal-note-${row.id}" type="text" placeholder="Payment ref or rejection note" value="${escapeHtml(row.admin_note || '')}"></td>
+            <td style="display:flex;gap:6px;flex-wrap:wrap">
+              <button onclick="processWithdrawal(${row.id}, 'paid')">Mark Paid</button>
+              <button class="danger" onclick="processWithdrawal(${row.id}, 'rejected')">Reject</button>
+              ${row.receipt_id ? `<button class="secondary" onclick="copyText('${escapeAttr(row.receipt_id)}')">Receipt</button>` : ''}
+            </td>
+          </tr>
+        `).join('')}</tbody>
+      </table></div>
+    `;
+  }
+
+  async function processWithdrawal(id, status) {
+    const admin_note = document.getElementById(`withdrawal-note-${id}`)?.value || '';
+    const res = await fetch(`/admin/withdrawals/${id}`, {
+      method: 'POST',
+      headers: headers(),
+      body: JSON.stringify({ status, admin_note })
+    });
+    const data = await res.json().catch(() => ({}));
+    setStatus('withdrawal-status', res.ok ? `Withdrawal ${status}.` : (data.detail || 'Could not process withdrawal.'), res.ok);
+    if (res.ok) loadWithdrawals();
+  }
+
+  async function savePayoutSettings() {
+    const minimum_payout_naira = Number(document.getElementById('minimum-payout')?.value || 1000);
+    const res = await fetch('/admin/payout-settings', {
+      method: 'PUT',
+      headers: headers(),
+      body: JSON.stringify({ minimum_payout_naira })
+    });
+    const data = await res.json().catch(() => ({}));
+    setStatus('withdrawal-status', res.ok ? `Minimum payout set to ${money(data.minimum_payout_naira)}.` : (data.detail || 'Could not save payout settings.'), res.ok);
+  }
+
+  async function exportWithdrawals() {
+    const res = await fetch('/admin/withdrawals/export', { headers: headers() });
+    const data = await res.json().catch(() => []);
+    if (!res.ok) {
+      setStatus('withdrawal-status', data.detail || 'Could not export withdrawals.', false);
+      return;
+    }
+    const header = ['id','author_id','author_name','author_email','amount_naira','status','requested_at','processed_at','admin_note','receipt_id'];
+    const csv = [header.join(',')].concat(data.map(row => header.map(key => JSON.stringify(row[key] ?? '')).join(','))).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'pickbook-withdrawals.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    setStatus('withdrawal-status', 'Withdrawal history exported.', true);
+  }
+
+  function copyText(text) {
+    navigator.clipboard?.writeText(text).catch(() => {});
+    setStatus('withdrawal-status', 'Receipt ID copied.', true);
+  }
+
+  async function trimSources() {
     if (!token()) {
       setStatus('storage-status', 'Admin token is required.', false);
       return;
     }
 
     const dryRun = document.getElementById('trim-dry-run').value === 'true';
-    if (!dryRun && !window.confirm('Delete selected Royal Road, FreeWebNovel, and LightNovelWorld rows now? Preview first if you are unsure.')) {
+    const source = document.getElementById('trim-source').value || 'all';
+    if (!dryRun && !window.confirm(`Delete selected ${source === 'all' ? 'all-source' : source} rows now? Preview first if you are unsure.`)) {
       return;
     }
 
     const params = new URLSearchParams({
+      source,
       target_remaining_percent: document.getElementById('trim-target-percent').value || '65',
       dry_run: String(dryRun)
     });
 
     setStatus('storage-status', dryRun ? 'Previewing storage trim...' : 'Deleting selected rows...', true);
-    const res = await fetch(`/admin/storage/trim-webnovel-sources?${params.toString()}`, {
+    const res = await fetch(`/admin/storage/trim-sources?${params.toString()}`, {
       method: 'POST',
       headers: headers()
     });
@@ -512,7 +1025,7 @@
     const maxBooks = Number(document.getElementById('ingest-max-books').value || 10);
     const params = new URLSearchParams();
 
-    if (['webnovels', 'lightnovelworld', 'freewebnovel', 'royalroad'].includes(source)) {
+    if (['all', 'webnovels', 'lightnovelworld', 'freewebnovel', 'royalroad'].includes(source)) {
       params.set('pages', String(pages));
       params.set('chapters_per_book', String(chapters));
       params.set('max_books_per_page', String(maxBooks));
@@ -545,51 +1058,142 @@
     }
 
     const prefix = data.stopped ? 'Stopped.' : 'Finished.';
-    setStatus('ingest-status', `${prefix} ${source} added ${data.count || 0} new stories. Now run Chapter Backfill for fuller reading.`, true);
+    const newCount = Number(data.new_count ?? data.count ?? data.total ?? 0);
+    const savedCount = Number(data.saved ?? 0);
+    const scrapedCount = Number(data.scraped ?? 0);
+    setStatus('ingest-status', `${prefix} ${source} scraped ${scrapedCount}, saved/updated ${savedCount}, added ${newCount} new stories.`, true);
     renderIngestResults(data);
   }
 
   function renderIngestResults(data) {
     let rows = Array.isArray(data.books) ? data.books : [];
+    let sourceNotes = [];
     if (!rows.length && data.sources && typeof data.sources === 'object') {
       rows = Object.entries(data.sources).flatMap(([sourceName, sourceResult]) => {
         const sourceRows = Array.isArray(sourceResult.books) ? sourceResult.books : [];
         return sourceRows.map(row => ({ ...row, sourceName }));
       });
     }
+    if (data.sources && typeof data.sources === 'object') {
+      sourceNotes = Object.entries(data.sources).map(([sourceName, sourceResult]) => ({
+        sourceName,
+        scraped: Number(sourceResult.scraped || 0),
+        saved: Number(sourceResult.saved || 0),
+        newCount: Number(sourceResult.new_count ?? sourceResult.count ?? 0),
+        note: sourceResult.note || '',
+        errors: Array.isArray(sourceResult.errors) ? sourceResult.errors : []
+      }));
+    } else {
+      sourceNotes = [{
+        sourceName: data.source || '',
+        scraped: Number(data.scraped || 0),
+        saved: Number(data.saved || 0),
+        newCount: Number(data.new_count ?? data.count ?? 0),
+        note: data.note || '',
+        errors: Array.isArray(data.errors) ? data.errors : []
+      }];
+    }
 
-    document.getElementById('ingest-results').innerHTML = rows.length ? `
+    const notesHtml = sourceNotes.length ? `
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Source</th><th>Scraped</th><th>Saved/Updated</th><th>New</th><th>Note / Error</th></tr></thead>
+        <tbody>
+          ${sourceNotes.map(item => `
+            <tr>
+              <td>${escapeHtml(item.sourceName)}</td>
+              <td>${item.scraped}</td>
+              <td>${item.saved}</td>
+              <td>${item.newCount}</td>
+              <td>${escapeHtml(item.note || item.errors.map(err => `${err.genre || ''} page ${err.page || ''}: ${err.error || ''}`).join('; ') || '')}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      </div>
+    ` : '';
+
+    const rowsHtml = rows.length ? `
       <div class="table-wrap">
       <table>
         <thead>
           <tr>
             <th>ID</th>
             <th>Book</th>
-            <th>Source</th>
-            <th>Chapters</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows.map(row => `
-            <tr>
-              <td><strong>${row.id}</strong></td>
-              <td>${escapeHtml(row.title)}${row.is_new ? ' <span style="color:var(--success)">new</span>' : ''}</td>
-              <td>${escapeHtml(row.sourceName || row.source || '')}</td>
-              <td>${Number(row.cached_chapters || 0)} cached / ${escapeHtml(row.chapters || '?')}</td>
-              <td><button class="secondary" onclick="useBookIdForBackfill(${row.id})">Use ID</button></td>
+              <th>Source</th>
+              <th>Chapters</th>
+              <th>Actions</th>
             </tr>
-          `).join('')}
-        </tbody>
-      </table>
-      </div>
-    ` : '<div class="empty">No saved book IDs were returned.</div>';
+          </thead>
+          <tbody>
+            ${rows.map(row => `
+              <tr>
+                <td><strong>${row.id}</strong></td>
+                <td>${escapeHtml(row.title)}${row.is_new ? ' <span style="color:var(--success)">new</span>' : ''}</td>
+                <td>${escapeHtml(row.sourceName || row.source || '')}</td>
+                <td>${Number(row.cached_chapters || 0)} cached / ${escapeHtml(row.chapters || '?')}</td>
+                <td style="display:flex;gap:6px;flex-wrap:wrap">
+                  <button class="secondary" onclick="useBookIdForBackfill(${row.id})">Backfill ID</button>
+                  <button class="secondary" onclick="ingestBookChapters(${row.id}, ${escapeHtml(JSON.stringify(row.title))})">Ingest Chapters</button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        </div>
+      ` : '<div class="empty">No saved book IDs were returned. Check the source notes above for blocked pages, changed layouts, or no new stories.</div>';
+
+    document.getElementById('ingest-results').innerHTML = notesHtml + rowsHtml;
   }
 
   function useBookIdForBackfill(bookId) {
     document.getElementById('backfill-book-id').value = bookId;
     setStatus('backfill-status', `Book ID ${bookId} added to Chapter Backfill.`, true);
     document.getElementById('backfill-book-id').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  async function ingestBookChapters(bookId, bookTitle) {
+    if (!token()) {
+      setStatus('ingest-status', 'Admin token is required.', false);
+      return;
+    }
+    const maxChapters = prompt(`Ingest chapters for:\n"${bookTitle}"\n\nMax chapters to fetch (leave blank for server default):`, '');
+    if (maxChapters === null) return; // cancelled
+    const params = new URLSearchParams({ force: 'false' });
+    if (maxChapters.trim()) params.set('max_chapters', maxChapters.trim());
+    setStatus('ingest-status', `Fetching chapters for book ID ${bookId}… keep this tab open.`, true);
+    document.getElementById('ingest-results').innerHTML = '<div class="empty">Fetching chapters…</div>';
+    let res, data = {};
+    try {
+      res = await fetch(`/ingest/books/${bookId}/ingest-chapters?${params.toString()}`, {
+        method: 'POST',
+        headers: headers()
+      });
+      data = await res.json().catch(() => ({}));
+    } catch (err) {
+      setStatus('ingest-status', 'Request failed: ' + err.message, false);
+      return;
+    }
+    if (!res || !res.ok) {
+      setStatus('ingest-status', data.detail || 'Chapter ingest failed.', false);
+      return;
+    }
+    const after = data.cached_after ?? 0;
+    const fetched = data.fetched ?? 0;
+    const note = data.note ? ` ${data.note}` : '';
+    setStatus('ingest-status', `Done. ${fetched} chapter(s) fetched — ${after} now cached for "${data.title}".${note}`, true);
+    document.getElementById('ingest-results').innerHTML = `
+      <div class="table-wrap"><table>
+        <thead><tr><th>Book</th><th>Target</th><th>Before</th><th>After</th><th>Fetched</th><th>Note</th></tr></thead>
+        <tbody><tr>
+          <td>${escapeHtml(data.title || '')}</td>
+          <td>${data.chapters_targeted ?? '?'}</td>
+          <td>${data.cached_before ?? 0}</td>
+          <td>${after}</td>
+          <td>${fetched}</td>
+          <td>${escapeHtml(data.note || '')}</td>
+        </tr></tbody>
+      </table></div>`;
   }
 
   async function stopSourceIngest() {
@@ -676,15 +1280,52 @@
     }
 
     const prefix = data.stopped ? 'Stopped.' : 'Finished.';
-    setStatus('backfill-status', `${prefix} Fetched ${data.chapters_fetched || 0} chapters across ${data.books_checked || 0} books.`, true);
+    const note = data.note ? ` ${data.note}` : '';
+    setStatus('backfill-status', `${prefix} Fetched ${data.chapters_fetched || 0} chapters across ${data.books_checked || 0} books.${note}`, true);
     let rows = Array.isArray(data.results) ? data.results : [];
+    let sourceNotes = [];
     if (!rows.length && data.sources && typeof data.sources === 'object') {
       rows = Object.entries(data.sources).flatMap(([sourceName, sourceResult]) => {
         const sourceRows = Array.isArray(sourceResult.results) ? sourceResult.results : [];
         return sourceRows.map(row => ({ ...row, sourceName }));
       });
     }
-    document.getElementById('backfill-results').innerHTML = rows.length ? `
+    if (data.sources && typeof data.sources === 'object') {
+      sourceNotes = Object.entries(data.sources).map(([sourceName, sourceResult]) => ({
+        sourceName,
+        matched: Number(sourceResult.matched_books || 0),
+        checked: Number(sourceResult.books_checked || 0),
+        fetched: Number(sourceResult.chapters_fetched || 0),
+        note: sourceResult.note || ''
+      }));
+    } else {
+      sourceNotes = [{
+        sourceName: data.source || source,
+        matched: Number(data.matched_books || 0),
+        checked: Number(data.books_checked || 0),
+        fetched: Number(data.chapters_fetched || 0),
+        note: data.note || ''
+      }];
+    }
+    const notesHtml = sourceNotes.length ? `
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Source</th><th>Matched DB Stories</th><th>Checked</th><th>Fetched</th><th>Note</th></tr></thead>
+        <tbody>
+          ${sourceNotes.map(item => `
+            <tr>
+              <td>${escapeHtml(item.sourceName)}</td>
+              <td>${item.matched}</td>
+              <td>${item.checked}</td>
+              <td>${item.fetched}</td>
+              <td>${escapeHtml(item.note || '')}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      </div>
+    ` : '';
+    const rowsHtml = rows.length ? `
       <div class="table-wrap">
       <table>
         <thead>
@@ -713,7 +1354,8 @@
         </tbody>
       </table>
       </div>
-    ` : '<div class="empty">No books were processed.</div>';
+    ` : `<div class="empty">${escapeHtml(data.note || 'No books were processed.')}</div>`;
+    document.getElementById('backfill-results').innerHTML = notesHtml + rowsHtml;
   }
 
   async function stopBackfill() {
@@ -736,6 +1378,88 @@
 
     setStatus('backfill-status', 'Stop requested. Current chapter will finish first.', true);
     document.getElementById('backfill-stop-btn').disabled = true;
+  }
+
+  let _singleBookId = null;
+
+  async function runSingleBookIngest() {
+    if (!token()) {
+      setStatus('single-status', 'Admin token is required.', false);
+      return;
+    }
+    const bookId = document.getElementById('single-book-id').value.trim();
+    if (!bookId) {
+      setStatus('single-status', 'Please enter a story ID.', false);
+      return;
+    }
+    _singleBookId = bookId;
+    const maxChapters = document.getElementById('single-max-chapters').value.trim();
+    const force = document.getElementById('single-force').checked;
+    const params = new URLSearchParams({ force: String(force) });
+    if (maxChapters) params.set('max_chapters', maxChapters);
+
+    document.getElementById('single-start-btn').disabled = true;
+    document.getElementById('single-stop-btn').disabled = false;
+    setStatus('single-status', `Fetching chapters for book ID ${bookId}… keep this tab open.`, true);
+    document.getElementById('single-results').innerHTML = '<div class="empty">Working…</div>';
+
+    let res, data = {};
+    try {
+      res = await fetch(`/ingest/books/${bookId}/ingest-chapters?${params.toString()}`, {
+        method: 'POST',
+        headers: headers()
+      });
+      data = await res.json().catch(() => ({}));
+    } finally {
+      document.getElementById('single-start-btn').disabled = false;
+      document.getElementById('single-stop-btn').disabled = true;
+      _singleBookId = null;
+    }
+
+    if (!res || !res.ok) {
+      setStatus('single-status', data.detail || 'Ingest failed.', false);
+      return;
+    }
+
+    const prefix = data.stopped ? 'Stopped.' : 'Finished.';
+    const fetched = data.fetched ?? 0;
+    const after = data.cached_after ?? 0;
+    const note = data.note ? ` ${data.note}` : '';
+    setStatus('single-status', `${prefix} ${fetched} chapter(s) fetched — ${after} now cached for "${data.title}".${note}`, true);
+
+    document.getElementById('single-results').innerHTML = `
+      <div class="table-wrap"><table>
+        <thead><tr><th>Book</th><th>Target</th><th>Before</th><th>After</th><th>Fetched</th><th>Short Previews</th><th>Note</th></tr></thead>
+        <tbody><tr>
+          <td>${escapeHtml(data.title || '')}</td>
+          <td>${data.chapters_targeted ?? '?'}</td>
+          <td>${data.cached_before ?? 0}</td>
+          <td>${after}</td>
+          <td>${fetched}</td>
+          <td>${data.short_preview ?? 0}</td>
+          <td>${escapeHtml(data.note || '')}</td>
+        </tr></tbody>
+      </table></div>`;
+  }
+
+  async function stopSingleBookIngest() {
+    if (!token()) {
+      setStatus('single-status', 'Admin token is required.', false);
+      return;
+    }
+    const bookId = _singleBookId || document.getElementById('single-book-id').value.trim();
+    if (!bookId) return;
+    const res = await fetch(`/ingest/books/${bookId}/ingest-chapters/stop`, {
+      method: 'POST',
+      headers: headers()
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setStatus('single-status', data.detail || 'Could not stop.', false);
+      return;
+    }
+    setStatus('single-status', 'Stop requested. Current chapter will finish first.', true);
+    document.getElementById('single-stop-btn').disabled = true;
   }
 
   function money(value) {
@@ -766,6 +1490,8 @@
   function escapeAttr(value) {
     return String(value ?? '').replace(/['\\]/g, '\\$&').replace(/[<>&"]/g, '');
   }
+
+  enhanceAdminSections();
 </script>
 </body>
 </html>

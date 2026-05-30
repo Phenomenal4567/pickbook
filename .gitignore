@@ -5,3 +5,4 @@ venv/
 *.db
 *.log
 Pickbook/
+private_uploads/

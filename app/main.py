@@ -1,6 +1,7 @@
 
 import asyncio
 import sys
+from urllib.parse import urlparse
 
 # Playwright on Windows requires ProactorEventLoop
 # because it launches browser subprocesses internally.
@@ -8,9 +9,11 @@ if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 from contextlib import asynccontextmanager
 from pathlib import Path
+import requests
 from fastapi import FastAPI, Request, Header, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import inspect
@@ -28,6 +31,21 @@ from app.features.routes import router as features_router
 # Absolute path to this file's directory (app/)
 # Prevents broken paths when the working directory differs from the project root
 BASE_DIR = Path(__file__).resolve().parent
+IMAGE_PROXY_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/124.0.0.0 Safari/537.36"
+    ),
+}
+IMAGE_PROXY_HOSTS = {
+    "freewebnovel.com",
+    "www.freewebnovel.com",
+    "lightnovelworld.org",
+    "www.lightnovelworld.org",
+    "royalroad.com",
+    "www.royalroad.com",
+}
 
 # =========================================================
 # DATABASE INIT — lifespan replaces deprecated @on_event
@@ -70,6 +88,33 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    response.headers.setdefault(
+        "Permissions-Policy",
+        "camera=(), microphone=(), geolocation=(), payment=()",
+    )
+    response.headers.setdefault(
+        "Content-Security-Policy",
+        (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline'; "
+            "style-src 'self' 'unsafe-inline'; "
+            "img-src 'self' data: https:; "
+            "connect-src 'self' https://api.paystack.co; "
+            "frame-src https://checkout.paystack.com; "
+            "object-src 'none'; "
+            "base-uri 'self'; "
+            "frame-ancestors 'none'"
+        ),
+    )
+    return response
+
 # =========================================================
 # STATIC FILES — absolute path avoids working-directory issues
 # =========================================================
@@ -77,6 +122,14 @@ app.mount(
     "/static",
     StaticFiles(directory=str(BASE_DIR / "static")),
     name="static",
+)
+
+PROJECT_ROOT = BASE_DIR.parent
+(PROJECT_ROOT / "public" / "uploads").mkdir(parents=True, exist_ok=True)
+app.mount(
+    "/uploads",
+    StaticFiles(directory=str(PROJECT_ROOT / "public" / "uploads")),
+    name="uploads",
 )
 
 # =========================================================
@@ -132,6 +185,37 @@ async def payment_success(request: Request):
     return templates.TemplateResponse(
         "index.html",
         {"request": request},
+    )
+
+
+@app.get("/cover-proxy")
+def cover_proxy(url: str):
+    parsed = urlparse(url)
+    host = (parsed.hostname or "").lower()
+
+    if parsed.scheme not in {"http", "https"} or host not in IMAGE_PROXY_HOSTS:
+        raise HTTPException(status_code=400, detail="Unsupported cover URL")
+
+    try:
+        response = requests.get(
+            url,
+            headers=IMAGE_PROXY_HEADERS,
+            timeout=20,
+            stream=True,
+        )
+        response.raise_for_status()
+    except requests.RequestException:
+        raise HTTPException(status_code=502, detail="Cover image unavailable")
+
+    content_type = response.headers.get("content-type", "image/jpeg")
+    if not content_type.startswith("image/"):
+        response.close()
+        raise HTTPException(status_code=502, detail="Cover URL is not an image")
+
+    return StreamingResponse(
+        response.iter_content(chunk_size=8192),
+        media_type=content_type,
+        headers={"Cache-Control": "public, max-age=86400"},
     )
 
 # =========================================================

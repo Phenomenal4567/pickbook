@@ -17,6 +17,8 @@ from app.author_portal.routes import router as author_router
 from app.admin.routes import router as admin_router
 from app.ingest.routes import router as ingest_router
 
+
+
 # ─────────────────────────────────────────────────────────
 # PATHS
 # ─────────────────────────────────────────────────────────
@@ -181,3 +183,5 @@ if settings.app_env != "production":
             table: [c["name"] for c in inspector.get_columns(table)]
             for table in inspector.get_table_names()
         }
+
+        

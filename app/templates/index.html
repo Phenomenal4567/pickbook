@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PickBook: Free Novel Reading</title>
+<title>PickBook: Novel Reading</title>
 <script>
   if (window.location.protocol === 'file:') {
     window.location.replace('http://127.0.0.1:8000/');
@@ -30,6 +30,7 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
   body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 15px; line-height: 1.6; transition: background var(--transition), color var(--transition); min-height: 100vh; }
+  .hidden { display: none !important; }
 
   /* OVERLAYS */
   .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.72); z-index: 200; align-items: center; justify-content: center; padding: 1rem; backdrop-filter: blur(2px); }
@@ -73,8 +74,10 @@
   .menu-btn, .mobile-theme-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); width: 38px; height: 38px; align-items: center; justify-content: center; font-size: 1.05rem; cursor: pointer; }
   .menu-btn { display: none; font-size: 1.2rem; }
   .mobile-theme-btn { display: none; }
-  .mobile-menu-panel { display: none; position: relative; z-index: 99; background: var(--surface); border-bottom: 1px solid var(--border); padding: 0.65rem 0.75rem; box-shadow: 0 12px 24px rgba(0,0,0,0.18); }
-  .mobile-menu-panel.open { display: none; }
+  .mobile-menu-backdrop { display: none; position: fixed; inset: 0; z-index: 255; background: rgba(0,0,0,0.28); backdrop-filter: blur(1px); }
+  .mobile-menu-backdrop.open { display: block; }
+  .mobile-menu-panel { display: none; position: fixed; top: 68px; left: 50%; right: auto; width: min(420px, calc(100vw - 1.5rem)); transform: translateX(-50%); z-index: 260; background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius); padding: 0.65rem; box-shadow: 0 18px 42px rgba(0,0,0,0.38); }
+  .mobile-menu-panel.open { display: block; }
   .mobile-menu-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
   .mobile-menu-item { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 0.65rem 0.75rem; font-family: var(--font-body); font-size: 0.86rem; text-align: left; cursor: pointer; }
   .mobile-menu-item strong { display: block; color: var(--accent); font-size: 0.72rem; font-weight: 600; margin-bottom: 1px; }
@@ -83,6 +86,10 @@
   .streak-badge { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.3rem 0.7rem; font-size: 0.8rem; color: var(--accent); display: flex; align-items: center; gap: 4px; cursor: default; user-select: none; }
   .shelf-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.4rem 0.7rem; color: var(--text-muted); cursor: pointer; font-size: 0.82rem; transition: border-color 0.2s, color 0.2s; display: flex; align-items: center; gap: 5px; white-space: nowrap; }
   .shelf-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .account-btn.synced { border-color: rgba(76,175,125,0.45); color: var(--success); }
+  .sync-chip { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text-muted); padding: 0.32rem 0.65rem; font-size: 0.74rem; max-width: 210px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sync-chip.synced { border-color: rgba(76,175,125,0.45); color: var(--success); }
+  .sync-chip.syncing { border-color: var(--border2); color: var(--accent); }
   .nav-icon { line-height: 1; }
   .nav-label { display: inline; }
   .shelf-count { background: var(--accent); color: var(--bg); font-size: 0.65rem; font-weight: 700; border-radius: 20px; padding: 1px 6px; display: none; }
@@ -111,6 +118,10 @@
   .donate-form label { display: block; color: var(--text-muted); font-size: 0.78rem; margin: 0.8rem 0 0.3rem; }
   .donate-form input { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); padding: 0.65rem 0.8rem; font-family: var(--font-body); font-size: 0.95rem; }
   .donate-notice { background: rgba(212,168,83,0.08); border: 1px solid var(--border); border-radius: 8px; padding: 0.7rem 0.85rem; color: var(--text-muted); font-size: 0.78rem; line-height: 1.5; margin-top: 0.8rem; }
+  .form-stack label { display: block; color: var(--text-muted); font-size: 0.78rem; margin: 0.7rem 0 0.3rem; }
+  .form-stack input, .form-stack select { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); padding: 0.65rem 0.8rem; font-family: var(--font-body); font-size: 0.92rem; }
+  .terms-link { color: var(--accent); text-decoration: none; }
+  .terms-link:hover { text-decoration: underline; }
 
   /* DONATE NUDGE */
   .donate-nudge { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 400; background: var(--surface); border: 1px solid var(--accent); border-radius: var(--radius-lg); padding: 1.1rem 1.3rem; max-width: 310px; box-shadow: 0 12px 36px rgba(0,0,0,0.55); opacity: 0; transform: translateY(20px); transition: opacity 0.4s, transform 0.4s; pointer-events: none; }
@@ -129,9 +140,9 @@
   /* GENRE TABS */
   .genre-bar-wrap { position: relative; border-bottom: 1px solid var(--border); background: var(--bg); }
   .genre-bar-wrap.hidden, .mood-filter-bar.hidden { display: none !important; }
-  .genre-bar { padding: 0 1.5rem; display: flex; overflow-x: auto; gap: 0; scrollbar-width: none; scroll-behavior: smooth; }
+  .genre-bar { padding: 0.35rem 1.5rem 0; display: flex; overflow-x: auto; gap: 0.35rem; scrollbar-width: none; scroll-behavior: smooth; }
   .genre-bar::-webkit-scrollbar { display: none; }
-  .genre-tab { padding: 0.65rem 0.95rem; font-size: 0.83rem; font-weight: 500; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; transition: color 0.2s, border-color 0.2s; flex-shrink: 0; background: none; border-top: none; border-left: none; border-right: none; font-family: var(--font-body); }
+  .genre-tab { min-height: 40px; padding: 0.55rem 0.9rem; font-size: 0.83rem; font-weight: 500; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; transition: color 0.2s, border-color 0.2s, background 0.2s; flex-shrink: 0; background: transparent; border-top: none; border-left: none; border-right: none; border-radius: 8px 8px 0 0; font-family: var(--font-body); display: inline-flex; align-items: center; justify-content: center; gap: 4px; line-height: 1.1; }
   .genre-tab:hover { color: var(--text); }
   .genre-tab.active { color: var(--accent2); border-bottom-color: var(--accent2); }
   .genre-scroll-btn { position: absolute; top: 0; bottom: 0; width: 36px; display: flex; align-items: center; justify-content: center; background: none; border: none; cursor: pointer; z-index: 5; font-size: 1rem; color: var(--text-muted); transition: color 0.2s; }
@@ -141,11 +152,11 @@
   .genre-scroll-btn.hide { display: none; }
 
   /* MOOD FILTER */
-  .mood-filter-bar, .source-filter-bar { padding: 0.6rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; gap: 0.5rem; align-items: center; overflow-x: auto; scrollbar-width: none; background: var(--bg); }
+  .mood-filter-bar, .source-filter-bar { padding: 0.6rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; gap: 0.55rem; align-items: center; overflow-x: auto; scrollbar-width: none; background: var(--bg); }
   .mood-filter-bar::-webkit-scrollbar, .source-filter-bar::-webkit-scrollbar { display: none; }
   .source-filter-bar.hidden { display: none !important; }
   .mood-label { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; margin-right: 0.3rem; }
-  .mood-chip, .source-chip { padding: 0.3rem 0.75rem; border-radius: 20px; border: 1px solid var(--border2); background: none; color: var(--text-muted); font-size: 0.78rem; font-family: var(--font-body); cursor: pointer; white-space: nowrap; transition: all 0.18s; }
+  .mood-chip, .source-chip { min-height: 34px; padding: 0.38rem 0.8rem; border-radius: 20px; border: 1px solid var(--border2); background: none; color: var(--text-muted); font-size: 0.78rem; font-family: var(--font-body); cursor: pointer; white-space: nowrap; transition: all 0.18s; display: inline-flex; align-items: center; justify-content: center; gap: 5px; line-height: 1.15; }
   .mood-chip:hover, .source-chip:hover { border-color: var(--accent2); color: var(--text); }
   .mood-chip.active, .source-chip.active { background: var(--accent2); border-color: var(--accent2); color: var(--bg); }
 
@@ -222,6 +233,8 @@
   .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-muted); grid-column: 1/-1; }
   .empty-state .empty-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
   .empty-state p { font-size: 0.9rem; }
+  .pager-row { display: flex; justify-content: center; margin: 1.1rem 0 0; }
+  .pager-row.hidden { display: none; }
 
   /* CONTINUE READING */
   .continue-strip { background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius); padding: 1rem 1.25rem; display: flex; align-items: center; gap: 1rem; cursor: pointer; transition: border-color 0.2s; margin-bottom: 0.5rem; }
@@ -276,16 +289,89 @@
   #shelf-view { display: none; }
   .shelf-header { font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--text); }
   #downloads-view { display: none; }
-  #webnovel-view, #features-view { display: none; }
+  #webnovel-view, #features-view, #deals-view, #author-view, #author-profile-view { display: none; }
   .hub-hero { border: 1px solid var(--border2); border-radius: var(--radius); padding: 1.2rem; margin-bottom: 1.5rem; background: var(--surface); display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: center; }
   .hub-title { font-family: var(--font-display); font-size: 1.55rem; line-height: 1.2; color: var(--text); }
   .hub-copy { color: var(--text-muted); font-size: 0.9rem; max-width: 680px; margin-top: 0.35rem; }
   .hub-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: flex-end; }
   .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.85rem; margin-bottom: 1.5rem; }
   .feature-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; min-height: 120px; }
+  .feature-card.earned { border-color: rgba(76,175,125,0.45); background: linear-gradient(180deg, rgba(76,175,125,0.1), var(--surface)); }
   .feature-kicker { color: var(--accent); font-size: 0.76rem; margin-bottom: 0.35rem; }
   .feature-value { font-family: var(--font-display); font-size: 1.45rem; color: var(--text); line-height: 1.2; }
   .feature-note { color: var(--text-muted); font-size: 0.82rem; margin-top: 0.35rem; }
+  .achievement-progress { height: 7px; border-radius: 999px; background: var(--surface2); border: 1px solid var(--border); overflow: hidden; margin-top: 0.65rem; }
+  .achievement-progress span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--success)); }
+  .deal-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.35rem; margin-bottom: 1rem; align-items: stretch; max-width: 520px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.35rem; }
+  .deal-tab { width: 100%; min-height: 42px; background: transparent; color: var(--text-muted); border: 1px solid transparent; border-radius: 7px; padding: 0.55rem 0.7rem; font-family: var(--font-body); font-size: 0.84rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; line-height: 1.15; text-align: center; white-space: normal; }
+  .deal-tab-label { display: block; max-width: 100%; overflow-wrap: normal; }
+  .deal-tab-label .compact-break { display: none; }
+  .deal-tab.active { border-color: var(--accent); color: var(--accent); background: rgba(212,168,83,0.1); }
+  .deal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 0.85rem; margin: 1rem 0; }
+  .deal-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; }
+  .deal-card .metric-label { color: var(--text-muted); font-size: 0.76rem; }
+  .deal-card .metric-value { font-family: var(--font-display); color: var(--text); font-size: 1.35rem; margin-top: 0.15rem; }
+  .deal-note { background: rgba(212,168,83,0.08); border: 1px solid var(--border); border-radius: 8px; padding: 0.8rem 0.9rem; color: var(--text-muted); font-size: 0.82rem; line-height: 1.6; }
+  .deal-doc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0.85rem; margin: 1rem 0; }
+  .deal-doc-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; }
+  .deal-doc-card h3 { font-family: var(--font-display); font-size: 1.1rem; color: var(--text); margin-bottom: 0.45rem; }
+  .deal-doc-card p, .deal-doc-card li { color: var(--text-muted); font-size: 0.84rem; line-height: 1.65; }
+  .deal-doc-card ul { margin: 0.55rem 0 0.8rem 1rem; }
+  .deal-doc-actions { display: flex; gap: 0.55rem; flex-wrap: wrap; margin-top: 0.85rem; }
+  .deal-doc-upload { margin-top: 0.85rem; padding-top: 0.85rem; border-top: 1px solid var(--border); }
+  .deal-doc-upload input[type="file"] { width: 100%; color: var(--text-muted); font-size: 0.8rem; margin-top: 0.45rem; }
+  .deal-upload-status { min-height: 1.2rem; margin-top: 0.55rem; color: var(--text-muted); font-size: 0.8rem; line-height: 1.5; }
+  .deal-upload-status.ok { color: var(--success); }
+  .deal-upload-status.err { color: var(--danger); }
+  .deal-panel { display: none; }
+  .deal-panel.active { display: block; }
+  .author-studio-grid { display: grid; grid-template-columns: minmax(260px, 0.9fr) minmax(320px, 1.3fr); gap: 0.9rem; align-items: start; }
+  .author-upload-form input[type="text"], .author-upload-form input[type="file"] { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); padding: 0.65rem 0.8rem; font-family: var(--font-body); font-size: 0.92rem; }
+  .author-upload-form input[type="file"] { color: var(--text-muted); }
+  .author-consent { display: grid; grid-template-columns: 20px 1fr; gap: 0.65rem; align-items: flex-start; color: var(--text-muted); font-size: 0.8rem; line-height: 1.45; margin-top: 0.8rem; padding: 0.72rem 0.78rem; border: 1px solid var(--border); border-radius: 8px; background: rgba(212,168,83,0.055); cursor: pointer; transition: border-color 0.2s, background 0.2s, box-shadow 0.2s; }
+  .author-consent:hover { border-color: var(--border2); background: rgba(212,168,83,0.085); }
+  .author-consent input[type="checkbox"] { appearance: none; width: 20px; height: 20px; margin: 0.05rem 0 0; border: 1.5px solid var(--border2); border-radius: 5px; background: var(--surface2); flex-shrink: 0; display: grid; place-items: center; cursor: pointer; transition: background 0.18s, border-color 0.18s, box-shadow 0.18s; }
+  .author-consent input[type="checkbox"]::before { content: ""; width: 9px; height: 5px; border-left: 2px solid var(--bg); border-bottom: 2px solid var(--bg); transform: rotate(-45deg) scale(0); transform-origin: center; transition: transform 0.16s ease; }
+  .author-consent input[type="checkbox"]:checked { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 0 3px rgba(212,168,83,0.16); }
+  .author-consent input[type="checkbox"]:checked::before { transform: rotate(-45deg) scale(1); }
+  .author-consent input[type="checkbox"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .author-consent:has(input[type="checkbox"]:checked) { border-color: rgba(212,168,83,0.5); background: rgba(212,168,83,0.12); }
+  .author-status-row { display: grid; grid-template-columns: 1fr auto; gap: 0.75rem; padding: 0.9rem 0; border-bottom: 1px solid var(--border); }
+  .author-status-row:last-child { border-bottom: none; }
+  .author-status-title { color: var(--text); font-weight: 600; line-height: 1.25; }
+  .author-status-meta { color: var(--text-muted); font-size: 0.78rem; margin-top: 0.25rem; }
+  .author-status-pill { align-self: start; border: 1px solid var(--border2); border-radius: 999px; padding: 0.22rem 0.6rem; color: var(--accent); font-size: 0.72rem; text-transform: capitalize; white-space: nowrap; }
+  .author-status-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.35rem; }
+  .author-status-actions button, .author-status-actions a { border-radius: 7px; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); padding: 0.38rem 0.62rem; font-family: var(--font-body); font-size: 0.76rem; text-decoration: none; cursor: pointer; }
+  .author-status-actions button:hover, .author-status-actions a:hover { border-color: var(--accent); color: var(--accent); }
+  .author-rules { border: 1px solid var(--border2); border-radius: 8px; padding: 0.72rem 0.78rem; margin: 0.6rem 0 0.8rem; color: var(--text-muted); font-size: 0.8rem; line-height: 1.55; background: rgba(212,168,83,0.075); }
+  .author-rights-note { border-left: 3px solid var(--accent); padding: 0.55rem 0.75rem; margin: 0.7rem 0; color: var(--text); background: rgba(212,168,83,0.07); font-size: 0.86rem; }
+  .author-cover-preview { display: none; width: 72px; aspect-ratio: 2 / 3; object-fit: cover; border: 1px solid var(--border2); border-radius: 8px; margin-top: 0.45rem; }
+  .author-profile-hero { border: 1px solid var(--border2); border-radius: var(--radius); padding: 1.2rem; margin-bottom: 1.2rem; background: radial-gradient(circle at top left, rgba(212,168,83,0.12), transparent 34%), var(--surface); }
+  .author-profile-top { display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: start; }
+  .author-profile-name { font-family: var(--font-display); font-size: 1.75rem; color: var(--text); line-height: 1.15; }
+  .author-profile-bio { color: var(--text-muted); font-size: 0.92rem; max-width: 720px; margin-top: 0.45rem; }
+  .author-profile-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.65rem; margin-top: 1rem; }
+  .author-stat { border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; background: rgba(26,14,7,0.22); }
+  .author-stat strong { display: block; font-family: var(--font-display); color: var(--text); font-size: 1.25rem; line-height: 1; }
+  .author-stat span { color: var(--text-muted); font-size: 0.74rem; }
+  .author-story-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.9rem; }
+  .author-story-card { width: 100%; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); overflow: hidden; padding: 0; text-align: left; color: inherit; font-family: var(--font-body); cursor: pointer; transition: border-color 0.2s, transform 0.2s; }
+  .author-story-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .author-story-cover { aspect-ratio: 2 / 3; background: linear-gradient(135deg, var(--surface2), var(--bg)); display: flex; align-items: flex-end; padding: 0.7rem; color: var(--accent); font-family: var(--font-display); font-size: 1.1rem; }
+  .author-story-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .author-story-info { padding: 0.75rem; }
+  .author-story-title { color: var(--text); font-weight: 600; font-size: 0.9rem; line-height: 1.25; }
+  .author-story-copy { color: var(--text-muted); font-size: 0.78rem; margin-top: 0.35rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .engagement-box { border-top: 1px solid var(--border); margin-top: 1rem; padding-top: 1rem; }
+  .rating-row { display: flex; gap: 0.35rem; align-items: center; flex-wrap: wrap; margin: 0.5rem 0; }
+  .rating-star { border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); border-radius: 7px; width: 34px; height: 34px; cursor: pointer; }
+  .rating-star.active { color: var(--accent); border-color: var(--accent); }
+  .review-toolbar { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; justify-content: space-between; margin-top: 0.55rem; }
+  .review-toolbar select { background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); padding: 0.45rem 0.6rem; font-family: var(--font-body); font-size: 0.8rem; }
+  .comment-list { display: grid; gap: 0.5rem; margin-top: 0.65rem; }
+  .comment-item { border: 1px solid var(--border); border-radius: 8px; padding: 0.65rem 0.75rem; color: var(--text-muted); font-size: 0.82rem; background: var(--surface); }
+  .author-empty { color: var(--text-muted); font-size: 0.88rem; padding: 1rem 0; }
   .streak-dots { display: grid; grid-template-columns: repeat(14, 1fr); gap: 5px; margin-top: 0.9rem; }
   .streak-dot { aspect-ratio: 1; border-radius: 5px; background: var(--surface2); border: 1px solid var(--border); }
   .streak-dot.active { background: var(--accent); border-color: var(--accent); }
@@ -334,6 +420,20 @@
   .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 0.65rem 1.2rem; font-family: var(--font-body); font-size: 0.9rem; cursor: pointer; transition: border-color 0.2s, color 0.2s; }
   .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
   .btn-secondary.on-shelf { border-color: var(--success); color: var(--success); }
+  .btn-danger { background: transparent; color: var(--danger); border: 1px solid rgba(201,64,64,0.5); border-radius: 8px; padding: 0.65rem 1.2rem; font-family: var(--font-body); font-size: 0.9rem; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+  .btn-danger:hover { border-color: var(--danger); background: rgba(201,64,64,0.08); }
+  .account-mode-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.45rem; margin-bottom: 0.9rem; }
+  .account-mode-btn { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text-muted); padding: 0.55rem 0.75rem; font-family: var(--font-body); cursor: pointer; }
+  .account-mode-btn.active { border-color: var(--accent); color: var(--accent); }
+  .account-summary { background: rgba(212,168,83,0.08); border: 1px solid var(--border); border-radius: 8px; padding: 0.85rem; color: var(--text-muted); font-size: 0.86rem; line-height: 1.55; margin: 0.8rem 0; }
+  .account-summary strong { color: var(--text); }
+  .settings-grid { display: grid; grid-template-columns: minmax(260px, 0.85fr) minmax(300px, 1.15fr); gap: 0.9rem; align-items: start; }
+  .settings-panel { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); padding: 1rem; }
+  .settings-panel h2 { font-family: var(--font-display); color: var(--text); font-size: 1.15rem; margin-bottom: 0.45rem; }
+  .settings-panel p { color: var(--text-muted); font-size: 0.84rem; line-height: 1.55; margin-bottom: 0.8rem; }
+  .settings-panel input { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); padding: 0.65rem 0.8rem; font-family: var(--font-body); font-size: 0.9rem; }
+  .danger-zone { border-color: rgba(244,91,91,0.45); background: rgba(244,91,91,0.055); }
+  .danger-copy { color: var(--danger) !important; }
   .synopsis { font-size: 0.95rem; color: var(--text-muted); line-height: 1.8; margin-bottom: 2rem; }
   .chapter-list-title { font-family: var(--font-display); font-size: 1.1rem; margin-bottom: 0.75rem; color: var(--text); }
   .chapter-item { display: flex; align-items: center; padding: 0.7rem 0; border-bottom: 1px solid var(--border); cursor: pointer; gap: 1rem; transition: color 0.2s; }
@@ -357,11 +457,12 @@
   .age-gate-check label { font-size: 0.88rem; color: var(--text-muted); cursor: pointer; }
 
   /* TASTE PICKER */
-  .taste-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; margin: 1rem 0; }
-  .taste-option { background: var(--surface2); border: 2px solid transparent; border-radius: var(--radius); padding: 0.6rem; text-align: center; cursor: pointer; font-size: 0.82rem; color: var(--text-muted); transition: border-color 0.2s, color 0.2s, background 0.2s; user-select: none; }
-  .taste-option:hover { border-color: var(--border2); color: var(--text); }
-  .taste-option.selected { border-color: var(--accent); color: var(--accent); background: rgba(212,168,83,0.08); }
-  .taste-emoji { font-size: 1.3rem; display: block; margin-bottom: 3px; }
+  .taste-modal { max-width: 560px; }
+  .taste-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(122px, 1fr)); gap: 0.7rem; margin: 1rem 0; }
+  .taste-option { min-height: 82px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.72rem 0.65rem; text-align: center; cursor: pointer; font-size: 0.82rem; color: var(--text-muted); transition: border-color 0.2s, color 0.2s, background 0.2s, transform 0.18s; user-select: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.35rem; line-height: 1.2; }
+  .taste-option:hover { border-color: var(--border2); color: var(--text); transform: translateY(-1px); }
+  .taste-option.selected { border-color: var(--accent); color: var(--accent); background: rgba(212,168,83,0.08); box-shadow: inset 0 0 0 1px rgba(212,168,83,0.22); }
+  .taste-emoji { width: 34px; height: 34px; border-radius: 999px; background: rgba(212,168,83,0.12); border: 1px solid var(--border); font-size: 1.05rem; display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
 
   /* READER VIEW */
   #reader-view { display: none; }
@@ -370,6 +471,8 @@
   .reader-novel-title { font-size: 0.85rem; color: var(--text-muted); }
   .reader-chapter-info { font-size: 0.82rem; color: var(--accent); font-weight: 500; }
   .font-controls { display: flex; align-items: center; gap: 6px; }
+  .floating-font-controls { position: fixed; right: 1rem; bottom: 5.25rem; z-index: 180; display: none; gap: 0.45rem; background: var(--surface); border: 1px solid var(--border2); border-radius: 999px; padding: 0.4rem; box-shadow: 0 12px 34px rgba(0,0,0,0.42); }
+  body.reader-active .floating-font-controls { display: flex; }
   .font-btn { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 3px 10px; color: var(--text-muted); cursor: pointer; font-family: var(--font-body); font-size: 0.85rem; transition: border-color 0.2s; }
   .font-btn:hover { border-color: var(--accent); color: var(--accent); }
   .reader-progress { background: var(--surface2); height: 3px; overflow: hidden; }
@@ -377,6 +480,10 @@
   .reader-content { max-width: 760px; margin: 0 auto; padding: 2rem 1.5rem 5rem; }
   .reader-body { font-family: var(--font-display); font-size: 1.1rem; line-height: 1.9; color: var(--text); }
   .reader-body p { margin-bottom: 1.5rem; }
+  .heart-loader { min-height: 220px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.65rem; color: var(--text-muted); }
+  .heart-fill { position: relative; display: inline-block; font-size: 4rem; line-height: 1; color: rgba(212,168,83,0.14); }
+  .heart-fill::after { content: "\2665"; position: absolute; inset: 0; color: var(--accent); clip-path: inset(100% 0 0 0); animation: heartFill 1.35s ease-in-out infinite; }
+  @keyframes heartFill { 0% { clip-path: inset(100% 0 0 0); } 70%, 100% { clip-path: inset(0 0 0 0); } }
   .reader-chapter-nav { display: flex; gap: 1rem; margin-top: 3rem; flex-wrap: wrap; }
   .chapter-nav-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.6rem 1.2rem; color: var(--text); font-family: var(--font-body); font-size: 0.88rem; cursor: pointer; flex: 1; text-align: center; transition: border-color 0.2s, color 0.2s; }
   .chapter-nav-btn:hover { border-color: var(--accent); color: var(--accent); }
@@ -412,6 +519,7 @@
   /* TOAST */
   .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: var(--surface); border: 1px solid var(--border2); border-radius: 8px; padding: 0.6rem 1.2rem; font-size: 0.85rem; color: var(--text); z-index: 300; opacity: 0; transition: opacity 0.3s, transform 0.3s; pointer-events: none; white-space: nowrap; max-width: 90vw; text-align: center; }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
+  .toast.email-toast { border-color: var(--accent); box-shadow: 0 14px 38px rgba(0,0,0,0.4); white-space: normal; }
   .milestone-badge { position: fixed; bottom: 2rem; left: 1.5rem; background: var(--surface); border: 2px solid var(--accent); border-radius: 12px; padding: 0.75rem 1rem; font-size: 0.82rem; color: var(--text); z-index: 301; max-width: 240px; opacity: 0; transform: translateY(20px); transition: opacity 0.4s, transform 0.4s; pointer-events: none; }
   .milestone-badge.show { opacity: 1; transform: translateY(0); }
   .milestone-badge .badge-title { font-weight: 500; color: var(--accent); margin-bottom: 2px; }
@@ -430,8 +538,8 @@
   .chapter-load-more { text-align: center; padding: 1rem 0; }
   .plan-pill { border: 1px solid var(--border2); border-radius: 8px; padding: 0.35rem 0.7rem; color: var(--accent); font-size: 0.78rem; white-space: nowrap; }
   .upgrade-modal .price { color: var(--accent); font-family: var(--font-display); font-size: 2rem; margin: 0.4rem 0; }
-  .plan-options { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin: 0.9rem 0; }
-  .plan-option { text-align: left; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; color: var(--text); cursor: pointer; font-family: var(--font-body); }
+  .plan-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.6rem; margin: 0.9rem 0; }
+  .plan-option { min-height: 82px; text-align: left; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; color: var(--text); cursor: pointer; font-family: var(--font-body); display: flex; flex-direction: column; justify-content: center; line-height: 1.25; }
   .plan-option.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
   .plan-option strong { display: block; font-size: 0.92rem; }
   .plan-option span { display: block; color: var(--text-muted); font-size: 0.76rem; margin-top: 2px; }
@@ -457,17 +565,33 @@
     .search-wrap input { padding-left: 2rem; font-size: 0.82rem; }
     .mobile-nav-tools { display: flex; order: 2; }
     .menu-btn, .mobile-theme-btn { display: inline-flex; }
-    .mobile-menu-panel.open { display: block; }
+    .mobile-menu-panel { top: 68px; }
     .nav-actions { display: none; }
     .streak-badge { display: none; }
+    .sync-chip { display: none; }
     .shelf-btn, .theme-btn { min-width: 34px; height: 34px; justify-content: center; padding: 0.35rem 0.5rem; font-size: 0.82rem; }
     .shelf-btn .nav-label { display: none; }
     .donate-nav-btn { display: none; }
     .plan-pill { display: none; }
-    .genre-bar { padding: 0 0.75rem; }
+    .genre-bar { padding: 0.35rem 0.75rem 0; gap: 0.25rem; }
+    .genre-tab { min-height: 38px; padding: 0.5rem 0.72rem; font-size: 0.8rem; }
     .mood-filter-bar, .source-filter-bar { padding: 0.55rem 0.75rem; }
+    .mood-chip, .source-chip { min-height: 32px; padding: 0.35rem 0.7rem; }
     .hub-hero { grid-template-columns: 1fr; }
     .hub-actions { justify-content: flex-start; }
+    .deal-tabs { width: 100%; max-width: none; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.4rem; padding: 0.4rem; }
+    .deal-tab { min-height: 42px; padding: 0.5rem 0.55rem; font-size: 0.8rem; }
+    .deal-tab-label .compact-break { display: inline; }
+    .deal-tab[data-deal-tab="calculator"], .deal-tab[data-deal-tab="documents"] { grid-column: auto; }
+    .author-studio-grid { grid-template-columns: 1fr; }
+    .settings-grid { grid-template-columns: 1fr; }
+    .author-status-row { grid-template-columns: 1fr; }
+    .author-status-pill { justify-self: flex-start; }
+    .author-profile-top { grid-template-columns: 1fr; }
+    .plan-options { grid-template-columns: 1fr; }
+    .taste-modal { padding: 1.35rem; max-height: calc(100vh - 2rem); overflow-y: auto; }
+    .taste-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.55rem; }
+    .taste-option { min-height: 74px; padding: 0.62rem 0.5rem; }
     .streak-dots { grid-template-columns: repeat(10, 1fr); }
   }
 </style>
@@ -499,26 +623,10 @@
 
 <!-- TASTE PICKER -->
 <div class="overlay" id="taste-picker-overlay">
-  <div class="modal">
+  <div class="modal taste-modal">
     <h2>What do you love reading?</h2>
     <p>Pick 3 genres to personalise your PickBook experience.</p>
-    <div class="taste-grid">
-      <div class="taste-option" data-genre="Romance"><span class="taste-emoji">&#128158;</span>Romance</div>
-      <div class="taste-option" data-genre="Fantasy"><span class="taste-emoji">&#9876;&#65039;</span>Fantasy</div>
-      <div class="taste-option" data-genre="Werewolf"><span class="taste-emoji">&#128058;</span>Werewolf</div>
-      <div class="taste-option" data-genre="Billionaire"><span class="taste-emoji">&#128142;</span>Billionaire</div>
-      <div class="taste-option" data-genre="Dark Romance"><span class="taste-emoji">&#127761;</span>Dark Romance</div>
-      <div class="taste-option" data-genre="Thriller"><span class="taste-emoji">&#128298;</span>Thriller</div>
-      <div class="taste-option" data-genre="Science Fiction"><span class="taste-emoji">&#128640;</span>Sci-Fi</div>
-      <div class="taste-option" data-genre="Horror"><span class="taste-emoji">&#128123;</span>Horror</div>
-      <div class="taste-option" data-genre="YA/Teen"><span class="taste-emoji">&#127775;</span>YA/Teen</div>
-      <div class="taste-option" data-genre="Historical Fiction"><span class="taste-emoji">&#128220;</span>Historical</div>
-      <div class="taste-option" data-genre="Non Fiction"><span class="taste-emoji">&#128188;</span>Non Fiction</div>
-      <div class="taste-option" data-genre="Paranormal"><span class="taste-emoji">&#128065;&#65039;</span>Paranormal</div>
-      <div class="taste-option" data-genre="Light Novel"><span class="taste-emoji">&#9889;</span>Light Novel</div>
-      <div class="taste-option" data-genre="Web Novel"><span class="taste-emoji">&#128220;</span>Web Novel</div>
-      <div class="taste-option" data-genre="Progression Fantasy"><span class="taste-emoji">&#128200;</span>Progression</div>
-    </div>
+    <div class="taste-grid" id="taste-grid"></div>
     <p id="taste-count-msg" style="color:var(--accent);font-size:0.82rem;text-align:center;">Select 3 genres</p>
     <button class="btn-primary" id="taste-done-btn" style="width:100%;margin-top:0.5rem;opacity:0.4;cursor:not-allowed" disabled onclick="confirmTastePicker()">Let's Go &rarr;</button>
     <!-- FIX 1: Added dismiss button so users are never trapped in this overlay -->
@@ -537,6 +645,10 @@
         <strong>Monthly</strong>
         <span>&#8358;2,500 for 1 month</span>
       </button>
+      <button class="plan-option" data-months="0" onclick="selectPlanOffer(this, 0)">
+        <strong>7 days</strong>
+        <span>&#8358;1,000 trial week</span>
+      </button>
       <button class="plan-option" data-months="5" onclick="selectPlanOffer(this, 5)">
         <strong>5 + 1 free</strong>
         <span>Pay 5 months, get 6</span>
@@ -551,6 +663,10 @@
       <input id="coupon-code" type="text" placeholder="Promo code">
       <button class="btn-secondary" onclick="applyCoupon()">Apply</button>
     </div>
+    <div class="coupon-row">
+      <input id="checkout-referral-code" type="text" placeholder="Referral code">
+      <button class="btn-secondary" onclick="saveCheckoutReferral()">Save</button>
+    </div>
     <button class="btn-primary" style="width:100%" onclick="startCheckout()">Upgrade Now</button>
     <button class="btn-secondary" style="width:100%;margin-top:0.5rem" onclick="closeUpgrade()">Maybe Later</button>
   </div>
@@ -563,7 +679,7 @@
       <div class="donate-icon-ring">&#10084;&#65039;</div>
       <h2>Support PickBook</h2>
     </div>
-    <p class="donate-sub">PickBook is completely free and ad-free. If you've been enjoying your reading here, a small donation helps keep the lights on and new books coming. Every naira counts!</p>
+    <p class="donate-sub">If you've been enjoying your reading here, a small donation helps keep the lights on and new books coming. Every naira counts!</p>
     <div class="donate-form">
       <label>Donation amount</label>
       <input id="donation-amount" type="number" min="500" step="100" placeholder="Minimum ₦500">
@@ -576,12 +692,64 @@
   </div>
 </div>
 
+<!-- ACCOUNT EMAIL MODAL -->
+<div class="overlay" id="account-email-overlay">
+  <div class="modal">
+    <h2 id="account-modal-title">Create your PickBook account</h2>
+    <p id="account-modal-copy">Add your username, email, and password so reading progress and payments stay connected to you.</p>
+    <div class="account-mode-row">
+      <button class="account-mode-btn active" id="account-create-tab" onclick="setAccountMode('signup')">Create</button>
+      <button class="account-mode-btn" id="account-login-tab" onclick="setAccountMode('login')">Sign In</button>
+      <button class="account-mode-btn" id="account-reset-tab" onclick="setAccountMode('reset')">Reset</button>
+    </div>
+    <div class="form-stack">
+      <div id="account-username-row">
+        <label>Username</label>
+        <input id="account-username-input" type="text" placeholder="yourname">
+      </div>
+      <label>Email address</label>
+      <input id="account-email-input" type="email" placeholder="you@gmail.com">
+      <label>Password</label>
+      <input id="account-password-input" type="password" minlength="8" autocomplete="current-password" placeholder="At least 8 characters">
+      <div id="account-reset-token-row" class="hidden">
+        <label>Reset token</label>
+        <input id="account-reset-token-input" type="text" placeholder="Paste token from reset link">
+      </div>
+      <div id="account-referral-row">
+        <label>Referral code (optional)</label>
+        <input id="account-referral-input" type="text" placeholder="Friend or partner code">
+      </div>
+      <label class="author-consent" id="account-terms-row">
+        <input id="account-terms-input" type="checkbox">
+        <span>I agree to the PickBook terms, including the <a class="terms-link" href="/static/legal/PickBook_Author_Agreement_and_Monetization_Policy.docx" target="_blank" rel="noopener">Author Agreement and Monetization Policy</a>.</span>
+      </label>
+    </div>
+    <button class="btn-primary" id="account-submit-btn" style="width:100%;margin-top:1rem" onclick="submitAccountRegistration()">Create Account</button>
+    <button class="btn-secondary hidden" id="account-reset-request-btn" style="width:100%;margin-top:0.5rem" onclick="requestPasswordReset()">Send Reset Link</button>
+    <button class="btn-secondary" style="width:100%;margin-top:0.5rem" onclick="cancelAccountRegistration()">Not Now</button>
+  </div>
+</div>
+
+<!-- ACCOUNT CONTROLS MODAL -->
+<div class="overlay" id="account-controls-overlay">
+  <div class="modal">
+    <h2>Account</h2>
+    <p>Manage this PickBook session and reader sync.</p>
+    <div class="account-summary" id="account-summary-panel"></div>
+    <button class="btn-primary" style="width:100%;margin-top:0.5rem" onclick="openAccountSettings()">Account Settings</button>
+    <button class="btn-primary" style="width:100%;margin-top:0.5rem" onclick="syncAccountNow()">Sync Now</button>
+    <button class="btn-secondary" style="width:100%;margin-top:0.5rem" onclick="logoutAccount()">Log Out</button>
+    <button class="btn-danger" style="width:100%;margin-top:0.5rem" onclick="deleteAccount()">Delete Account</button>
+    <button class="btn-secondary" style="width:100%;margin-top:0.5rem" onclick="closeAccountControls()">Close</button>
+  </div>
+</div>
+
 <!-- DONATE NUDGE -->
 <div class="donate-nudge" id="donate-nudge">
   <button class="nudge-dismiss" onclick="dismissNudge()" aria-label="Dismiss">&#10005;</button>
   <span class="nudge-heart">&#128218;</span>
   <div class="nudge-title">Enjoying PickBook?</div>
-  <div class="nudge-body">You've been reading for a while &mdash; we're glad you're here! PickBook is free and made with love. A small donation helps us keep it that way.</div>
+  <div class="nudge-body">You've been reading for a while &mdash; we're glad you're here! A small donation helps us keep PickBook light, fast, and growing.</div>
   <div class="nudge-actions">
     <button class="nudge-yes" onclick="openDonateFromNudge()">Support Us &#10084;&#65039;</button>
     <button class="nudge-no" onclick="dismissNudge()">Not Now</button>
@@ -599,8 +767,12 @@
   </div>
   <div class="nav-actions">
     <button class="shelf-btn" onclick="showWebNovelTab()" title="Web Novels"><span class="nav-icon">&#9889;</span><span class="nav-label">Web Novels</span></button>
+    <button class="shelf-btn" onclick="showView('author')" title="Author Studio"><span class="nav-icon">&#9998;</span><span class="nav-label">Author</span></button>
     <button class="shelf-btn" onclick="showView('features')" title="Progress"><span class="nav-icon">&#9673;</span><span class="nav-label">Progress</span></button>
     <button class="shelf-btn" onclick="openUpgrade('Standard unlocks full chapters and offline reading.')" title="Upgrade"><span class="nav-icon">&#9733;</span><span class="nav-label">Upgrade</span></button>
+    <button class="shelf-btn" onclick="showView('deals')" title="Investors and Partners"><span class="nav-icon">&#8358;</span><span class="nav-label">Deals</span></button>
+    <button class="shelf-btn account-btn" id="account-nav-btn" onclick="openAccountControls()" title="Account and sync"><span class="nav-icon">&#128100;</span><span class="nav-label" id="account-nav-label">Account</span></button>
+    <div class="sync-chip" id="sync-status-chip" title="Reader sync status">Local only</div>
     <div class="plan-pill" id="plan-pill">Free</div>
     <div class="streak-badge" id="streak-badge">&#128293; <span id="streak-count">0</span> day streak</div>
     <button class="shelf-btn" onclick="showView('downloads')" title="Downloads"><span class="nav-icon">&#11015;</span><span class="nav-label">Downloads</span><span class="shelf-count" id="download-count-badge">0</span></button>
@@ -614,6 +786,7 @@
   </div>
 </nav>
 
+<div class="mobile-menu-backdrop" id="mobile-menu-backdrop" onclick="closeMobileMenu()"></div>
 <div class="mobile-menu-panel" id="mobile-menu-panel">
   <div class="mobile-menu-grid">
     <button class="mobile-menu-item" onclick="mobileMenuAction(() => openUpgrade('Standard unlocks full chapters and offline reading.'))"><strong>Plan</strong>Subscription</button>
@@ -621,6 +794,9 @@
     <button class="mobile-menu-item" onclick="mobileMenuAction(() => showView('shelf'))"><strong>Library</strong>My Shelf</button>
     <button class="mobile-menu-item" onclick="mobileMenuAction(openDonate)"><strong>Support</strong>Donate</button>
     <button class="mobile-menu-item" onclick="mobileMenuAction(() => showView('referral'))"><strong>Bonus</strong>Referral Offer</button>
+    <button class="mobile-menu-item" onclick="mobileMenuAction(openAccountControls)"><strong>Account</strong><span id="mobile-account-label">Sync reading</span></button>
+    <button class="mobile-menu-item" onclick="mobileMenuAction(() => showView('deals'))"><strong>Deals</strong>Investors & Partners</button>
+    <button class="mobile-menu-item" onclick="mobileMenuAction(() => showView('author'))"><strong>Author</strong>Submissions</button>
     <button class="mobile-menu-item" onclick="mobileMenuAction(() => showView('features'))"><strong>Progress</strong>Streaks</button>
     <button class="mobile-menu-item" onclick="mobileMenuAction(showWebNovelTab)"><strong>Browse</strong>Web Novels</button>
   </div>
@@ -666,11 +842,10 @@
 <div class="source-filter-bar" id="source-filter-bar">
   <span class="mood-label">Source:</span>
   <button class="source-chip active" onclick="selectSource(this,'All')">All Sources</button>
-  <button class="source-chip" onclick="selectSource(this,'anystories')">Anystories</button>
-  <button class="source-chip" onclick="selectSource(this,'alphanovel')">AlphaNovel</button>
   <button class="source-chip" onclick="selectSource(this,'lightnovelworld')">LightNovelWorld</button>
   <button class="source-chip" onclick="selectSource(this,'freewebnovel')">FreeWebNovel</button>
   <button class="source-chip" onclick="selectSource(this,'royalroad')">Royal Road</button>
+
 </div>
 
 <!-- HOME VIEW -->
@@ -691,6 +866,9 @@
       <div class="skeleton-card"><div class="skeleton-cover"></div><div class="skeleton-info"><div class="skeleton-line"></div><div class="skeleton-line short"></div></div></div>
       <div class="skeleton-card"><div class="skeleton-cover"></div><div class="skeleton-info"><div class="skeleton-line"></div><div class="skeleton-line short"></div></div></div>
       <div class="skeleton-card"><div class="skeleton-cover"></div><div class="skeleton-info"><div class="skeleton-line"></div><div class="skeleton-line short"></div></div></div>
+    </div>
+    <div class="pager-row hidden" id="recommended-pager">
+      <button class="btn-secondary" onclick="showNextRecommendedPage()">Next Page</button>
     </div>
     <div id="home-error" style="display:none"></div>
     <div class="section-header" id="trending-header"><h2 class="section-title">&#128293; Trending Now</h2></div>
@@ -807,6 +985,339 @@
       <div class="section-header"><h2 class="section-title">Recent Streak Progress</h2></div>
       <div class="streak-dots" id="streak-dots"></div>
     </section>
+    <section>
+      <div class="section-header"><h2 class="section-title">Reader Achievements</h2></div>
+      <div class="feature-grid" id="achievement-grid">
+        <div class="author-empty">Sign in to track badges and reading milestones.</div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ACCOUNT SETTINGS VIEW -->
+<div id="account-settings-view" style="display:none">
+  <div class="view-back-bar">
+    <button class="view-back-btn" onclick="showView('home')"><span class="arrow">&larr;</span> Browse</button>
+    <span class="view-back-crumb">Account settings</span>
+  </div>
+  <main>
+    <div class="hub-hero">
+      <div>
+        <h1 class="hub-title">Account Settings</h1>
+        <p class="hub-copy">Manage your PickBook account, password, subscription visibility, sync, and deletion choices.</p>
+      </div>
+      <div class="hub-actions">
+        <button class="btn-primary" onclick="syncAccountNow()">Sync Now</button>
+        <button class="btn-secondary" onclick="logoutAccount()">Log Out</button>
+      </div>
+    </div>
+    <div class="settings-grid">
+      <section class="settings-panel">
+        <h2>Subscription</h2>
+        <p>Your current plan and renewal visibility.</p>
+        <div class="account-summary" id="settings-account-summary"></div>
+        <button class="btn-secondary" style="width:100%;margin-top:0.5rem" onclick="openUpgrade('Upgrade when you are ready for offline reading, unlimited shelf space, and premium access.')">Manage Subscription</button>
+      </section>
+      <section class="settings-panel">
+        <h2>Password</h2>
+        <p>Use at least 8 characters. Changing your password keeps you signed in here.</p>
+        <div class="form-stack">
+          <label>Current password</label>
+          <input id="settings-current-password" type="password" autocomplete="current-password">
+          <label>New password</label>
+          <input id="settings-new-password" type="password" minlength="8" autocomplete="new-password">
+          <label>Confirm new password</label>
+          <input id="settings-confirm-password" type="password" minlength="8" autocomplete="new-password">
+        </div>
+        <button class="btn-primary" style="width:100%;margin-top:1rem" onclick="changeAccountPassword()">Change Password</button>
+      </section>
+      <section class="settings-panel">
+        <h2>Profile</h2>
+        <p>Choose the name readers see and how PickBook contacts you.</p>
+        <div class="form-stack">
+          <label>Display name</label>
+          <input id="settings-display-name" type="text" maxlength="24" placeholder="yourname">
+          <label class="author-consent">
+            <input id="settings-email-notifications" type="checkbox">
+            <span>Email me account and reading updates.</span>
+          </label>
+          <label class="author-consent">
+            <input id="settings-author-notifications" type="checkbox">
+            <span>Email me author review and payout updates.</span>
+          </label>
+        </div>
+        <button class="btn-primary" style="width:100%;margin-top:1rem" onclick="saveProfilePreferences()">Save Profile</button>
+      </section>
+      <section class="settings-panel">
+        <h2>Account Management</h2>
+        <p id="settings-sync-copy">Shelf, progress, bookmarks, downloads, achievements, follows, and author submissions are tied to this account when synced.</p>
+        <p>Your stories remain yours. PickBook keeps only the rights needed to host and distribute work you choose to publish, and may retain limited legal, payment, and audit records when required.</p>
+        <button class="btn-secondary" style="width:100%;margin-top:0.5rem" onclick="openAccountControls()">Account Quick Panel</button>
+      </section>
+      <section class="settings-panel danger-zone">
+        <h2>Delete Account</h2>
+        <p class="danger-copy">Deleting your account removes everything tied to it: reader progress, shelf, bookmarks, downloads, comments, ratings, achievements, follows, author submissions, payout details, and payment records. This cannot be undone.</p>
+        <button class="btn-danger" style="width:100%;margin-top:0.5rem" onclick="deleteAccount()">Delete Account</button>
+      </section>
+    </div>
+  </main>
+</div>
+
+<!-- AUTHOR PROFILE VIEW -->
+<div id="author-profile-view" style="display:none">
+  <div class="view-back-bar">
+    <button class="view-back-btn" onclick="showView('home')"><span class="arrow">&larr;</span> Browse</button>
+    <span class="view-back-crumb">Author profile</span>
+  </div>
+  <main>
+    <div id="author-profile-panel">
+      <div class="author-empty">Choose a PickBook author to view their profile.</div>
+    </div>
+  </main>
+</div>
+
+<!-- DEALS VIEW -->
+<div id="deals-view" style="display:none">
+  <div class="view-back-bar">
+    <button class="view-back-btn" onclick="showView('home')"><span class="arrow">&larr;</span> Browse</button>
+    <span class="view-back-crumb">Investors and partners</span>
+  </div>
+  <main>
+    <div class="hub-hero">
+      <div>
+        <h1 class="hub-title">Investor and Partner Deals</h1>
+        <p class="hub-copy">Track referred revenue, Paystack deductions, net earnings, commissions, investment progress, and ROI from one place.</p>
+      </div>
+      <div class="hub-actions">
+        <button class="btn-primary" onclick="switchDealTab('register')">Join Manually</button>
+        <button class="btn-secondary" onclick="switchDealTab('dashboard')">View Earnings</button>
+      </div>
+    </div>
+    <div class="deal-note" id="deal-charge-note">For a ₦2,500 Standard payment, Paystack/bank charges are removed first. Partner commission and investor ROI are calculated from the balance left after those charges, not from a fixed ₦2,500.</div>
+    <div class="deal-tabs">
+      <button class="deal-tab active" data-deal-tab="dashboard" onclick="switchDealTab('dashboard')"><span class="deal-tab-label">Dashboard</span></button>
+      <button class="deal-tab" data-deal-tab="register" onclick="switchDealTab('register')"><span class="deal-tab-label">Register</span></button>
+      <button class="deal-tab" data-deal-tab="calculator" onclick="switchDealTab('calculator')"><span class="deal-tab-label">ROI<span class="compact-break"><br></span> Calculator</span></button>
+      <button class="deal-tab" data-deal-tab="documents" onclick="switchDealTab('documents')"><span class="deal-tab-label">Learn<span class="compact-break"><br></span> &amp; Docs</span></button>
+    </div>
+    <section class="deal-panel active" id="deal-dashboard-panel">
+      <div class="form-stack">
+        <label>Partner referral code</label>
+        <input id="deal-partner-code" type="text" placeholder="e.g. PICKBOOKPARTNER">
+        <label>Investor email</label>
+        <input id="deal-investor-email" type="email" placeholder="investor@gmail.com">
+      </div>
+      <button class="btn-primary" style="margin-top:0.9rem" onclick="loadDealSummary()">View Progress</button>
+      <div class="deal-grid" id="deal-summary-grid"></div>
+    </section>
+    <section class="deal-panel" id="deal-register-panel">
+      <div class="deal-grid">
+        <div class="deal-card">
+          <h2 class="section-title">Partner Registration</h2>
+          <div class="form-stack">
+            <label>Name</label><input id="partner-name" type="text" placeholder="Full name">
+            <label>Email</label><input id="partner-email" type="email" placeholder="partner@gmail.com">
+            <label>Custom referral code</label><input id="partner-code" type="text" placeholder="MYCODE">
+          </div>
+          <div class="deal-note" style="margin-top:0.8rem">Partners use a referral code to track paid subscribers. Direct referrals earn a recurring commission while those subscribers stay active, and active partners may also share in the marketing pool.</div>
+          <div class="deal-doc-actions">
+            <a class="btn-secondary" href="/static/legal/Pickbook_CoMarketing_Partnership_Agreement.docx" download>Download Partner Agreement</a>
+          </div>
+          <div class="deal-doc-upload">
+            <label>Upload signed partner agreement</label>
+            <input id="partner-document" type="file" accept=".doc,.docx,.pdf,.jpg,.jpeg,.png">
+            <button class="btn-secondary" style="width:100%;margin-top:0.65rem" onclick="uploadDealDocument('partner')">Upload Signed Document</button>
+            <div class="deal-upload-status" id="partner-upload-status"></div>
+          </div>
+          <button class="btn-primary" style="width:100%;margin-top:0.9rem" onclick="registerPartner()">Create Partner Code</button>
+        </div>
+        <div class="deal-card">
+          <h2 class="section-title">Investor Registration</h2>
+          <div class="form-stack">
+            <label>Name</label><input id="investor-name" type="text" placeholder="Full name">
+            <label>Email</label><input id="investor-email" type="email" placeholder="investor@gmail.com">
+            <label>Investment plan</label>
+            <select id="investor-plan" onchange="renderInvestorCalculator()">
+              <option value="revenue_share">Revenue share</option>
+              <option value="subscriber_slots">Subscriber slots</option>
+            </select>
+            <label>Investment amount</label><input id="investor-amount" type="number" min="2500" step="500" value="15000" oninput="renderInvestorCalculator()">
+          </div>
+          <div class="deal-note" id="investor-live-roi" style="margin-top:0.8rem"></div>
+          <div class="deal-doc-actions">
+            <a class="btn-secondary" href="/static/legal/Pickbook_MicroInvestment_Agreement.docx" download>Download Investor Agreement</a>
+          </div>
+          <div class="deal-doc-upload">
+            <label>Upload signed investor agreement</label>
+            <input id="investor-document" type="file" accept=".doc,.docx,.pdf,.jpg,.jpeg,.png">
+            <button class="btn-secondary" style="width:100%;margin-top:0.65rem" onclick="uploadDealDocument('investor')">Upload Signed Document</button>
+            <div class="deal-upload-status" id="investor-upload-status"></div>
+          </div>
+          <button class="btn-primary" style="width:100%;margin-top:0.9rem" onclick="payInvestorPlan()">Pay with Paystack</button>
+        </div>
+      </div>
+    </section>
+    <section class="deal-panel" id="deal-calculator-panel">
+      <div class="deal-grid">
+        <div class="deal-card">
+          <div class="metric-label">Customer pays</div>
+          <div class="metric-value" id="calc-gross">₦2,500</div>
+        </div>
+        <div class="deal-card">
+          <div class="metric-label">Estimated Paystack/bank charge</div>
+          <div class="metric-value" id="calc-fee">₦0</div>
+        </div>
+        <div class="deal-card">
+          <div class="metric-label">Balance used for ROI</div>
+          <div class="metric-value" id="calc-net">₦0</div>
+        </div>
+        <div class="deal-card">
+          <div class="metric-label">20% partner commission</div>
+          <div class="metric-value" id="calc-partner">₦0</div>
+        </div>
+      </div>
+    </section>
+    <section class="deal-panel" id="deal-documents-panel">
+      <div class="deal-doc-grid">
+        <div class="deal-doc-card">
+          <h3>For marketing partners</h3>
+          <p>Partners help PickBook grow by sharing the app and bringing paying readers through a unique referral code.</p>
+          <ul>
+            <li>Direct referrals: 20% recurring commission from each active premium subscriber who uses your code.</li>
+            <li>Marketing pool: 15% of organic premium subscription revenue may be shared among active partners.</li>
+            <li>Free signups do not count for payout. Payouts are based on successfully processed premium subscriptions.</li>
+            <li>The referral system is one level only. There are no sub-commissions from people referred by your referrals.</li>
+          </ul>
+          <div class="deal-doc-actions">
+            <a class="btn-secondary" href="/static/legal/Pickbook_CoMarketing_Partnership_Agreement.docx" download>Download Partner Agreement</a>
+            <button class="btn-primary" onclick="switchDealTab('register')">Register as Partner</button>
+          </div>
+        </div>
+        <div class="deal-doc-card">
+          <h3>For micro-investors</h3>
+          <p>Investors support infrastructure and operations. This is a revenue-sharing deal, not ownership or equity in PickBook.</p>
+          <ul>
+            <li>Revenue-share option: receive 15% of premium subscription revenue until the agreed cap is reached.</li>
+            <li>Subscriber-slots option: receive the value of agreed active premium subscriber slots when paying subscribers exist.</li>
+            <li>The default sample agreement uses a 2x cap: for example, &#8358;15,000 can cap at &#8358;30,000.</li>
+            <li>Investor payment starts through Paystack, but the signed agreement should also be uploaded for records.</li>
+          </ul>
+          <div class="deal-doc-actions">
+            <a class="btn-secondary" href="/static/legal/Pickbook_MicroInvestment_Agreement.docx" download>Download Investor Agreement</a>
+            <button class="btn-primary" onclick="switchDealTab('register')">Register as Investor</button>
+          </div>
+        </div>
+      </div>
+      <div class="deal-doc-card">
+        <h3>Upload completed agreement</h3>
+        <p>Download the correct document, fill and sign it, then upload the completed copy here or in the registration form. Accepted formats: DOC, DOCX, PDF, JPG, PNG. Maximum size: 10 MB.</p>
+        <div class="deal-grid">
+          <div>
+            <h3>Partner document</h3>
+            <div class="form-stack">
+              <label>Name</label><input id="partner-doc-name" type="text" placeholder="Full name">
+              <label>Email</label><input id="partner-doc-email" type="email" placeholder="partner@gmail.com">
+            </div>
+            <input id="partner-document-docs" type="file" accept=".doc,.docx,.pdf,.jpg,.jpeg,.png">
+            <button class="btn-secondary" style="width:100%;margin-top:0.65rem" onclick="uploadDealDocument('partner', 'docs')">Upload Partner Document</button>
+            <div class="deal-upload-status" id="partner-upload-status-docs"></div>
+          </div>
+          <div>
+            <h3>Investor document</h3>
+            <div class="form-stack">
+              <label>Name</label><input id="investor-doc-name" type="text" placeholder="Full name">
+              <label>Email</label><input id="investor-doc-email" type="email" placeholder="investor@gmail.com">
+            </div>
+            <input id="investor-document-docs" type="file" accept=".doc,.docx,.pdf,.jpg,.jpeg,.png">
+            <button class="btn-secondary" style="width:100%;margin-top:0.65rem" onclick="uploadDealDocument('investor', 'docs')">Upload Investor Document</button>
+            <div class="deal-upload-status" id="investor-upload-status-docs"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- AUTHOR VIEW -->
+<div id="author-view" style="display:none">
+  <div class="view-back-bar">
+    <button class="view-back-btn" onclick="showView('home')"><span class="arrow">&larr;</span> Browse</button>
+    <span class="view-back-crumb">Author Studio</span>
+  </div>
+  <main>
+    <div class="hub-hero">
+      <div>
+        <h1 class="hub-title">Author Studio</h1>
+        <p class="hub-copy">Upload a manuscript draft and track review status from the same browser or account session. Your stories remain yours. Always.</p>
+      </div>
+      <div class="hub-actions">
+        <button class="btn-secondary" onclick="loadAuthorSubmissions()">Refresh</button>
+      </div>
+    </div>
+    <div class="author-studio-grid">
+      <section class="deal-card">
+        <h2 class="section-title">Submit Draft</h2>
+        <div class="author-rights-note"><strong>Your stories remain yours. Always.</strong> PickBook only needs a non-exclusive license to host and distribute work you choose to submit.</div>
+        <div class="author-rules">
+          Manuscripts: TXT, DOCX, or EPUB only. Maximum size: 50 MB.<br>
+          Covers: JPG, PNG, or WEBP only. Maximum size: 5 MB.
+        </div>
+        <div class="author-upload-form form-stack">
+          <label>Story title</label>
+          <input id="author-title" type="text" maxlength="500" placeholder="Story title">
+          <label>Author name</label>
+          <input id="author-name" type="text" maxlength="200" placeholder="Pen name">
+          <label>Manuscript file</label>
+          <input id="author-file" type="file" accept=".txt,.docx,.epub">
+          <label>Book cover</label>
+          <input id="author-cover" type="file" accept=".jpg,.jpeg,.png,.webp" onchange="previewAuthorCover()">
+          <img id="author-cover-preview" class="author-cover-preview" alt="Cover preview">
+          <div class="actions" style="margin-top:0.5rem">
+            <button class="btn-secondary" type="button" onclick="clearSelectedAuthorCover()">Remove Selected Cover</button>
+          </div>
+          <label class="author-consent">
+            <input id="author-consent" type="checkbox">
+            <span>I confirm this is my work or I have permission to submit it for PickBook review.</span>
+          </label>
+          <label class="author-consent">
+            <input id="author-terms" type="checkbox">
+            <span>I agree to the <a class="terms-link" href="/static/legal/PickBook_Author_Agreement_and_Monetization_Policy.docx" target="_blank" rel="noopener">Author Agreement and Monetization Policy</a>, including PickBook's non-exclusive platform license, monetization rules, and payout terms.</span>
+          </label>
+          <div class="author-rights-note"><strong>Deletion policy:</strong> you can delete or unpublish your story from PickBook, while limited legal, payment, and review audit records may be retained where required.</div>
+          <button class="btn-primary" style="width:100%;margin-top:0.9rem" onclick="submitAuthorDraft()">Submit for Review</button>
+          <progress id="author-upload-progress" class="hidden" value="0" max="100" style="width:100%;margin-top:0.7rem"></progress>
+          <div class="deal-upload-status" id="author-upload-status"></div>
+        </div>
+      </section>
+      <section class="deal-card">
+        <div class="section-header" style="margin:0 0 0.4rem">
+          <h2 class="section-title">Draft Status</h2>
+        </div>
+        <div class="deal-note" id="author-session-note">Submissions are linked to your account when signed in, or to this browser after your first upload.</div>
+        <div id="author-submission-list" style="margin-top:0.6rem">
+          <div class="author-empty">No submissions loaded yet.</div>
+        </div>
+        <div class="section-header" style="margin:1.2rem 0 0.4rem">
+          <h2 class="section-title">Earnings & Withdrawals</h2>
+        </div>
+        <div class="deal-note" id="author-earnings-summary">Earnings will appear after stories are approved and revenue is posted.</div>
+        <div id="author-notification-list" style="margin-top:0.6rem"></div>
+        <div class="form-stack" style="margin-top:0.75rem">
+          <label>Bank name</label>
+          <input id="author-bank-name" type="text" placeholder="Bank name">
+          <label>Account name</label>
+          <input id="author-bank-account-name" type="text" placeholder="Account name">
+          <label>Account number</label>
+          <input id="author-bank-account-number" type="text" placeholder="Account number">
+          <button class="btn-secondary" style="width:100%;margin-top:0.65rem" onclick="saveAuthorBankDetails()">Save Bank Details</button>
+          <label>Withdrawal amount <span id="author-minimum-payout-note" class="feature-note"></span></label>
+          <input id="author-withdrawal-amount" type="number" min="1" step="1" placeholder="Amount in naira">
+          <button class="btn-primary" style="width:100%;margin-top:0.65rem" onclick="requestAuthorWithdrawal()">Request Withdrawal</button>
+          <div class="deal-upload-status" id="author-withdrawal-status"></div>
+        </div>
+        <div id="author-withdrawal-list" style="margin-top:0.6rem"></div>
+      </section>
+    </div>
   </main>
 </div>
 
@@ -862,6 +1373,33 @@
       </div>
     </div>
     <p class="synopsis" id="detail-synopsis"></p>
+    <div class="engagement-box">
+      <h3 class="chapter-list-title">Reader Reactions</h3>
+      <div id="engagement-summary" class="detail-author">No reactions yet.</div>
+      <div class="rating-row" id="rating-row">
+        <button class="rating-star" onclick="submitEngagement({ rating: 1 })">&#9733;</button>
+        <button class="rating-star" onclick="submitEngagement({ rating: 2 })">&#9733;</button>
+        <button class="rating-star" onclick="submitEngagement({ rating: 3 })">&#9733;</button>
+        <button class="rating-star" onclick="submitEngagement({ rating: 4 })">&#9733;</button>
+        <button class="rating-star" onclick="submitEngagement({ rating: 5 })">&#9733;</button>
+        <button class="btn-secondary" id="reader-like-btn" onclick="toggleLikeCurrentNovel()">Like</button>
+      </div>
+      <div class="form-stack">
+        <label>Review or comment</label>
+        <textarea id="reader-comment-input" style="width:100%;min-height:76px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);padding:0.65rem 0.8rem;font-family:var(--font-body)" placeholder="Share a short review for moderation"></textarea>
+        <button class="btn-secondary" style="margin-top:0.5rem" onclick="submitReaderComment()">Submit Review</button>
+        <button class="btn-secondary" style="margin-top:0.5rem" onclick="deleteReaderComment()">Delete My Review</button>
+      </div>
+      <div class="review-toolbar">
+        <span class="feature-note">Approved reader reviews</span>
+        <select id="review-sort" onchange="renderEngagement(currentEngagement)">
+          <option value="newest">Newest first</option>
+          <option value="highest">Highest rated</option>
+          <option value="lowest">Lowest rated</option>
+        </select>
+      </div>
+      <div class="comment-list" id="reader-comment-list"></div>
+    </div>
     <div class="chapter-list">
       <h3 class="chapter-list-title">Chapters</h3>
       <div id="chapter-list-items"></div>
@@ -886,6 +1424,10 @@
     </div>
   </div>
   <div class="reader-progress"><div class="reader-progress-fill" id="progress-fill" style="width:0%"></div></div>
+  <div class="floating-font-controls" aria-label="Reader font size controls">
+    <button class="font-btn" onclick="changeFontSize(-1)">A&minus;</button>
+    <button class="font-btn" onclick="changeFontSize(1)">A+</button>
+  </div>
   <div class="reader-content">
     <div class="reader-body" id="reader-body"></div>
     <div class="reader-actions">
@@ -916,9 +1458,9 @@
     <a href="#" onclick="openDonate()">&#10084;&#65039; Donate</a>
     <a href="#" onclick="showView('referral')">Referral Offer</a>
     <a href="https://wa.me/2349042427548?text=PickBook%20Feedback%3A%20" target="_blank">&#128172; Feedback</a>
-    <a href="#">Submit a Novel</a>
+    <a href="#" onclick="showView('author')">Submit a Novel</a>
   </div>
-  <div>&copy; 2026 PickBook &middot; Free public domain reading &middot; Sources: Standard Ebooks &amp; Feedbooks</div>
+  <div>&copy; 2026 PickBook &middot; Public domain and web novel reading &middot; Sources include FreeWebNovel and other web novel catalogues</div>
 </footer>
 
 <div class="toast" id="toast"></div>
@@ -929,9 +1471,9 @@
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 //  CONSTANTS
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 const ADULT_GENRES = new Set(['LGBTQ+', 'YA/Teen', 'Erotic']);
 
 const MOOD_KEYWORDS = {
@@ -955,18 +1497,64 @@ const COVER_GRADIENTS = [
 ];
 
 const CHAPTER_PAGE_SIZE = 50;
+const HOME_PAGE_SIZE = 20;
 const WEB_NOVEL_SOURCES = new Set(['lightnovelworld', 'freewebnovel', 'royalroad']);
 const SOURCE_LABELS = {
   anystories: 'Anystories',
-  alphanovel: 'AlphaNovel',
   lightnovelworld: 'LightNovelWorld',
   freewebnovel: 'FreeWebNovel',
   royalroad: 'Royal Road'
 };
+const FALLBACK_TASTE_GENRES = [
+  'Romance',
+  'Dark Romance',
+  'Billionaire',
+  'Werewolf',
+  'Fantasy',
+  'Paranormal',
+  'Horror',
+  'Thriller',
+  'Science Fiction',
+  'Historical Fiction',
+  'Non Fiction',
+  'YA/Teen',
+  'Light Novel',
+  'Web Novel',
+  'Action & Adventure'
+];
+const TASTE_ICONS = {
+  'Action & Adventure': '\u2694\uFE0F',
+  Billionaire: '\uD83D\uDC8E',
+  'Dark Romance': '\uD83C\uDF19',
+  Fantasy: '\u2728',
+  Horror: '\uD83D\uDC7B',
+  'Historical Fiction': '\uD83D\uDCDC',
+  'Light Novel': '\u26A1',
+  'Non Fiction': '\uD83D\uDCBC',
+  Other: '\uD83D\uDCD6',
+  Paranormal: '\uD83D\uDC41\uFE0F',
+  Romance: '\uD83D\uDC9E',
+  'Science Fiction': '\uD83D\uDE80',
+  Thriller: '\uD83D\uDD2A',
+  Unknown: '\uD83D\uDCD6',
+  WebNovel: '\uD83D\uDCDD',
+  'Web Novel': '\uD83D\uDCDD',
+  Werewolf: '\uD83C\uDF15',
+  'YA/Teen': '\uD83C\uDF1F'
+};
+const TASTE_LABELS = {
+  'Action & Adventure': 'Action',
+  'Historical Fiction': 'Historical',
+  'Science Fiction': 'Sci-Fi',
+  'Progression Fantasy': 'Progression'
+};
+const STANDARD_PRICE_NAIRA = 2500;
+const PARTNER_COMMISSION_RATE = 0.20;
+const INVESTOR_REVENUE_SHARE_RATE = 0.15;
 
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 //  HELPERS
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 function textFromBook(book) {
   return [...(book.subjects || []), book.title || '', book.author || '', book.genre || '', book.synopsis || ''].join(' ').toLowerCase();
 }
@@ -997,19 +1585,38 @@ function inferChapters(book, index) { if (book.chapters && Number.isInteger(book
 function escapeHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+function money(value) {
+  return `₦${Number(value || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+}
+function paystackFeeNaira(amountNaira) {
+  const amount = Math.max(0, Number(amountNaira || 0));
+  const percent = amount * 0.015;
+  const flat = amount >= 2500 ? 100 : 0;
+  return Math.min(2000, Math.round((percent + flat) * 100) / 100);
+}
+function netReceiptNaira(amountNaira) {
+  return Math.max(0, Number(amountNaira || 0) - paystackFeeNaira(amountNaira));
+}
+function hasBackfilledChapters(novel) {
+  const cached = Number(novel.cachedChapters || 0);
+  const declaredTotal = Number(novel.declaredChapters || 0);
+  return declaredTotal > 0 && cached >= declaredTotal;
+}
 
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 //  LOCAL STORAGE
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 const LS = {
   get: (k, def) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch(e) { return def; } },
   set: (k, v)   => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} }
 };
 
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 //  STATE
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 let NOVELS = [];
+let recommendedPage = 0;
+let currentRecommended = [];
 let state = {
   theme:        LS.get('pb_theme', 'dark'),
   tastePicked:  LS.get('pb_taste_picked', false),
@@ -1026,6 +1633,13 @@ let state = {
   nudgeDone:    LS.get('pb_nudge_done', false),
   userId:        LS.get('pb_user_id', null),
   userEmail:     LS.get('pb_user_email', null),
+  accessToken:   LS.get('pb_access_token', null),
+  emailVerified: LS.get('pb_email_verified', false),
+  username:      LS.get('pb_username', null),
+  emailNotificationsEnabled: LS.get('pb_email_notifications_enabled', true),
+  authorNotificationsEnabled: LS.get('pb_author_notifications_enabled', true),
+  authorId:      LS.get('pb_author_id', null),
+  authorToken:   LS.get('pb_author_token', null),
   plan:          LS.get('pb_plan', 'free'),
   selectedPlanMonths: LS.get('pb_selected_plan_months', 1),
   subscriptionExpiry: LS.get('pb_subscription_expiry', null),
@@ -1036,6 +1650,7 @@ let state = {
   deviceFingerprint: LS.get('pb_device_fingerprint', null),
   couponCode:    LS.get('pb_coupon_code', ''),
   downloads:     LS.get('pb_downloads', {}),
+  followedAuthors: LS.get('pb_followed_authors', []),
 };
 
 // FIX 10: Use a Set for O(1) shelf lookups instead of O(n) array.includes()
@@ -1043,12 +1658,17 @@ let shelfSet = new Set(state.shelf);
 
 let currentNovel   = null;
 let currentChapter = 1;
+let currentEngagement = null;
 let activeGenre    = 'All';
 let activeMood     = 'All';
 let activeSource   = 'All';
 let selectedTastes = [...state.tasteGenres];
 let searchTimer    = null;
 let isCatalogueReady = false;
+let activeView = 'home';
+let suppressHistoryPush = false;
+let pendingEmailResolver = null;
+let accountMode = 'signup';
 
 function saveState() {
   const keys = {
@@ -1060,6 +1680,13 @@ function saveState() {
     'pb_font_size': state.fontSize, 'pb_milestones': state.milestones,
     'pb_nudge_done': state.nudgeDone,
     'pb_user_id': state.userId, 'pb_user_email': state.userEmail,
+    'pb_access_token': state.accessToken,
+    'pb_email_verified': state.emailVerified,
+    'pb_username': state.username,
+    'pb_email_notifications_enabled': state.emailNotificationsEnabled,
+    'pb_author_notifications_enabled': state.authorNotificationsEnabled,
+    'pb_author_id': state.authorId,
+    'pb_author_token': state.authorToken,
     'pb_plan': state.plan, 'pb_selected_plan_months': state.selectedPlanMonths,
     'pb_subscription_expiry': state.subscriptionExpiry,
     'pb_subscription_alerts': state.subscriptionAlerts,
@@ -1068,8 +1695,155 @@ function saveState() {
     'pb_last_donation': state.lastDonation,
     'pb_device_fingerprint': state.deviceFingerprint,
     'pb_coupon_code': state.couponCode, 'pb_downloads': state.downloads,
+    'pb_followed_authors': state.followedAuthors,
   };
   Object.entries(keys).forEach(([k, v]) => LS.set(k, v));
+}
+
+let readerSyncTimer = null;
+let readerSyncStatus = (state.userId || state.accessToken) ? 'synced' : 'local';
+const authorStoryTitles = {};
+
+function readerStatePayload() {
+  return {
+    shelf: state.shelf.map(id => Number(id)).filter(Boolean),
+    progress: state.progress || {},
+    bookmarks: state.bookmarks || {},
+    downloads: {}
+  };
+}
+
+function accountDisplayName() {
+  return state.username || state.userEmail || (state.userId ? 'Reader' : '');
+}
+
+function renderAccountSyncStatus(status = readerSyncStatus) {
+  readerSyncStatus = (state.userId || state.accessToken) ? status : 'local';
+  const isSynced = readerSyncStatus === 'synced' && (state.userId || state.accessToken);
+  const isSyncing = readerSyncStatus === 'syncing';
+  const label = accountDisplayName();
+  const navBtn = document.getElementById('account-nav-btn');
+  const navLabel = document.getElementById('account-nav-label');
+  const mobileLabel = document.getElementById('mobile-account-label');
+  const chip = document.getElementById('sync-status-chip');
+
+  if (navBtn) navBtn.classList.toggle('synced', !!isSynced);
+  if (navLabel) navLabel.textContent = label ? label : 'Account';
+  if (mobileLabel) mobileLabel.textContent = label ? `Signed in as ${label}` : 'Sync reading';
+  if (chip) {
+    chip.classList.toggle('synced', !!isSynced);
+    chip.classList.toggle('syncing', !!isSyncing);
+    chip.textContent = isSyncing
+      ? 'Syncing...'
+      : (isSynced ? 'Shelf synced' : 'Local only');
+    chip.title = isSynced
+      ? 'Shelf, progress, and bookmarks are backed by your PickBook account.'
+      : 'Shelf, progress, and bookmarks are saved in this browser until you create an account.';
+  }
+}
+
+function applyServerReaderState(data) {
+  if (!data || typeof data !== 'object') return;
+  const profile = data.profile || {};
+  applyProfileSession(profile);
+  if (typeof profile.streak_count === 'number') state.streakCount = profile.streak_count;
+  if (profile.last_read_date) state.streakDate = profile.last_read_date;
+
+  if (Array.isArray(data.shelf)) {
+    state.shelf = data.shelf.map(id => Number(id)).filter(Boolean);
+    shelfSet = new Set(state.shelf);
+  }
+  if (data.progress && typeof data.progress === 'object') state.progress = data.progress;
+  if (data.bookmarks && typeof data.bookmarks === 'object') state.bookmarks = data.bookmarks;
+  if (data.downloads && typeof data.downloads === 'object') {
+    const mergedDownloads = { ...(state.downloads || {}) };
+    Object.entries(data.downloads).forEach(([id, serverDownload]) => {
+      mergedDownloads[id] = { ...(mergedDownloads[id] || {}), ...(serverDownload || {}) };
+    });
+    state.downloads = mergedDownloads;
+  }
+
+  saveState();
+  renderPlan();
+  renderStreak();
+  renderShelfCount();
+  renderDownloadCount();
+  renderAccountSyncStatus('synced');
+  renderContinueSection();
+  if (activeView === 'shelf') renderShelfView();
+  if (activeView === 'downloads') renderDownloadsView();
+}
+
+async function refreshLocalSession() {
+  if (!state.accessToken) return false;
+  try {
+    const res = await fetch('/api/me', { headers: authHeaders() });
+    if (!res.ok) return false;
+    const profile = await res.json();
+    applyProfileSession(profile);
+    saveState();
+    renderPlan();
+    renderAccountSyncStatus('synced');
+    return true;
+  } catch (err) {
+    console.warn('[PickBook] Could not refresh account session:', err);
+    return false;
+  }
+}
+
+async function loadReaderStateFromServer() {
+  if (!state.userId && !state.accessToken) return false;
+  renderAccountSyncStatus('syncing');
+  let res = await fetch('/api/reader-state', { headers: authHeaders() });
+  if (res.status === 401 && await refreshLocalSession()) {
+    res = await fetch('/api/reader-state', { headers: authHeaders() });
+  }
+  if (!res.ok) {
+    renderAccountSyncStatus('local');
+    return false;
+  }
+  const data = await res.json().catch(() => null);
+  applyServerReaderState(data);
+  return true;
+}
+
+async function pushReaderState() {
+  if (!state.userId && !state.accessToken) return false;
+  renderAccountSyncStatus('syncing');
+  let res = await fetch('/api/reader-state', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(readerStatePayload())
+  });
+  if (res.status === 401 && await refreshLocalSession()) {
+    res = await fetch('/api/reader-state', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify(readerStatePayload())
+    });
+  }
+  if (!res.ok) {
+    renderAccountSyncStatus('local');
+    return false;
+  }
+  const data = await res.json().catch(() => null);
+  applyServerReaderState(data);
+  return true;
+}
+
+function scheduleReaderStateSync() {
+  if (!state.userId && !state.accessToken) return;
+  clearTimeout(readerSyncTimer);
+  readerSyncTimer = setTimeout(() => {
+    pushReaderState().catch(err => console.warn('[PickBook] Reader sync failed:', err));
+  }, 700);
+}
+
+async function restoreAccountState() {
+  if (!state.userId && !state.userEmail && !state.accessToken) return;
+  if (!state.accessToken && state.userEmail) await refreshLocalSession();
+  const synced = await loadReaderStateFromServer();
+  renderAccountSyncStatus(synced ? 'synced' : 'local');
 }
 
 function getDeviceFingerprint() {
@@ -1093,19 +1867,33 @@ function guardCatalogueReady() {
   return false;
 }
 
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 //  COVER IMAGE HELPER
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 let _coverImgIdCounter = 0;
+
+function coverSrc(url) {
+  if (!url || typeof url !== 'string' || !url.startsWith('http')) return '';
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    if (host === 'freewebnovel.com' || host.endsWith('.freewebnovel.com') || host === 'lightnovelworld.org' || host.endsWith('.lightnovelworld.org') || host === 'royalroad.com' || host.endsWith('.royalroad.com')) {
+      return `/cover-proxy?url=${encodeURIComponent(url)}`;
+    }
+  } catch (err) {
+    return '';
+  }
+  return url;
+}
 
 function coverHtml(novel, cssClass = 'novel-cover-bg') {
   const gradient = novel.bg || COVER_GRADIENTS[0];
   let imgTag = '';
-  if (novel.cover && typeof novel.cover === 'string' && novel.cover.startsWith('http')) {
+  const src = coverSrc(novel.cover);
+  if (src) {
     const uid = 'cimg_' + (++_coverImgIdCounter);
     imgTag = `<img
       id="${uid}"
-      src="${escapeHtml(novel.cover)}"
+      src="${escapeHtml(src)}"
       alt="${escapeHtml(novel.title)}"
       loading="lazy"
       onload="this.classList.add('loaded')"
@@ -1115,9 +1903,9 @@ function coverHtml(novel, cssClass = 'novel-cover-bg') {
   return `<div class="${cssClass}" style="background:${gradient}">${imgTag}</div>`;
 }
 
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 //  DONATE
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 function openDonate() {
   const emailInput = document.getElementById('donation-email');
   if (emailInput && state.userEmail && !emailInput.value) emailInput.value = state.userEmail;
@@ -1171,21 +1959,32 @@ function dismissNudge() {
   state.nudgeDone = true; saveState();
 }
 
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 //  MOBILE MENU + REFERRALS
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 function toggleMobileMenu() {
   const panel = document.getElementById('mobile-menu-panel');
+  const backdrop = document.getElementById('mobile-menu-backdrop');
   if (panel) panel.classList.toggle('open');
+  if (backdrop) backdrop.classList.toggle('open', panel && panel.classList.contains('open'));
 }
 function closeMobileMenu() {
   const panel = document.getElementById('mobile-menu-panel');
+  const backdrop = document.getElementById('mobile-menu-backdrop');
   if (panel) panel.classList.remove('open');
+  if (backdrop) backdrop.classList.remove('open');
 }
 function mobileMenuAction(fn) {
   closeMobileMenu();
   fn();
 }
+document.addEventListener('click', e => {
+  const panel = document.getElementById('mobile-menu-panel');
+  const btn = document.getElementById('mobile-menu-btn');
+  if (panel && panel.classList.contains('open') && !panel.contains(e.target) && e.target !== btn) {
+    closeMobileMenu();
+  }
+});
 function currentReferralCode() {
   if (state.referralCode) return state.referralCode;
   if (state.userId) return 'PB' + String(state.userId).replace(/-/g, '').slice(0, 8).toUpperCase();
@@ -1212,7 +2011,7 @@ function copyReferralLink() {
 }
 function shareReferral() {
   const link = referralLink();
-  const text = `Read free novels with me on PickBook. Use my referral link for bonus perks: ${link}`;
+  const text = `Read novels with me on PickBook. Use my referral link for bonus perks: ${link}`;
   if (navigator.share) navigator.share({ title: 'PickBook Referral', text, url: link }).catch(() => {});
   else if (navigator.clipboard) navigator.clipboard.writeText(text).catch(() => {});
   showToast('Referral invite ready to share.');
@@ -1245,11 +2044,19 @@ async function claimReferralBoost() {
   showToast(data.message || 'Referral boost added.');
 }
 
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 //  PLAN / CHECKOUT
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 function authHeaders() {
-  return state.userId ? { 'Authorization': `Bearer ${state.userId}` } : {};
+  return state.accessToken ? { 'Authorization': `Bearer ${state.accessToken}` } : (
+    state.userId ? { 'Authorization': `Bearer ${state.userId}` } : {}
+  );
+}
+function authorAuthHeaders() {
+  const headers = authHeaders();
+  if (Object.keys(headers).length) return headers;
+  if (state.authorToken) return { 'Authorization': `Bearer ${state.authorToken}` };
+  return state.authorId ? { 'X-User-Id': state.authorId } : {};
 }
 function isStandard() {
   if (state.plan !== 'standard') return false;
@@ -1310,6 +2117,15 @@ async function handlePaymentReturn() {
       showToast('Thank you for donating.');
       return;
     }
+    if (data.kind === 'investment') {
+      state.lastDonation = null;
+      saveState();
+      window.history.replaceState({}, document.title, '/');
+      showView('deals');
+      switchDealTab('dashboard');
+      showToast('Investment payment confirmed. Your dashboard is ready.');
+      return;
+    }
 
     state.plan = data.current_plan || 'standard';
     if (data.subscription_expiry) state.subscriptionExpiry = data.subscription_expiry;
@@ -1329,51 +2145,398 @@ function renderDownloadCount() {
   badge.textContent = count;
   badge.classList.toggle('visible', count > 0);
 }
-async function ensureLocalProfile() {
-  if (state.userId) return state.userId;
-  const email = window.prompt('Enter your email to create your PickBook account:');
-  if (!email) return null;
-  const res = await fetch('/api/auth/signup', {
+function applyProfileSession(profile) {
+  if (!profile || !profile.id) return;
+  state.userId = profile.id || state.userId;
+  state.userEmail = profile.email || state.userEmail;
+  state.accessToken = profile.access_token || state.accessToken;
+  state.emailVerified = !!profile.email_verified;
+  state.username = profile.username || state.username;
+  state.emailNotificationsEnabled = profile.email_notifications_enabled !== false;
+  state.authorNotificationsEnabled = profile.author_notifications_enabled !== false;
+  state.plan = profile.current_plan || state.plan;
+  state.subscriptionExpiry = profile.subscription_expiry || state.subscriptionExpiry;
+  state.referralCode = profile.referral_code || state.referralCode;
+}
+function requestAccountEmail() {
+  setAccountMode('signup');
+  const overlay = document.getElementById('account-email-overlay');
+  const input = document.getElementById('account-email-input');
+  const passwordInput = document.getElementById('account-password-input');
+  const usernameInput = document.getElementById('account-username-input');
+  const referralInput = document.getElementById('account-referral-input');
+  const termsInput = document.getElementById('account-terms-input');
+  if (input) input.value = state.userEmail || '';
+  if (passwordInput) passwordInput.value = '';
+  if (usernameInput) usernameInput.value = state.username || '';
+  if (referralInput) referralInput.value = state.referredBy || '';
+  if (termsInput) termsInput.checked = false;
+  const resetToken = new URLSearchParams(window.location.search).get('reset_token') || '';
+  const resetTokenInput = document.getElementById('account-reset-token-input');
+  if (resetTokenInput) resetTokenInput.value = resetToken;
+  if (resetToken) setAccountMode('reset');
+  if (overlay) overlay.classList.add('active');
+  showToast('Create your reader account to continue.', 'email-toast');
+  return new Promise(resolve => { pendingEmailResolver = resolve; });
+}
+
+function setAccountMode(mode) {
+  accountMode = mode === 'login' || mode === 'reset' ? mode : 'signup';
+  const isLogin = accountMode === 'login';
+  const isReset = accountMode === 'reset';
+  document.getElementById('account-create-tab')?.classList.toggle('active', !isLogin);
+  document.getElementById('account-create-tab')?.classList.toggle('active', accountMode === 'signup');
+  document.getElementById('account-login-tab')?.classList.toggle('active', isLogin);
+  document.getElementById('account-reset-tab')?.classList.toggle('active', isReset);
+  const title = document.getElementById('account-modal-title');
+  const copy = document.getElementById('account-modal-copy');
+  const submit = document.getElementById('account-submit-btn');
+  if (title) title.textContent = isReset ? 'Reset your PickBook password' : (isLogin ? 'Sign in to PickBook' : 'Create your PickBook account');
+  if (copy) copy.textContent = isReset
+    ? 'Request a reset link for older or passwordless accounts, then paste the token and choose a new password.'
+    : (isLogin
+      ? 'Use your email and password to sync shelf, progress, payments, and author submissions.'
+      : 'Add your username, email, and password so reading progress and payments stay connected to you.');
+  if (submit) submit.textContent = isReset ? 'Set New Password' : (isLogin ? 'Sign In' : 'Create Account');
+  document.getElementById('account-username-row')?.classList.toggle('hidden', isLogin || isReset);
+  document.getElementById('account-referral-row')?.classList.toggle('hidden', isLogin || isReset);
+  document.getElementById('account-terms-row')?.classList.toggle('hidden', isLogin || isReset);
+  document.getElementById('account-reset-token-row')?.classList.toggle('hidden', !isReset);
+  document.getElementById('account-reset-request-btn')?.classList.toggle('hidden', !isReset);
+}
+
+function submitAccountRegistration() {
+  const input = document.getElementById('account-email-input');
+  const passwordInput = document.getElementById('account-password-input');
+  const usernameInput = document.getElementById('account-username-input');
+  const referralInput = document.getElementById('account-referral-input');
+  const termsInput = document.getElementById('account-terms-input');
+  const resetTokenInput = document.getElementById('account-reset-token-input');
+  const email = (input && input.value || '').trim();
+  const password = (passwordInput && passwordInput.value || '');
+  const username = (usernameInput && usernameInput.value || '').trim();
+  const referralCode = (referralInput && referralInput.value || '').trim();
+  const resetToken = (resetTokenInput && resetTokenInput.value || '').trim();
+  const termsAccepted = !!(termsInput && termsInput.checked);
+  if (accountMode === 'signup' && (!username || username.length < 3)) {
+    showToast('Choose a username with at least 3 characters.', 'email-toast');
+    return;
+  }
+  if (accountMode !== 'reset' && (!email || !email.includes('@'))) {
+    showToast('Please enter a valid email address.', 'email-toast');
+    return;
+  }
+  if (accountMode === 'reset' && !resetToken) {
+    showToast('Paste the reset token from your email.', 'email-toast');
+    return;
+  }
+  if (!password || password.length < 8) {
+    showToast('Enter a password with at least 8 characters.', 'email-toast');
+    return;
+  }
+  if (accountMode === 'signup' && !termsAccepted) {
+    showToast('Please accept the PickBook terms to create an account.', 'email-toast');
+    return;
+  }
+  if (referralCode) state.referredBy = referralCode.toUpperCase();
+  document.getElementById('account-email-overlay').classList.remove('active');
+  if (pendingEmailResolver) pendingEmailResolver({ mode: accountMode, email, password, username, referralCode, termsAccepted, resetToken });
+  pendingEmailResolver = null;
+}
+async function requestPasswordReset() {
+  const email = (document.getElementById('account-email-input')?.value || '').trim();
+  if (!email || !email.includes('@')) {
+    showToast('Enter the account email first.', 'email-toast');
+    return;
+  }
+  const res = await fetch('/api/auth/password-reset/request', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, fingerprint: getDeviceFingerprint() })
+    body: JSON.stringify({ email })
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    showToast(data.detail || 'Could not send reset link.', 'email-toast');
+    return;
+  }
+  if (data.reset_url) {
+    const token = new URL(data.reset_url).searchParams.get('reset_token') || '';
+    const tokenInput = document.getElementById('account-reset-token-input');
+    if (tokenInput) tokenInput.value = token;
+    console.info('[PickBook] Development password reset URL:', data.reset_url);
+  }
+  showToast(data.email_sent ? 'Reset link sent.' : 'Reset token generated for local setup.', 'email-toast');
+}
+function cancelAccountRegistration() {
+  document.getElementById('account-email-overlay').classList.remove('active');
+  if (pendingEmailResolver) pendingEmailResolver(null);
+  pendingEmailResolver = null;
+}
+async function ensureLocalProfile() {
+  if (state.userId && state.accessToken) return state.userId;
+  if (state.userId && state.userEmail && !state.accessToken) {
+    showToast('Please sign in again to continue.');
+  }
+  const account = await requestAccountEmail();
+  if (!account) return null;
+  const endpoint = account.mode === 'reset'
+    ? '/api/auth/password-reset/confirm'
+    : (account.mode === 'login' ? '/api/auth/login' : '/api/auth/signup');
+  const body = account.mode === 'reset'
+    ? { token: account.resetToken, newPassword: account.password }
+    : {
+      email: account.email,
+      password: account.password,
+      username: account.username,
+      referralCode: account.referralCode || state.referredBy || null,
+      fingerprint: getDeviceFingerprint(),
+      termsAccepted: !!account.termsAccepted
+    };
+  const res = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     showToast(err.detail || 'Could not create account');
+    if (account.mode === 'login' && String(err.detail || '').toLowerCase().includes('password reset')) {
+      document.getElementById('account-email-input').value = account.email || '';
+      document.getElementById('account-password-input').value = '';
+      document.getElementById('account-email-overlay')?.classList.add('active');
+      setAccountMode('reset');
+    }
     return null;
   }
   const profile = await res.json();
-  state.userId = profile.id;
-  state.userEmail = profile.email;
-  state.plan = profile.current_plan || 'free';
-  state.subscriptionExpiry = profile.subscription_expiry || state.subscriptionExpiry;
-  state.referralCode = profile.referral_code || state.referralCode;
+  applyProfileSession(profile);
+  if (!state.username && account.username) state.username = account.username;
   saveState();
   renderPlan();
+  renderAccountSyncStatus('synced');
+  if (profile.verification_url) {
+    console.info('[PickBook] Development email verification URL:', profile.verification_url);
+  }
+  await pushReaderState();
   return state.userId;
+}
+async function openAccountControls() {
+  if (state.userId || state.accessToken) {
+    renderAccountPanel();
+    document.getElementById('account-controls-overlay')?.classList.add('active');
+    return;
+  }
+  const profileId = await ensureLocalProfile();
+  if (profileId) showToast('Account created. Shelf, progress, and bookmarks will sync here.');
+}
+
+async function openAccountSettings() {
+  closeAccountControls();
+  const profileId = await ensureLocalProfile();
+  if (!profileId) return;
+  showView('account-settings');
+}
+
+function accountSummaryHtml(includeSyncDetails = false) {
+  const verified = state.emailVerified ? 'Verified' : 'Not verified yet';
+  const plan = isStandard() ? 'Standard' : 'Free';
+  const expiry = state.subscriptionExpiry ? `<br><strong>Expires:</strong> ${new Date(state.subscriptionExpiry).toLocaleDateString()}` : '';
+  const syncDetails = includeSyncDetails
+    ? `<br><strong>Synced items:</strong> ${state.shelf.length} shelf · ${Object.keys(state.progress || {}).length} progress · ${Object.keys(state.bookmarks || {}).length} bookmarks · ${Object.keys(state.downloads || {}).length} downloads`
+    : '';
+  return `
+    <strong>${escapeHtml(accountDisplayName() || 'Reader')}</strong><br>
+    ${escapeHtml(state.userEmail || 'No email saved')}<br>
+    <strong>Email:</strong> ${verified}<br>
+    <strong>Plan:</strong> ${plan}${expiry}<br>
+    <strong>Referral:</strong> ${escapeHtml(currentReferralCode())}${syncDetails}
+  `;
+}
+
+function renderAccountPanel() {
+  const panel = document.getElementById('account-summary-panel');
+  if (!panel) return;
+  panel.innerHTML = `${accountSummaryHtml(false)}
+    <div id="account-achievement-strip" class="feature-note" style="margin-top:0.7rem">Loading badges...</div>
+  `;
+  loadAccountAchievementBadges();
+}
+
+function renderAccountSettings() {
+  const summary = document.getElementById('settings-account-summary');
+  if (summary) summary.innerHTML = accountSummaryHtml(true);
+  const displayName = document.getElementById('settings-display-name');
+  const emailNotifications = document.getElementById('settings-email-notifications');
+  const authorNotifications = document.getElementById('settings-author-notifications');
+  if (displayName) displayName.value = state.username || '';
+  if (emailNotifications) emailNotifications.checked = state.emailNotificationsEnabled !== false;
+  if (authorNotifications) authorNotifications.checked = state.authorNotificationsEnabled !== false;
+  const syncCopy = document.getElementById('settings-sync-copy');
+  if (syncCopy) {
+    syncCopy.textContent = isStandard()
+      ? 'Standard is visible on this account. Synced reader and author activity will be removed if you delete the account.'
+      : 'This account is currently Free. Synced reader and author activity will be removed if you delete the account.';
+  }
+}
+
+async function saveProfilePreferences() {
+  const username = (document.getElementById('settings-display-name')?.value || '').trim();
+  const emailNotificationsEnabled = !!document.getElementById('settings-email-notifications')?.checked;
+  const authorNotificationsEnabled = !!document.getElementById('settings-author-notifications')?.checked;
+  if (!username || username.length < 3) {
+    showToast('Display name must be at least 3 characters.');
+    return;
+  }
+  const res = await fetch('/api/auth/profile', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify({ username, emailNotificationsEnabled, authorNotificationsEnabled })
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    showToast(data.detail || 'Could not save profile.');
+    return;
+  }
+  applyProfileSession(data);
+  saveState();
+  renderAccountSettings();
+  renderAccountSyncStatus('synced');
+  showToast('Profile saved.');
+}
+
+async function changeAccountPassword() {
+  const currentInput = document.getElementById('settings-current-password');
+  const newInput = document.getElementById('settings-new-password');
+  const confirmInput = document.getElementById('settings-confirm-password');
+  const currentPassword = currentInput?.value || '';
+  const newPassword = newInput?.value || '';
+  const confirmPassword = confirmInput?.value || '';
+
+  if (!currentPassword) {
+    showToast('Enter your current password.');
+    return;
+  }
+  if (newPassword.length < 8) {
+    showToast('New password must be at least 8 characters.');
+    return;
+  }
+  if (newPassword !== confirmPassword) {
+    showToast('New passwords do not match.');
+    return;
+  }
+
+  const res = await fetch('/api/auth/password', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify({ currentPassword, newPassword })
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    showToast(data.detail || 'Could not change password.');
+    return;
+  }
+  if (currentInput) currentInput.value = '';
+  if (newInput) newInput.value = '';
+  if (confirmInput) confirmInput.value = '';
+  showToast('Password changed.');
+}
+
+async function loadAccountAchievementBadges() {
+  const strip = document.getElementById('account-achievement-strip');
+  if (!strip || !state.userId) return;
+  try {
+    const res = await fetch('/api/achievements', { headers: authHeaders() });
+    const data = await res.json().catch(() => []);
+    if (!res.ok || !Array.isArray(data)) throw new Error('Badges unavailable');
+    const earned = data.filter(item => item.earned).slice(0, 3);
+    strip.innerHTML = earned.length
+      ? `<strong>Badges:</strong> ${earned.map(item => escapeHtml(item.title || '')).join(' · ')}`
+      : '<strong>Badges:</strong> Keep reading to unlock your first badge.';
+  } catch (err) {
+    strip.textContent = 'Badges unavailable right now.';
+  }
+}
+
+function closeAccountControls() {
+  document.getElementById('account-controls-overlay')?.classList.remove('active');
+}
+
+async function syncAccountNow() {
+  const synced = await pushReaderState();
+  renderAccountPanel();
+  showToast(synced ? 'Your reading is synced.' : 'Sync is unavailable right now.');
+}
+
+function clearAccountSession() {
+  state.userId = null;
+  state.userEmail = null;
+  state.accessToken = null;
+  state.emailVerified = false;
+  state.username = null;
+  state.authorId = null;
+  state.authorToken = null;
+  state.plan = 'free';
+  state.subscriptionExpiry = null;
+  state.referralCode = '';
+  saveState();
+  renderPlan();
+  renderAccountSyncStatus('local');
+}
+
+async function logoutAccount() {
+  await fetch('/api/auth/logout', { method: 'POST', headers: authHeaders() }).catch(() => {});
+  clearAccountSession();
+  closeAccountControls();
+  showToast('Logged out.');
+}
+
+async function deleteAccount() {
+  const warning = [
+    'Deleting your PickBook account will permanently delete everything tied to it:',
+    'reader progress, shelf, bookmarks, downloads, comments, ratings, achievements, follows, author submissions, payout details, and payment records.',
+    'This cannot be undone. Type DELETE to continue.'
+  ].join('\n\n');
+  const confirmation = prompt(warning);
+  if (confirmation !== 'DELETE') {
+    showToast('Account deletion cancelled.');
+    return;
+  }
+  const res = await fetch('/api/auth/account', { method: 'DELETE', headers: authHeaders() });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    showToast(data.detail || 'Could not delete account.');
+    return;
+  }
+  clearAccountSession();
+  closeAccountControls();
+  showToast('Account deleted.');
 }
 function openUpgrade(reason) {
   const reasonEl = document.getElementById('upgrade-reason');
   if (reasonEl && reason) reasonEl.textContent = reason;
-  const planBtn = document.querySelector(`.plan-option[data-months="${state.selectedPlanMonths === 5 ? 5 : 1}"]`);
+  const selected = state.selectedPlanMonths === 5 ? 5 : (state.selectedPlanMonths === 0 ? 0 : 1);
+  const planBtn = document.querySelector(`.plan-option[data-months="${selected}"]`);
   if (planBtn) selectPlanOffer(planBtn, state.selectedPlanMonths);
+  const referralInput = document.getElementById('checkout-referral-code');
+  if (referralInput) referralInput.value = state.referredBy || '';
   document.getElementById('upgrade-overlay').classList.add('active');
 }
 function closeUpgrade() {
   document.getElementById('upgrade-overlay').classList.remove('active');
 }
 function selectPlanOffer(el, months) {
-  state.selectedPlanMonths = months === 5 ? 5 : 1;
+  state.selectedPlanMonths = months === 5 ? 5 : (months === 0 ? 0 : 1);
   document.querySelectorAll('.plan-option').forEach(btn => btn.classList.remove('active'));
   el.classList.add('active');
   const price = document.getElementById('upgrade-price');
   if (price) {
     price.innerHTML = state.selectedPlanMonths === 5
       ? '&#8358;12,500 <span style="font-size:0.85rem;color:var(--text-muted);font-family:var(--font-body)">/ 6 months</span>'
-      : '&#8358;2,500 <span style="font-size:0.85rem;color:var(--text-muted);font-family:var(--font-body)">/ month</span>';
+      : (state.selectedPlanMonths === 0
+        ? '&#8358;1,000 <span style="font-size:0.85rem;color:var(--text-muted);font-family:var(--font-body)">/ 7 days</span>'
+        : '&#8358;2,500 <span style="font-size:0.85rem;color:var(--text-muted);font-family:var(--font-body)">/ month</span>');
   }
-  if (state.selectedPlanMonths === 5) {
+  if (state.selectedPlanMonths !== 1) {
     state.couponCode = '';
     const couponInput = document.getElementById('coupon-code');
     if (couponInput) couponInput.value = '';
@@ -1381,7 +2544,7 @@ function selectPlanOffer(el, months) {
   saveState();
 }
 async function applyCoupon() {
-  if (state.selectedPlanMonths === 5) {
+  if (state.selectedPlanMonths !== 1) {
     showToast('Promo codes are available on the monthly plan.');
     return;
   }
@@ -1405,9 +2568,21 @@ async function applyCoupon() {
   saveState();
   showToast(`Promo code ${state.couponCode} applied`);
 }
+function saveCheckoutReferral() {
+  const input = document.getElementById('checkout-referral-code');
+  const code = (input && input.value || '').trim().toUpperCase();
+  state.referredBy = code;
+  saveState();
+  showToast(code ? 'Referral code saved.' : 'Referral code cleared.');
+}
 async function startCheckout() {
   const userId = await ensureLocalProfile();
   if (!userId) return;
+  const referralInput = document.getElementById('checkout-referral-code');
+  if (referralInput && referralInput.value.trim()) {
+    state.referredBy = referralInput.value.trim().toUpperCase();
+    saveState();
+  }
   const res = await fetch('/api/checkout/initialize', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -1417,7 +2592,8 @@ async function startCheckout() {
       planType: 'standard',
       paidMonths: state.selectedPlanMonths || 1,
       couponCode: state.couponCode || document.getElementById('coupon-code').value.trim() || null,
-      fingerprint: getDeviceFingerprint()
+      fingerprint: getDeviceFingerprint(),
+      referralCode: state.referredBy || null
     })
   });
   const data = await res.json().catch(() => ({}));
@@ -1444,14 +2620,15 @@ async function downloadCurrentNovel() {
   if (!res.ok) { showToast(data.detail || 'Download is not available yet'); return; }
   state.downloads[currentNovel.id] = { savedAt: new Date().toISOString(), payload: data };
   saveState();
+  scheduleReaderStateSync();
   showToast('Novel saved for offline reading');
   renderDownloadCount();
   buildHomeGrids(getFilteredNovels());
 }
 
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 //  LOAD BOOKS
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 async function loadBooks() {
   isCatalogueReady = false;
   setCatalogueLoading(true, 'Loading your library');
@@ -1465,18 +2642,21 @@ async function loadBooks() {
       id:       book.id       ?? (i + 1),
       title:    book.title    || 'Untitled',
       author:   book.author   || 'Unknown Author',
+      authorId: book.author_id || null,
       genre:    book.genre    || 'Unknown',
       mood:     inferMood(book),
       tags:     inferTags(book),
       rating:   parseFloat(inferRating(i)),
       chapters: inferChapters(book, i),
+      declaredChapters: Number(book.chapters || 0),
       hasContent: !!book.has_content,
       cachedChapters: Number(book.cached_chapters || 0),
+      createdAt: book.created_at || null,
       bg:       COVER_GRADIENTS[i % COVER_GRADIENTS.length],
-      synopsis: book.synopsis || 'Available free on PickBook.',
+      synopsis: book.synopsis || 'Available on PickBook.',
       source:   book.source   || 'PickBook Library',
       license:  book.license  || 'Public Domain',
-      cover:    (book.cover && typeof book.cover === 'string' && book.cover.startsWith('http')) ? book.cover : null,
+      cover:    (book.cover && typeof book.cover === 'string' && (book.cover.startsWith('http') || book.cover.startsWith('/'))) ? book.cover : null,
       download: book.download || book.content_url || null,
       subjects: Array.isArray(book.subjects) ? book.subjects : (book.subjects ? String(book.subjects).split('|').filter(Boolean) : []),
     }));
@@ -1484,6 +2664,7 @@ async function loadBooks() {
     console.info(`[PickBook] Loaded ${NOVELS.length} books.`);
     document.getElementById('home-error').style.display = 'none';
     updateFilterTabs();
+    normalizeTasteGenres();
     isCatalogueReady = true;
   } catch (err) {
     console.error('[PickBook] API error:', err.message);
@@ -1503,16 +2684,18 @@ async function loadBooks() {
   renderShelfCount();
 }
 
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 //  VIEWS
-// ═══════════════════════════════════════════════════════
-const VIEWS = ['home-view','detail-view','reader-view','shelf-view','downloads-view','webnovel-view','features-view','donation-thanks-view','referral-view'];
+// -------------------------------------------------------
+const VIEWS = ['home-view','detail-view','reader-view','shelf-view','downloads-view','webnovel-view','features-view','account-settings-view','donation-thanks-view','referral-view','deals-view','author-view','author-profile-view'];
 
-function showView(v) {
+function showView(v, pushHistory = true) {
   VIEWS.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = (id === v + '-view') ? 'block' : 'none';
   });
+  activeView = v;
+  document.body.classList.toggle('reader-active', v === 'reader');
   const hideFilters = (v !== 'home');
   document.getElementById('genre-bar').classList.toggle('hidden', hideFilters);
   document.getElementById('mood-filter-bar').classList.toggle('hidden', hideFilters);
@@ -1521,9 +2704,15 @@ function showView(v) {
   if (v === 'downloads') renderDownloadsView();
   if (v === 'webnovel') renderWebNovelView();
   if (v === 'features') renderFeaturesView();
+  if (v === 'account-settings') renderAccountSettings();
   if (v === 'donation-thanks') renderDonationThanks();
   if (v === 'referral') renderReferralView();
+  if (v === 'deals') { renderInvestorCalculator(); renderDealCalculator(); }
+  if (v === 'author') loadAuthorSubmissions();
   closeMobileMenu();
+  if (pushHistory && !suppressHistoryPush) {
+    window.history.pushState({ view: v }, '', window.location.pathname + window.location.search);
+  }
   window.scrollTo(0, 0);
 }
 
@@ -1540,9 +2729,581 @@ function showWebNovelTab() {
   showView('webnovel');
 }
 
-// ═══════════════════════════════════════════════════════
+function switchDealTab(tab) {
+  document.querySelectorAll('.deal-tab').forEach(btn => btn.classList.toggle('active', btn.dataset.dealTab === tab));
+  document.querySelectorAll('.deal-panel').forEach(panel => panel.classList.remove('active'));
+  const panel = document.getElementById(`deal-${tab}-panel`);
+  if (panel) panel.classList.add('active');
+  if (tab === 'calculator') renderDealCalculator();
+  if (tab === 'register') renderInvestorCalculator();
+}
+function renderDealCalculator() {
+  const net = netReceiptNaira(STANDARD_PRICE_NAIRA);
+  const fee = paystackFeeNaira(STANDARD_PRICE_NAIRA);
+  const setText = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; };
+  setText('calc-gross', money(STANDARD_PRICE_NAIRA));
+  setText('calc-fee', money(fee));
+  setText('calc-net', money(net));
+  setText('calc-partner', money(net * PARTNER_COMMISSION_RATE));
+}
+function renderInvestorCalculator() {
+  const amount = Number(document.getElementById('investor-amount')?.value || 15000);
+  const plan = document.getElementById('investor-plan')?.value || 'revenue_share';
+  const netMonthly = netReceiptNaira(STANDARD_PRICE_NAIRA);
+  const roiCap = amount * 2;
+  const sharePerSub = plan === 'subscriber_slots' ? netMonthly : netMonthly * INVESTOR_REVENUE_SHARE_RATE;
+  const neededSubs = sharePerSub > 0 ? Math.ceil(roiCap / sharePerSub) : 0;
+  const el = document.getElementById('investor-live-roi');
+  if (el) {
+    el.textContent = `${money(STANDARD_PRICE_NAIRA)} paid by a reader becomes about ${money(netMonthly)} after Paystack/bank charges. Your ROI cap is ${money(roiCap)}. At this plan rate, about ${neededSubs.toLocaleString()} paid subscriptions are needed to reach the cap.`;
+  }
+}
+async function registerPartner() {
+  const payload = {
+    name: document.getElementById('partner-name').value.trim(),
+    email: document.getElementById('partner-email').value.trim(),
+    referralCode: document.getElementById('partner-code').value.trim()
+  };
+  const res = await fetch('/api/deals/partners/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { showToast(data.detail || 'Could not register partner.'); return; }
+  document.getElementById('deal-partner-code').value = data.referral_code || payload.referralCode;
+  showToast(`Partner code ready: ${data.referral_code || payload.referralCode}`);
+  switchDealTab('dashboard');
+  loadDealSummary();
+}
+async function payInvestorPlan() {
+  const payload = {
+    name: document.getElementById('investor-name').value.trim(),
+    email: document.getElementById('investor-email').value.trim(),
+    planType: document.getElementById('investor-plan').value,
+    amountNaira: Number(document.getElementById('investor-amount').value || 0)
+  };
+  const res = await fetch('/api/deals/investors/pay', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { showToast(data.detail || 'Could not start investor payment.'); return; }
+  state.userEmail = state.userEmail || payload.email;
+  saveState();
+  if (data.authorization_url) window.location.href = data.authorization_url;
+}
+function setDealUploadStatus(id, message, ok) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = message || '';
+  el.className = `deal-upload-status ${ok ? 'ok' : 'err'}`;
+}
+async function uploadDealDocument(role, area = 'register') {
+  const prefix = role === 'partner' ? 'partner' : 'investor';
+  const nameId = area === 'docs' ? `${prefix}-doc-name` : `${prefix}-name`;
+  const emailId = area === 'docs' ? `${prefix}-doc-email` : `${prefix}-email`;
+  const fileId = area === 'docs' ? `${prefix}-document-docs` : `${prefix}-document`;
+  const statusId = area === 'docs' ? `${prefix}-upload-status-docs` : `${prefix}-upload-status`;
+  const name = document.getElementById(nameId)?.value.trim() || '';
+  const email = document.getElementById(emailId)?.value.trim() || '';
+  const fileInput = document.getElementById(fileId);
+  const file = fileInput && fileInput.files && fileInput.files[0];
+
+  if (!name) { setDealUploadStatus(statusId, 'Enter your name before uploading.', false); return; }
+  if (!email || !email.includes('@')) { setDealUploadStatus(statusId, 'Enter a valid email before uploading.', false); return; }
+  if (!file) { setDealUploadStatus(statusId, 'Choose a completed agreement file first.', false); return; }
+  if (file.size > 10 * 1024 * 1024) { setDealUploadStatus(statusId, 'File must be 10 MB or smaller.', false); return; }
+
+  const form = new FormData();
+  form.append('role', role);
+  form.append('name', name);
+  form.append('email', email);
+  form.append('document', file);
+
+  setDealUploadStatus(statusId, 'Uploading document...', true);
+  const res = await fetch('/api/deals/documents/upload', {
+    method: 'POST',
+    body: form
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    setDealUploadStatus(statusId, data.detail || 'Could not upload document.', false);
+    return;
+  }
+  fileInput.value = '';
+  setDealUploadStatus(statusId, data.message || 'Document received.', true);
+}
+async function loadDealSummary() {
+  const params = new URLSearchParams();
+  const partnerCode = document.getElementById('deal-partner-code').value.trim();
+  const investorEmail = document.getElementById('deal-investor-email').value.trim();
+  if (partnerCode) params.set('partner_code', partnerCode);
+  if (investorEmail) params.set('investor_email', investorEmail);
+  const res = await fetch(`/api/deals/summary?${params.toString()}`);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { showToast(data.detail || 'Could not load deal summary.'); return; }
+  const grid = document.getElementById('deal-summary-grid');
+  if (!grid) return;
+  const partner = data.partner || {};
+  const investor = data.investor;
+  const standard = data.standard_plan || {};
+  grid.innerHTML = `
+    <div class="deal-card"><div class="metric-label">Standard net receipt</div><div class="metric-value">${money(standard.net_receipt_naira)}</div></div>
+    <div class="deal-card"><div class="metric-label">Partner referred subscriptions</div><div class="metric-value">${Number(partner.referred_subscriptions || 0).toLocaleString()}</div></div>
+    <div class="deal-card"><div class="metric-label">Partner net revenue</div><div class="metric-value">${money(partner.net_revenue_naira)}</div></div>
+    <div class="deal-card"><div class="metric-label">Partner commission</div><div class="metric-value">${money(partner.direct_commission_naira)}</div></div>
+    ${investor ? `
+      <div class="deal-card"><div class="metric-label">Investor plan</div><div class="metric-value">${escapeHtml(investor.plan_type.replace('_', ' '))}</div></div>
+      <div class="deal-card"><div class="metric-label">Investment</div><div class="metric-value">${money(investor.investment_naira)}</div></div>
+      <div class="deal-card"><div class="metric-label">ROI cap</div><div class="metric-value">${money(investor.roi_cap_naira)}</div></div>
+      <div class="deal-card"><div class="metric-label">Projected due</div><div class="metric-value">${money(investor.projected_due_naira)}</div></div>
+    ` : ''}
+    <div class="deal-note" style="grid-column:1/-1">${escapeHtml(data.charge_note || '')}</div>
+  `;
+}
+
+// -------------------------------------------------------
+//  AUTHOR STUDIO
+// -------------------------------------------------------
+function setAuthorUploadStatus(message, ok = false) {
+  const el = document.getElementById('author-upload-status');
+  if (!el) return;
+  el.textContent = message || '';
+  el.className = `deal-upload-status ${ok ? 'ok' : 'err'}`;
+}
+function formatBytes(bytes) {
+  const value = Number(bytes || 0);
+  if (!value) return '';
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${Math.round(value / 1024)} KB`;
+  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+}
+function formatShortDate(value) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+}
+function previewAuthorCover() {
+  const input = document.getElementById('author-cover');
+  const preview = document.getElementById('author-cover-preview');
+  const file = input?.files?.[0];
+  if (!preview) return;
+  if (!file) {
+    preview.style.display = 'none';
+    preview.removeAttribute('src');
+    return;
+  }
+  preview.src = URL.createObjectURL(file);
+  preview.style.display = 'block';
+}
+function clearSelectedAuthorCover() {
+  const input = document.getElementById('author-cover');
+  if (input) input.value = '';
+  previewAuthorCover();
+}
+function uploadAuthorDraftWithProgress(payload) {
+  const progress = document.getElementById('author-upload-progress');
+  if (progress) {
+    progress.value = 0;
+    progress.classList.remove('hidden');
+  }
+  return new Promise(resolve => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/author/submit');
+    Object.entries(authorAuthHeaders()).forEach(([key, value]) => xhr.setRequestHeader(key, value));
+    xhr.upload.onprogress = event => {
+      if (!progress || !event.lengthComputable) return;
+      progress.value = Math.round((event.loaded / event.total) * 100);
+      setAuthorUploadStatus(`Uploading draft... ${progress.value}%`, true);
+    };
+    xhr.onload = () => {
+      let data = {};
+      try { data = JSON.parse(xhr.responseText || '{}'); } catch (err) { data = {}; }
+      resolve({ ok: xhr.status >= 200 && xhr.status < 300, status: xhr.status, data });
+    };
+    xhr.onerror = () => resolve({ ok: false, status: 0, data: { detail: 'Network error during upload.' } });
+    xhr.send(payload);
+  });
+}
+function renderAuthorMoney(data) {
+  const summary = document.getElementById('author-earnings-summary');
+  const list = document.getElementById('author-withdrawal-list');
+  const minimumNote = document.getElementById('author-minimum-payout-note');
+  const notifications = document.getElementById('author-notification-list');
+  const earnings = data?.earnings || {};
+  const minimumPayout = Number(data?.minimum_payout_naira || 1000);
+  const withdrawalInput = document.getElementById('author-withdrawal-amount');
+  if (withdrawalInput) withdrawalInput.min = String(minimumPayout);
+  if (summary) {
+    summary.innerHTML = `
+      Available: <strong>${money(earnings.available_naira || 0)}</strong> &middot;
+      Earned: ${money(earnings.earned_naira || 0)} &middot;
+      Pending withdrawals: ${money(earnings.pending_withdrawals_naira || 0)}
+    `;
+  }
+  if (minimumNote) minimumNote.textContent = `(minimum ${money(minimumPayout)})`;
+  const notificationRows = Array.isArray(data?.notifications) ? data.notifications : [];
+  if (notifications) {
+    notifications.innerHTML = notificationRows.length
+      ? `<div class="deal-note">${notificationRows.slice(0, 4).map(row => `<div><strong>${escapeHtml(row.title || 'Author update')}</strong><br>${escapeHtml(row.message || '')}</div>`).join('<hr style="border:0;border-top:1px solid var(--border);margin:0.55rem 0">')}</div>`
+      : '';
+  }
+  const withdrawals = Array.isArray(data?.withdrawals) ? data.withdrawals : [];
+  if (list) {
+    list.innerHTML = withdrawals.length
+      ? withdrawals.map(row => `<div class="author-status-row">
+          <div>
+            <div class="author-status-title">${money(row.amount_naira || 0)}</div>
+            <div class="author-status-meta">${escapeHtml(formatShortDate(row.requested_at) || '')} ${row.admin_note ? '&middot; ' + escapeHtml(row.admin_note) : ''}</div>
+          </div>
+          <span class="author-status-pill">${escapeHtml(row.status || 'pending')}</span>
+        </div>`).join('')
+      : '<div class="author-empty">No withdrawal requests yet.</div>';
+  }
+}
+function authorProfileCardCover(story) {
+  const src = story?.cover ? escapeHtml(story.cover) : '';
+  if (src) return `<img src="${src}" alt="">`;
+  const title = escapeHtml((story?.title || 'PickBook').slice(0, 42));
+  return `<span>${title}</span>`;
+}
+function renderAuthorProfile(data) {
+  const panel = document.getElementById('author-profile-panel');
+  if (!panel) return;
+  if (!data || !data.id) {
+    panel.innerHTML = '<div class="author-empty">Author profile could not be loaded.</div>';
+    return;
+  }
+  if (data.viewer_following === true && !state.followedAuthors.includes(data.id)) {
+    state.followedAuthors = Array.from(new Set([...state.followedAuthors, data.id]));
+    saveState();
+  } else if (data.viewer_following === false && state.followedAuthors.includes(data.id)) {
+    state.followedAuthors = state.followedAuthors.filter(id => id !== data.id);
+    saveState();
+  }
+  const isFollowing = data.viewer_following === true || state.followedAuthors.includes(data.id);
+  const catalog = Array.isArray(data.catalog) ? data.catalog : [];
+  panel.innerHTML = `
+    <div class="author-profile-hero">
+      <div class="author-profile-top">
+        <div>
+          <div class="author-profile-name">${escapeHtml(data.name || 'PickBook Author')}</div>
+          <div class="author-profile-bio">${escapeHtml(data.bio || 'This author is building their PickBook shelf. Your stories remain yours. Always.')}</div>
+        </div>
+        <button class="btn-primary" id="author-follow-btn" onclick="toggleAuthorFollow('${escapeHtml(data.id)}')">${isFollowing ? 'Following' : 'Follow'}</button>
+      </div>
+      <div class="author-profile-stats">
+        <div class="author-stat"><strong>${Number(data.followers || 0).toLocaleString()}</strong><span>followers</span></div>
+        <div class="author-stat"><strong>${Number(data.published_books || 0).toLocaleString()}</strong><span>published stories</span></div>
+        <div class="author-stat"><strong>${data.average_rating ? escapeHtml(String(data.average_rating)) : '-'}</strong><span>average rating</span></div>
+        <div class="author-stat"><strong>${Number(data.likes || 0).toLocaleString()}</strong><span>likes</span></div>
+      </div>
+    </div>
+    <section>
+      <div class="section-header"><h2 class="section-title">Author Story Shelf</h2></div>
+      <div class="author-story-grid">
+        ${catalog.length ? catalog.map(story => `
+          <button class="author-story-card" onclick="openAuthorStory(${Number(story.book_id || 0)})">
+            <div class="author-story-cover">${authorProfileCardCover(story)}</div>
+            <div class="author-story-info">
+              <div class="author-story-title">${escapeHtml(story.title || 'Untitled story')}</div>
+              <div class="author-story-copy">${escapeHtml(story.synopsis || 'Published on PickBook.')}</div>
+            </div>
+          </button>
+        `).join('') : '<div class="author-empty">No published stories yet.</div>'}
+      </div>
+    </section>
+  `;
+}
+function openAuthorStory(bookId) {
+  if (!bookId) {
+    showToast('This story is not in the reader catalogue yet.');
+    return;
+  }
+  const found = NOVELS.find(n => String(n.id) === String(bookId));
+  if (!found) {
+    showToast('Reload the library to open this story from the author shelf.');
+    return;
+  }
+  showDetail(bookId);
+}
+async function openAuthorProfile(authorId) {
+  if (!authorId) return;
+  const panel = document.getElementById('author-profile-panel');
+  if (panel) panel.innerHTML = '<div class="author-empty">Loading author profile...</div>';
+  showView('author-profile');
+  try {
+    const res = await fetch(`/api/authors/${encodeURIComponent(authorId)}/profile`, { headers: authHeaders() });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || 'Could not load author profile.');
+    renderAuthorProfile(data);
+  } catch (err) {
+    if (panel) panel.innerHTML = `<div class="author-empty">${escapeHtml(err.message || 'Could not load author profile.')}</div>`;
+  }
+}
+async function toggleAuthorFollow(authorId) {
+  if (!authorId) return;
+  const userId = await ensureLocalProfile();
+  if (!userId) return;
+  const isFollowing = state.followedAuthors.includes(authorId);
+  const res = await fetch(`/api/authors/${encodeURIComponent(authorId)}/follow`, {
+    method: isFollowing ? 'DELETE' : 'POST',
+    headers: authHeaders()
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    showToast(data.detail || 'Could not update follow.');
+    return;
+  }
+  state.followedAuthors = isFollowing
+    ? state.followedAuthors.filter(id => id !== authorId)
+    : Array.from(new Set([...state.followedAuthors, authorId]));
+  saveState();
+  showToast(isFollowing ? 'Author unfollowed.' : 'Author followed.');
+  openAuthorProfile(authorId);
+}
+function renderAuthorSubmissions(data) {
+  const list = document.getElementById('author-submission-list');
+  const note = document.getElementById('author-session-note');
+  if (!list) return;
+  const submissions = Array.isArray(data?.submissions) ? data.submissions : [];
+  if (note) {
+    note.textContent = data?.author_name
+      ? `Showing submissions for ${data.author_name}.`
+      : 'Showing submissions linked to this author session.';
+  }
+  if (!submissions.length) {
+    list.innerHTML = '<div class="author-empty">No drafts submitted yet. Upload a TXT, DOCX, or EPUB manuscript to start review.</div>';
+    return;
+  }
+  list.innerHTML = submissions.map(item => {
+    authorStoryTitles[Number(item.story_id)] = item.title || '';
+    const size = formatBytes(item.size_bytes);
+    const date = formatShortDate(item.submitted_at || item.updated_at);
+    const fileBits = [item.filename, size, date].filter(Boolean).map(escapeHtml).join(' &middot; ');
+    const feedback = item.review_feedback ? `<div class="author-status-meta">Feedback: ${escapeHtml(item.review_feedback)}</div>` : '';
+    const cover = item.cover ? `<img src="${escapeHtml(item.cover)}" alt="" style="width:38px;aspect-ratio:2/3;object-fit:cover;border-radius:5px;border:1px solid var(--border);margin-right:0.5rem;float:left">` : '';
+    return `<div class="author-status-row">
+      <div>
+        ${cover}
+        <div class="author-status-title">${escapeHtml(item.title || 'Untitled draft')}</div>
+        <div class="author-status-meta">${fileBits || 'Manuscript metadata unavailable'}</div>
+        ${feedback}
+      </div>
+      <span class="author-status-pill">${escapeHtml(String(item.status || 'draft').replaceAll('_', ' '))}</span>
+      <div class="author-status-actions">
+        <button onclick="openAuthorProfile('${escapeHtml(data.author_id || '')}')">View Profile</button>
+        <button onclick="replaceAuthorStoryCover(${Number(item.story_id)})">Replace Cover</button>
+        <button onclick="removeAuthorStoryCover(${Number(item.story_id)})">Remove Cover</button>
+        <button onclick="editAuthorStory(${Number(item.story_id)})">Edit</button>
+        <button onclick="exportAuthorStory(${Number(item.story_id)})">Export</button>
+        <button onclick="unpublishAuthorStory(${Number(item.story_id)})">Unpublish</button>
+        <button onclick="deleteAuthorStory(${Number(item.story_id)})">Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+async function replaceAuthorStoryCover(storyId) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.jpg,.jpeg,.png,.webp';
+  input.onchange = async () => {
+    const cover = input.files?.[0];
+    if (!cover) return;
+    if (!['jpg','jpeg','png','webp'].includes((cover.name.split('.').pop() || '').toLowerCase())) { showToast('Cover must be JPG, PNG, or WEBP.'); return; }
+    if (cover.size > 5 * 1024 * 1024) { showToast('Cover must be 5 MB or smaller.'); return; }
+    const payload = new FormData();
+    payload.append('cover', cover);
+    const res = await fetch(`/author/stories/${storyId}/cover`, {
+      method: 'POST',
+      headers: authorAuthHeaders(),
+      body: payload
+    });
+    const data = await res.json().catch(() => ({}));
+    showToast(res.ok ? 'Cover updated.' : (data.detail || 'Could not update cover.'));
+    if (res.ok) loadAuthorSubmissions();
+  };
+  input.click();
+}
+async function removeAuthorStoryCover(storyId) {
+  if (!confirm('Remove this story cover?')) return;
+  const res = await fetch(`/author/stories/${storyId}/cover`, {
+    method: 'DELETE',
+    headers: authorAuthHeaders()
+  });
+  const data = await res.json().catch(() => ({}));
+  showToast(res.ok ? 'Cover removed.' : (data.detail || 'Could not remove cover.'));
+  if (res.ok) loadAuthorSubmissions();
+}
+async function loadAuthorSubmissions() {
+  const list = document.getElementById('author-submission-list');
+  if (!state.userId && !state.accessToken && !state.authorId) {
+    if (list) list.innerHTML = '<div class="author-empty">Submit your first draft here, then its review status will appear in this dashboard.</div>';
+    return false;
+  }
+  if (list) list.innerHTML = '<div class="author-empty">Loading submissions...</div>';
+  let res = await fetch('/author/submissions', { headers: authorAuthHeaders() });
+  if (res.status === 401 && await refreshLocalSession()) {
+    res = await fetch('/author/submissions', { headers: authorAuthHeaders() });
+  }
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    if (list) list.innerHTML = `<div class="author-empty">${escapeHtml(data.detail || 'Could not load author submissions right now.')}</div>`;
+    return false;
+  }
+  const data = await res.json();
+  state.authorId = data.author_id || state.authorId;
+  state.authorToken = data.author_access_token || state.authorToken;
+  saveState();
+  renderAuthorSubmissions(data);
+  renderAuthorMoney(data);
+  return true;
+}
+async function submitAuthorDraft() {
+  const title = document.getElementById('author-title')?.value.trim();
+  const author = document.getElementById('author-name')?.value.trim();
+  const file = document.getElementById('author-file')?.files?.[0];
+  const cover = document.getElementById('author-cover')?.files?.[0];
+  const consent = !!document.getElementById('author-consent')?.checked;
+  const termsAccepted = !!document.getElementById('author-terms')?.checked;
+  if (!title) { setAuthorUploadStatus('Please enter a story title.'); return; }
+  if (!author) { setAuthorUploadStatus('Please enter an author name.'); return; }
+  if (!file) { setAuthorUploadStatus('Please choose a TXT, DOCX, or EPUB manuscript.'); return; }
+  if (!['txt','docx','epub'].includes((file.name.split('.').pop() || '').toLowerCase())) { setAuthorUploadStatus('Manuscript must be TXT, DOCX, or EPUB.'); return; }
+  if (file.size > 50 * 1024 * 1024) { setAuthorUploadStatus('Manuscript must be 50 MB or smaller.'); return; }
+  if (cover && !['jpg','jpeg','png','webp'].includes((cover.name.split('.').pop() || '').toLowerCase())) { setAuthorUploadStatus('Cover must be JPG, PNG, or WEBP.'); return; }
+  if (cover && cover.size > 5 * 1024 * 1024) { setAuthorUploadStatus('Cover must be 5 MB or smaller.'); return; }
+  if (!consent) { setAuthorUploadStatus('Please confirm you have permission to submit this manuscript.'); return; }
+  if (!termsAccepted) { setAuthorUploadStatus('Please accept the PickBook author agreement before uploading.'); return; }
+
+  const payload = new FormData();
+  payload.append('title', title);
+  payload.append('author', author);
+  payload.append('consent', 'true');
+  payload.append('terms_accepted', 'true');
+  payload.append('file', file);
+  if (cover) payload.append('cover', cover);
+
+  setAuthorUploadStatus('Uploading draft... 0%', true);
+  let result = await uploadAuthorDraftWithProgress(payload);
+  if ((result.status === 0 || result.status >= 500) && file.size > 5 * 1024 * 1024) {
+    setAuthorUploadStatus('Upload interrupted. Retrying once...', true);
+    result = await uploadAuthorDraftWithProgress(payload);
+  }
+  if (result.status === 401 && await refreshLocalSession()) {
+    result = await uploadAuthorDraftWithProgress(payload);
+  }
+  const data = result.data || {};
+  if (!result.ok) {
+    setAuthorUploadStatus(data.detail || 'Could not submit this draft.');
+    return;
+  }
+
+  state.authorId = data.author_id || state.authorId;
+  state.authorToken = data.author_access_token || state.authorToken;
+  saveState();
+  setAuthorUploadStatus('Draft submitted for review.', true);
+  document.getElementById('author-title').value = '';
+  document.getElementById('author-file').value = '';
+  document.getElementById('author-cover').value = '';
+  previewAuthorCover();
+  document.getElementById('author-consent').checked = false;
+  document.getElementById('author-terms').checked = false;
+  document.getElementById('author-upload-progress')?.classList.add('hidden');
+  showToast('Draft submitted for review.');
+  loadAuthorSubmissions();
+}
+
+async function editAuthorStory(storyId) {
+  const currentTitle = authorStoryTitles[Number(storyId)] || '';
+  const title = prompt('Story title', currentTitle || '');
+  if (title === null) return;
+  const synopsis = prompt('Short synopsis or author note', '');
+  const res = await fetch(`/author/stories/${storyId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...authorAuthHeaders() },
+    body: JSON.stringify({ title, synopsis })
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { showToast(data.detail || 'Could not update story.'); return; }
+  showToast('Story updated.');
+  loadAuthorSubmissions();
+}
+async function unpublishAuthorStory(storyId) {
+  if (!confirm('Unpublish this story from PickBook?')) return;
+  const res = await fetch(`/author/stories/${storyId}/unpublish`, { method: 'POST', headers: authorAuthHeaders() });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { showToast(data.detail || 'Could not unpublish story.'); return; }
+  showToast('Story unpublished.');
+  loadAuthorSubmissions();
+}
+async function deleteAuthorStory(storyId) {
+  if (!confirm('Delete this story submission? It will be removed from your dashboard and reader surfaces. Limited legal, payment, and review audit records may be retained where required. This cannot be undone.')) return;
+  const res = await fetch(`/author/stories/${storyId}`, { method: 'DELETE', headers: authorAuthHeaders() });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { showToast(data.detail || 'Could not delete story.'); return; }
+  showToast('Story deleted.');
+  loadAuthorSubmissions();
+}
+async function exportAuthorStory(storyId) {
+  const res = await fetch(`/author/stories/${storyId}/export`, { headers: authorAuthHeaders() });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    showToast(data.detail || 'Could not export story.');
+    return;
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `pickbook-story-${storyId}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+async function saveAuthorBankDetails() {
+  const payload = {
+    bank_name: document.getElementById('author-bank-name')?.value.trim() || '',
+    bank_account_name: document.getElementById('author-bank-account-name')?.value.trim() || '',
+    bank_account_number: document.getElementById('author-bank-account-number')?.value.trim() || ''
+  };
+  if (!payload.bank_name || !payload.bank_account_name || !payload.bank_account_number) {
+    showToast('Enter all bank details.');
+    return;
+  }
+  const res = await fetch('/author/bank-details', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...authorAuthHeaders() },
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json().catch(() => ({}));
+  showToast(res.ok ? 'Bank details saved.' : (data.detail || 'Could not save bank details.'));
+}
+async function requestAuthorWithdrawal() {
+  const status = document.getElementById('author-withdrawal-status');
+  const amountInput = document.getElementById('author-withdrawal-amount');
+  const amount = Number(amountInput?.value || 0);
+  const minimum = Number(amountInput?.min || 1);
+  if (!amount || amount <= 0) { if (status) status.textContent = 'Enter a valid amount.'; return; }
+  if (amount < minimum) { if (status) status.textContent = `Minimum withdrawal is ${money(minimum)}.`; return; }
+  const res = await fetch('/author/withdrawals', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authorAuthHeaders() },
+    body: JSON.stringify({ amount_naira: amount })
+  });
+  const data = await res.json().catch(() => ({}));
+  if (status) {
+    status.textContent = res.ok ? 'Withdrawal request submitted.' : (data.detail || 'Could not request withdrawal.');
+    status.className = `deal-upload-status ${res.ok ? 'ok' : 'err'}`;
+  }
+  if (res.ok) loadAuthorSubmissions();
+}
+
+// -------------------------------------------------------
 //  THEME
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 function applyTheme() {
   document.documentElement.setAttribute('data-theme', state.theme);
   const btn = document.getElementById('theme-btn');
@@ -1552,9 +3313,9 @@ function applyTheme() {
 }
 function toggleTheme() { state.theme = state.theme === 'dark' ? 'light' : 'dark'; applyTheme(); saveState(); }
 
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 //  STREAK
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 function updateStreak() {
   const today = new Date().toDateString();
   const yesterday = new Date(Date.now() - 86400000).toDateString();
@@ -1582,9 +3343,9 @@ async function pingStreak(bookId, chapter) {
   }
 }
 
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 //  MILESTONES
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 const MILESTONE_DEFS = [
   { id:'first_read',  icon:'\uD83D\uDCD6', title:'First Chapter!',   desc:'You read your very first chapter.',      check: () => state.chaptersRead.length >= 1 },
   { id:'five_chaps',  icon:'\uD83C\uDFAF', title:'5 Chapters Read',  desc:'Getting into the reading habit!',        check: () => state.chaptersRead.length >= 5 },
@@ -1608,10 +3369,10 @@ function checkMilestones() {
   }
 }
 
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 //  SHELF
 //  FIX 10: Uses shelfSet (Set) for O(1) lookups
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 function toggleShelf(novelId) {
   const id = novelId !== undefined ? novelId : (currentNovel ? currentNovel.id : null);
   if (id === null) return;
@@ -1631,6 +3392,7 @@ function toggleShelf(novelId) {
     showToast('Removed from shelf');
   }
   saveState(); renderShelfCount(); updateDetailShelfBtn(); checkMilestones();
+  scheduleReaderStateSync();
   const homeEl  = document.getElementById('home-view');
   const shelfEl = document.getElementById('shelf-view');
   if (homeEl  && homeEl.style.display  !== 'none') buildHomeGrids(getFilteredNovels());
@@ -1696,13 +3458,20 @@ async function renderFeaturesView() {
   document.getElementById('feature-plan').textContent = isStandard() ? 'Standard' : 'Free';
   const note = document.getElementById('feature-plan-note');
   const days = subscriptionDaysLeft();
-  note.textContent = isStandard() && days !== null ? `${days} day${days === 1 ? '' : 's'} left on Standard.` : 'Upgrade when you are ready for offline reading.';
+  const referral = currentReferralCode();
+  note.textContent = isStandard() && days !== null
+    ? `${days} day${days === 1 ? '' : 's'} left on Standard. Referral code: ${referral}.`
+    : `Upgrade when you are ready for offline reading. Referral code: ${referral}.`;
 
   const dots = document.getElementById('streak-dots');
   if (!dots) return;
   dots.innerHTML = Array.from({ length: 28 }, (_, i) => `<span class="streak-dot ${i < Math.min(state.streakCount, 28) ? 'active' : ''}"></span>`).join('');
 
-  if (!state.userId) return;
+  const achievementGrid = document.getElementById('achievement-grid');
+  if (!state.userId) {
+    if (achievementGrid) achievementGrid.innerHTML = '<div class="author-empty">Sign in to track badges and reading milestones.</div>';
+    return;
+  }
   try {
     const res = await fetch('/api/streak/calendar', { headers: authHeaders() });
     if (!res.ok) return;
@@ -1717,12 +3486,31 @@ async function renderFeaturesView() {
   } catch (err) {
     console.warn('[PickBook] streak calendar failed', err);
   }
+  try {
+    const res = await fetch('/api/achievements', { headers: authHeaders() });
+    const data = await res.json().catch(() => []);
+    if (!res.ok || !achievementGrid) return;
+    achievementGrid.innerHTML = (Array.isArray(data) ? data : []).map(item => `
+      <div class="feature-card ${item.earned ? 'earned' : ''}">
+        <div class="feature-kicker">${item.earned ? 'Earned' : 'In progress'}</div>
+        <div class="feature-value">${escapeHtml(item.title || '')}</div>
+        <div class="feature-note">${escapeHtml(item.description || '')}<br>${Number(item.progress || 0)} / ${Number(item.target || 1)}</div>
+        <div class="achievement-progress" aria-hidden="true"><span style="width:${Math.min(100, Math.round((Number(item.progress || 0) / Math.max(1, Number(item.target || 1))) * 100))}%"></span></div>
+      </div>
+    `).join('') || '<div class="author-empty">No achievements yet.</div>';
+  } catch (err) {
+    console.warn('[PickBook] achievements failed', err);
+  }
 }
 
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 //  PROGRESS / CONTINUE READING
-// ═══════════════════════════════════════════════════════
-function saveProgress(novelId, chapter, pct) { state.progress[novelId] = { chapter, pct }; saveState(); }
+// -------------------------------------------------------
+function saveProgress(novelId, chapter, pct) {
+  state.progress[novelId] = { chapter, pct };
+  saveState();
+  scheduleReaderStateSync();
+}
 function renderContinueSection() {
   const section = document.getElementById('continue-section');
   const strips  = document.getElementById('continue-strips');
@@ -1757,9 +3545,9 @@ function resumeReading(novelId) {
   renderReaderView(); showView('reader');
 }
 
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 //  GENRE + MOOD FILTERS
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 function getFilteredNovels() {
   let novels = NOVELS;
   if (activeGenre !== 'All' && activeGenre !== 'All Genres')
@@ -1857,6 +3645,7 @@ function selectGenre(el, genre) {
   document.querySelectorAll('.genre-tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   activeGenre = genre;
+  recommendedPage = 0;
   updateFilterTabs();
   buildHomeGrids(getFilteredNovels());
 }
@@ -1866,6 +3655,7 @@ function selectMood(el, mood) {
   document.querySelectorAll('.mood-chip').forEach(c => c.classList.remove('active'));
   el.classList.add('active');
   activeMood = mood;
+  recommendedPage = 0;
   buildHomeGrids(getFilteredNovels());
 }
 function selectSource(el, source) {
@@ -1873,21 +3663,23 @@ function selectSource(el, source) {
   document.querySelectorAll('.source-chip').forEach(c => c.classList.remove('active'));
   el.classList.add('active');
   activeSource = source;
+  recommendedPage = 0;
   updateFilterTabs();
   buildHomeGrids(getFilteredNovels());
 }
 function clearFilters() {
   if (!guardCatalogueReady()) return;
   activeGenre = 'All'; activeMood = 'All'; activeSource = 'All';
+  recommendedPage = 0;
   document.querySelectorAll('.source-chip').forEach(c => c.classList.remove('active'));
   document.querySelector('.source-chip').classList.add('active');
   updateFilterTabs();
   buildHomeGrids(NOVELS);
 }
 
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 //  AGE GATE
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 function confirmAge() {
   const cb = document.getElementById('age-confirm');
   if (!cb.checked) { showToast('Please tick the checkbox to confirm your age'); return; }
@@ -1905,14 +3697,44 @@ function closeAgeGate() {
   updateFilterTabs();
 }
 
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 //  TASTE PICKER
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
+function availableTasteGenres() {
+  const liveGenres = [...new Set(NOVELS.map(n => n.genre).filter(Boolean))]
+    .filter(g => g !== 'Erotic')
+    .sort((a, b) => a.localeCompare(b));
+  return liveGenres.length ? liveGenres : FALLBACK_TASTE_GENRES;
+}
+function tasteLabel(genre) {
+  return TASTE_LABELS[genre] || genre;
+}
+function tasteIcon(genre) {
+  return TASTE_ICONS[genre] || '\uD83D\uDCD6';
+}
+function normalizeTasteGenres() {
+  const allowed = new Set(availableTasteGenres());
+  const normalized = state.tasteGenres.filter(genre => allowed.has(genre));
+  if (normalized.length !== state.tasteGenres.length) {
+    state.tasteGenres = normalized;
+    saveState();
+  }
+  selectedTastes = selectedTastes.filter(genre => allowed.has(genre));
+}
+function renderTasteOptions() {
+  const grid = document.getElementById('taste-grid');
+  if (!grid) return;
+  grid.innerHTML = availableTasteGenres().map(genre => `
+    <button type="button" class="taste-option ${selectedTastes.includes(genre) ? 'selected' : ''}" data-genre="${escapeHtml(genre)}">
+      <span class="taste-emoji">${tasteIcon(genre)}</span>
+      ${escapeHtml(tasteLabel(genre))}
+    </button>
+  `).join('');
+}
 function showTastePicker() {
+  normalizeTasteGenres();
   selectedTastes = [...state.tasteGenres];
-  document.querySelectorAll('.taste-option').forEach(el => {
-    el.classList.toggle('selected', selectedTastes.includes(el.dataset.genre));
-  });
+  renderTasteOptions();
   updateTasteCount();
   document.getElementById('taste-picker-overlay').classList.add('active');
 }
@@ -1944,20 +3766,20 @@ function skipTastePicker() {
   showView('features');
   setTimeout(() => openUpgrade('See what Standard unlocks whenever you are ready: offline downloads, unlimited shelf space, and streak rewards.'), 650);
 }
-document.querySelectorAll('.taste-option').forEach(el => {
-  el.addEventListener('click', () => {
-    const g = el.dataset.genre;
-    const idx = selectedTastes.indexOf(g);
-    if (idx === -1) selectedTastes.push(g);
-    else selectedTastes.splice(idx, 1);
-    el.classList.toggle('selected', selectedTastes.includes(g));
-    updateTasteCount();
-  });
+document.getElementById('taste-grid').addEventListener('click', event => {
+  const el = event.target.closest('.taste-option');
+  if (!el) return;
+  const g = el.dataset.genre;
+  const idx = selectedTastes.indexOf(g);
+  if (idx === -1) selectedTastes.push(g);
+  else selectedTastes.splice(idx, 1);
+  el.classList.toggle('selected', selectedTastes.includes(g));
+  updateTasteCount();
 });
 
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 //  SEARCH
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 function handleSearch(val) {
   if (!guardCatalogueReady()) {
     const input = document.getElementById('search-input');
@@ -2003,10 +3825,10 @@ document.addEventListener('click', e => {
   }
 });
 
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 //  EROTIC REQUEST PAGE
 //  FIX 2: Checks ageVerified before rendering content
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 function showEroticRequestPage() {
   // FIX 2: Age gate guard - must verify age before seeing erotic page
   if (!state.ageVerified) {
@@ -2018,7 +3840,9 @@ function showEroticRequestPage() {
 
   const grid = document.getElementById('recommended-grid');
   const header = document.getElementById('recommended-title');
+  const pager = document.getElementById('recommended-pager');
   if (header) header.textContent = '\uD83D\uDD1E Erotic Content';
+  if (pager) pager.classList.add('hidden');
   ['trending-header','trending-grid','latest-header','latest-grid'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
@@ -2096,9 +3920,9 @@ function submitEroticRequest() {
   showToast('Opening WhatsApp to send your request!');
 }
 
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 //  GRID RENDERER
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 function renderGrid(el, novels) {
   if (!el) return;
   if (!novels || !novels.length) {
@@ -2109,6 +3933,9 @@ function renderGrid(el, novels) {
     const onShelf   = isOnShelf(n.id);
     const srcShort  = SOURCE_LABELS[(n.source || '').toLowerCase()] || (n.source || '').replace(' (standardebooks.org)','').replace(' (feedbooks.com)','');
     const downloaded = !!state.downloads[n.id];
+    const authorLine = n.authorId
+      ? `<button class="novel-author-sm" style="background:none;border:0;padding:0;cursor:pointer;text-align:left" onclick="event.stopPropagation();openAuthorProfile('${escapeHtml(n.authorId)}')">${escapeHtml(n.author)}</button>`
+      : `<div class="novel-author-sm">${escapeHtml(n.author)}</div>`;
     return `<div class="novel-card" onclick="showDetail(${n.id})">
       <div class="novel-cover">
         ${coverHtml(n)}
@@ -2120,7 +3947,7 @@ function renderGrid(el, novels) {
       </div>
       <div class="novel-info">
         <div class="novel-title-sm">${escapeHtml(n.title)}</div>
-        <div class="novel-author-sm">${escapeHtml(n.author)}</div>
+        ${authorLine}
         <span class="novel-tag">${escapeHtml(n.tags[0] || n.genre)}</span>
         <div><span class="source-pill" title="${escapeHtml(n.source || '')}">\uD83D\uDCDA ${escapeHtml(srcShort)}</span></div>
         ${downloaded ? '<div class="download-badge">Saved offline</div>' : ''}
@@ -2147,7 +3974,8 @@ function buildHomeGrids(novels) {
   const grid = document.getElementById('recommended-grid');
   if (grid) {
     grid.style.display = 'grid';
-    renderGrid(grid, recommended.slice(0, 20));
+    currentRecommended = recommended;
+    renderRecommendedPage();
   }
 
   if (!isFiltered && NOVELS.length > 0) {
@@ -2156,27 +3984,46 @@ function buildHomeGrids(novels) {
     const last = parseInt(localStorage.getItem('pb_sections_refreshed') || '0', 10);
     const stale = (now - last) >= TWO_DAYS;
     let trendingIds = JSON.parse(localStorage.getItem('pb_trending_ids') || 'null');
-    let latestIds   = JSON.parse(localStorage.getItem('pb_latest_ids')   || 'null');
-    if (stale || !trendingIds || !latestIds) {
+    if (stale || !trendingIds) {
       const byRating = [...NOVELS].sort((a, b) => b.rating - a.rating);
       const topPool  = byRating.slice(0, Math.min(12, NOVELS.length));
       for (let i = topPool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [topPool[i], topPool[j]] = [topPool[j], topPool[i]]; }
       trendingIds = topPool.slice(0, 4).map(n => n.id);
-      const latestPool = [...NOVELS].slice(-10).reverse();
-      for (let i = latestPool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [latestPool[i], latestPool[j]] = [latestPool[j], latestPool[i]]; }
-      latestIds = latestPool.slice(0, 4).map(n => n.id);
       localStorage.setItem('pb_trending_ids',       JSON.stringify(trendingIds));
-      localStorage.setItem('pb_latest_ids',         JSON.stringify(latestIds));
       localStorage.setItem('pb_sections_refreshed', String(now));
     }
+    const latestIds = [...NOVELS]
+      .filter(hasBackfilledChapters)
+      .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')) || Number(b.id) - Number(a.id))
+      .slice(0, 4)
+      .map(n => n.id);
     renderGrid(document.getElementById('trending-grid'), trendingIds.map(id => NOVELS.find(n => n.id === id)).filter(Boolean));
     renderGrid(document.getElementById('latest-grid'),   latestIds.map(id => NOVELS.find(n => n.id === id)).filter(Boolean));
   }
 }
 
-// ═══════════════════════════════════════════════════════
+function renderRecommendedPage() {
+  const grid = document.getElementById('recommended-grid');
+  const pager = document.getElementById('recommended-pager');
+  const start = recommendedPage * HOME_PAGE_SIZE;
+  const pageItems = currentRecommended.slice(start, start + HOME_PAGE_SIZE);
+
+  renderGrid(grid, pageItems);
+  if (pager) pager.classList.toggle('hidden', currentRecommended.length <= HOME_PAGE_SIZE);
+}
+
+function showNextRecommendedPage() {
+  if (!currentRecommended.length) return;
+
+  const maxPage = Math.max(0, Math.ceil(currentRecommended.length / HOME_PAGE_SIZE) - 1);
+  recommendedPage = recommendedPage >= maxPage ? 0 : recommendedPage + 1;
+  renderRecommendedPage();
+  document.getElementById('recommended-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// -------------------------------------------------------
 //  DETAIL VIEW
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 function showDetail(novelId) {
   // FIX 7: Use String comparison for safe ID matching
   const n = NOVELS.find(x => String(x.id) === String(novelId));
@@ -2185,7 +4032,12 @@ function showDetail(novelId) {
   currentChapter = 1;
 
   document.getElementById('detail-title').textContent  = n.title;
-  document.getElementById('detail-author').textContent = `by ${n.author}`;
+  const detailAuthor = document.getElementById('detail-author');
+  if (detailAuthor) {
+    detailAuthor.innerHTML = n.authorId
+      ? `by <button class="section-link" style="margin-left:0;background:none;border:0;padding:0" onclick="openAuthorProfile('${escapeHtml(n.authorId)}')">${escapeHtml(n.author)}</button>`
+      : `by ${escapeHtml(n.author)}`;
+  }
   document.getElementById('detail-synopsis').textContent = n.synopsis || 'No synopsis available.';
   document.getElementById('detail-source').textContent  = SOURCE_LABELS[(n.source || '').toLowerCase()] || n.source || 'Unknown';
   document.getElementById('detail-license').textContent = n.license || 'Public Domain';
@@ -2195,9 +4047,10 @@ function showDetail(novelId) {
   if (detailCoverWrapper) {
     const gradient = n.bg || COVER_GRADIENTS[0];
     let imgTag = '';
-    if (n.cover && typeof n.cover === 'string' && n.cover.startsWith('http')) {
+    const src = coverSrc(n.cover);
+    if (src) {
       const uid = 'cimg_' + (++_coverImgIdCounter);
-      imgTag = `<img id="${uid}" src="${escapeHtml(n.cover)}" alt="${escapeHtml(n.title)}" loading="lazy" onload="this.classList.add('loaded')" onerror="this.style.display='none'">`;
+      imgTag = `<img id="${uid}" src="${escapeHtml(src)}" alt="${escapeHtml(n.title)}" loading="lazy" onload="this.classList.add('loaded')" onerror="this.style.display='none'">`;
     }
     detailCoverWrapper.innerHTML = `<div class="detail-cover-bg" id="detail-cover-bg" style="background:${gradient}">${imgTag}</div>`;
   }
@@ -2210,7 +4063,133 @@ function showDetail(novelId) {
   renderChapterList(n, 0);
 
   updateDetailShelfBtn();
+  loadEngagement(n.id);
   showView('detail');
+}
+
+function renderEngagement(data) {
+  const summary = document.getElementById('engagement-summary');
+  const comments = document.getElementById('reader-comment-list');
+  const rating = data?.average_rating ? `${data.average_rating} / 5` : 'No ratings yet';
+  if (summary) {
+    summary.textContent = `${rating} · ${Number(data?.like_count || 0).toLocaleString()} likes · ${Number(data?.comment_count || 0).toLocaleString()} approved reviews`;
+  }
+  document.querySelectorAll('.rating-star').forEach((btn, idx) => {
+    btn.classList.toggle('active', Number(data?.viewer?.rating || 0) >= idx + 1);
+  });
+  if (comments) {
+    const rows = Array.isArray(data?.comments) ? data.comments : [];
+    comments.innerHTML = rows.length
+      ? rows.map(row => `<div class="comment-item"><strong>${row.rating ? '&#9733; ' + row.rating : 'Review'}</strong><br>${escapeHtml(row.comment || '')}</div>`).join('')
+      : '<div class="author-empty">No approved reviews yet.</div>';
+  }
+}
+async function loadEngagement(bookId) {
+  const endpoint = (state.userId || state.accessToken)
+    ? `/api/novels/${bookId}/engagement/me`
+    : `/api/novels/${bookId}/engagement`;
+  const res = await fetch(endpoint, { headers: authHeaders() });
+  const data = await res.json().catch(() => ({}));
+  if (res.ok) renderEngagement(data);
+}
+async function submitEngagement(payload) {
+  if (!currentNovel) return;
+  const userId = await ensureLocalProfile();
+  if (!userId) return;
+  const res = await fetch(`/api/novels/${currentNovel.id}/engagement`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { showToast(data.detail || 'Could not save reaction.'); return; }
+  renderEngagement(data);
+  showToast(payload.comment !== undefined ? 'Review submitted for moderation.' : 'Reaction saved.');
+}
+function toggleLikeCurrentNovel() {
+  submitEngagement({ liked: !currentEngagement?.viewer?.liked });
+}
+function submitReaderComment() {
+  const input = document.getElementById('reader-comment-input');
+  const comment = (input?.value || '').trim();
+  if (!comment) { showToast('Write a short review first.'); return; }
+  submitEngagement({ comment }).then(() => {
+    if (input) input.value = '';
+  });
+}
+
+async function deleteReaderComment() {
+  if (!currentNovel) return;
+  const userId = await ensureLocalProfile();
+  if (!userId) return;
+  if (!confirm('Delete your review for this story?')) return;
+  const res = await fetch(`/api/novels/${currentNovel.id}/engagement/comment`, {
+    method: 'DELETE',
+    headers: authHeaders()
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { showToast(data.detail || 'Could not delete review.'); return; }
+  renderEngagement(data);
+  showToast('Review deleted.');
+}
+
+async function reportReaderComment(commentId) {
+  const userId = await ensureLocalProfile();
+  if (!userId) return;
+  const reason = prompt('Why should admins review this comment?') || '';
+  if (!reason.trim()) return;
+  const res = await fetch(`/api/engagement/comments/${commentId}/report`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify({ reason })
+  });
+  const data = await res.json().catch(() => ({}));
+  showToast(res.ok ? 'Comment reported for review.' : (data.detail || 'Could not report comment.'));
+}
+
+function editReaderComment(text) {
+  const input = document.getElementById('reader-comment-input');
+  if (!input) return;
+  input.value = text || '';
+  input.focus();
+}
+
+function renderCommentItem(row) {
+  const meta = [
+    row.reader ? `by ${escapeHtml(row.reader)}` : '',
+    row.created_at ? `<span class="feature-note">${escapeHtml(formatShortDate(row.created_at))}</span>` : '',
+    row.edited_at ? '<span class="feature-note">edited</span>' : ''
+  ].filter(Boolean).join(' ');
+  const actions = row.mine
+    ? `<button onclick='editReaderComment(${JSON.stringify(row.comment || '')})'>Edit</button>`
+    : `<button onclick="reportReaderComment(${Number(row.id)})">Report</button>`;
+  return `<div class="comment-item"><strong>${row.rating ? '&#9733; ' + row.rating : 'Review'}</strong> ${meta}<br>${escapeHtml(row.comment || '')}<div class="author-status-actions" style="margin-top:0.5rem">${actions}</div></div>`;
+}
+
+function renderEngagement(data) {
+  currentEngagement = data || null;
+  const summary = document.getElementById('engagement-summary');
+  const comments = document.getElementById('reader-comment-list');
+  const rating = data?.average_rating ? `${data.average_rating} / 5` : 'No ratings yet';
+  if (summary) {
+    summary.textContent = `${rating} · ${Number(data?.like_count || 0).toLocaleString()} likes · ${Number(data?.comment_count || 0).toLocaleString()} approved reviews`;
+  }
+  document.querySelectorAll('.rating-star').forEach((btn, idx) => {
+    btn.classList.toggle('active', Number(data?.viewer?.rating || 0) >= idx + 1);
+  });
+  const likeBtn = document.getElementById('reader-like-btn');
+  if (likeBtn) likeBtn.textContent = data?.viewer?.liked ? 'Liked' : 'Like';
+  if (comments) {
+    const sort = document.getElementById('review-sort')?.value || 'newest';
+    const rows = [...(Array.isArray(data?.comments) ? data.comments : [])].sort((a, b) => {
+      if (sort === 'highest') return Number(b.rating || 0) - Number(a.rating || 0);
+      if (sort === 'lowest') return Number(a.rating || 0) - Number(b.rating || 0);
+      return String(b.created_at || '').localeCompare(String(a.created_at || ''));
+    });
+    comments.innerHTML = rows.length
+      ? rows.map(renderCommentItem).join('')
+      : '<div class="author-empty">No approved reviews yet.</div>';
+  }
 }
 
 // FIX 6: Paginated chapter list renderer
@@ -2255,14 +4234,24 @@ function renderChapterList(novel, offset) {
 
 function startReading()      { if (currentNovel) openChapter(1); }
 function openChapter(num) {
+  if (!canOpenChapter(num)) return;
   currentChapter = num;
   renderReaderView();
   showView('reader');
 }
 
-// ═══════════════════════════════════════════════════════
+function hasStreakUnlock() {
+  return Number(state.streakCount || 0) >= 7;
+}
+function canOpenChapter(num) {
+  if (Number(num) < 10 || isStandard() || hasStreakUnlock()) return true;
+  openUpgrade('Free readers can read through chapter 9. Chapter 10 and beyond unlock with a 7-day pass, Standard, or a 7-day reading streak.');
+  return false;
+}
+
+// -------------------------------------------------------
 //  GENRE SCROLL
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 function scrollGenre(dir) {
   const bar = document.getElementById('genre-bar-inner');
   bar.scrollBy({ left: dir * 200, behavior: 'smooth' });
@@ -2278,9 +4267,9 @@ function updateGenreScrollBtns() {
 }
 document.getElementById('genre-bar-inner').addEventListener('scroll', updateGenreScrollBtns);
 
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 //  READER VIEW
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 function renderReaderView() {
   if (!currentNovel) return;
   const n = currentNovel;
@@ -2305,8 +4294,8 @@ function renderReaderView() {
   if (bmBtn) bmBtn.classList.toggle('active', !!state.bookmarks[bookmarkKey]);
 
   document.getElementById('reader-body').innerHTML = `
-    <div class="chapter-loading" id="chapter-loading-indicator">
-      <div class="spinner"></div>
+    <div class="heart-loader" id="chapter-loading-indicator">
+      <div class="heart-fill">&#9825;</div>
       <div>Loading Chapter ${ch}&hellip;</div>
     </div>`;
 
@@ -2326,6 +4315,12 @@ async function loadChapterContent(novel, chapter) {
 
   try {
     const res = await fetch(`/ingest/books/${novel.id}/chapters/${chapter}`, { headers: authHeaders() });
+    if (res.status === 402) {
+      const data = await res.json().catch(() => ({}));
+      body.innerHTML = `<p>${escapeHtml(data.detail || 'This chapter requires Standard access.')}</p>`;
+      openUpgrade(data.detail || 'Chapter 10 and beyond require a 7-day pass, Standard plan, or a 7-day reading streak.');
+      return;
+    }
     if (!res.ok) throw new Error('HTTP ' + res.status);
 
     const data = await res.json();
@@ -2351,7 +4346,11 @@ async function loadChapterContent(novel, chapter) {
 
 function nextChapter() {
   if (!currentNovel) return;
-  if (currentChapter < currentNovel.chapters) { currentChapter++; renderReaderView(); window.scrollTo(0, 0); }
+  if (currentChapter < currentNovel.chapters) {
+    const next = currentChapter + 1;
+    if (!canOpenChapter(next)) return;
+    currentChapter = next; renderReaderView(); window.scrollTo(0, 0);
+  }
   else showToast('You\'ve finished this novel! \uD83C\uDF89');
 }
 function prevChapter() {
@@ -2359,29 +4358,30 @@ function prevChapter() {
   currentChapter--; renderReaderView(); window.scrollTo(0, 0);
 }
 
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 //  READER ACTIONS
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 function toggleBookmark() {
   if (!currentNovel) return;
   const key = `${currentNovel.id}_${currentChapter}`;
   if (state.bookmarks[key]) { delete state.bookmarks[key]; showToast('Bookmark removed'); }
   else { state.bookmarks[key] = true; showToast('\uD83D\uDCD6 Bookmarked!'); }
   saveState();
+  scheduleReaderStateSync();
   const btn = document.getElementById('bookmark-btn');
   if (btn) btn.classList.toggle('active', !!state.bookmarks[key]);
 }
 function rateChapter() { showToast('\u2605 Thanks for rating!'); }
 function shareChapter() {
   const url  = window.location.href;
-  const text = `Reading "${currentNovel ? currentNovel.title : 'a novel'}" on PickBook - free novels online!`;
+  const text = `Reading "${currentNovel ? currentNovel.title : 'a novel'}" on PickBook.`;
   if (navigator.share) navigator.share({ title: 'PickBook', text, url }).catch(() => {});
   else { navigator.clipboard && navigator.clipboard.writeText(url).catch(() => {}); showToast('Link copied!'); }
 }
 
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 //  FONT SIZE
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 function changeFontSize(delta) {
   state.fontSize = Math.min(1.6, Math.max(0.85, state.fontSize + delta * 0.1));
   saveState();
@@ -2389,31 +4389,47 @@ function changeFontSize(delta) {
   if (body) body.style.fontSize = state.fontSize + 'rem';
 }
 
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 //  TOAST
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 let toastTimer = null;
-function showToast(msg) {
+function showToast(msg, extraClass = '') {
   const t = document.getElementById('toast');
+  t.className = `toast ${extraClass}`.trim();
   t.textContent = msg; t.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
 }
 
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 //  INIT
-// ═══════════════════════════════════════════════════════
+// -------------------------------------------------------
 (function init() {
+  window.history.replaceState({ view: 'home' }, '', window.location.pathname + window.location.search);
+  window.addEventListener('popstate', e => {
+    const target = (e.state && e.state.view) || 'home';
+    suppressHistoryPush = true;
+    showView(target, false);
+    suppressHistoryPush = false;
+  });
   const ref = new URLSearchParams(window.location.search).get('ref');
   if (ref) {
     state.referredBy = ref.trim().toUpperCase();
     saveState();
+  }
+  if (new URLSearchParams(window.location.search).get('reset_token')) {
+    setTimeout(() => {
+      requestAccountEmail();
+      setAccountMode('reset');
+    }, 400);
   }
   applyTheme();
   renderStreak();
   renderShelfCount();
   renderDownloadCount();
   renderPlan();
+  renderAccountSyncStatus();
+  restoreAccountState();
   handlePaymentReturn();
   checkSubscriptionReminder();
   updateGenreScrollBtns();
@@ -2430,7 +4446,6 @@ function showToast(msg) {
   if (!state.tastePicked) {
     setTimeout(showTastePicker, 900);
   }
-
   loadBooks();
 })();
 </script>

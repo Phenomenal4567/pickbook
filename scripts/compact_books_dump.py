@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 
-DROP_SOURCES = {"royalroad", "freewebnovel", "lightnovelworld"}
+DROP_SOURCES = {"moboreader"}
 
 
 def compact_books_dump(input_path: Path, output_path: Path) -> dict:

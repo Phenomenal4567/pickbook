@@ -26,7 +26,9 @@ def _make_engine(database_url: str):
     )
 
 
-engine = _make_engine(settings.database_url)
+engine = _make_engine(settings.sqlalchemy_database_url)
+active_database_url = settings.sqlalchemy_database_url
+using_local_database_fallback = False
 
 SessionLocal = sessionmaker(
     autocommit=False,
@@ -44,9 +46,13 @@ def _initialize_configured_database() -> None:
 
 def initialize_database() -> None:
     """Create and patch tables, falling back to SQLite for local dev only."""
-    global engine
+    global active_database_url, engine, using_local_database_fallback
 
-    attempts = 1 if settings.local_database_fallback else max(
+    allow_fallback = (
+        settings.local_database_fallback
+        and settings.app_env != "production"
+    )
+    attempts = 1 if allow_fallback else max(
         1,
         settings.database_startup_retries,
     )
@@ -55,12 +61,14 @@ def initialize_database() -> None:
     for attempt in range(1, attempts + 1):
         try:
             _initialize_configured_database()
+            active_database_url = settings.sqlalchemy_database_url
+            using_local_database_fallback = False
             if attempt > 1:
                 print(f"[database] connected after {attempt} attempts")
             return
         except SQLAlchemyError as exc:
             last_error = exc
-            if settings.local_database_fallback:
+            if allow_fallback:
                 break
             if attempt >= attempts:
                 break
@@ -73,7 +81,7 @@ def initialize_database() -> None:
             engine.dispose()
             sleep(settings.database_startup_retry_seconds)
 
-    if not settings.local_database_fallback:
+    if not allow_fallback:
         assert last_error is not None
         raise last_error
 
@@ -87,6 +95,8 @@ def initialize_database() -> None:
     engine.dispose()
     engine = _make_engine(fallback_url)
     SessionLocal.configure(bind=engine)
+    active_database_url = fallback_url
+    using_local_database_fallback = True
     Base.metadata.create_all(bind=engine)
     ensure_database_schema()
 
@@ -114,6 +124,9 @@ def ensure_database_schema() -> None:
         if "chapter_content" not in existing_columns:
             missing_columns.append(("chapter_content", text_type))
 
+        if "created_at" not in existing_columns:
+            missing_columns.append(("created_at", "TIMESTAMP"))
+
         with engine.begin() as connection:
             for name, column_type in missing_columns:
                 connection.execute(
@@ -136,6 +149,27 @@ def ensure_database_schema() -> None:
         if "referral_code" not in profile_columns:
             profile_missing_columns.append(("referral_code", "VARCHAR"))
 
+        if "username" not in profile_columns:
+            profile_missing_columns.append(("username", "VARCHAR"))
+
+        if "email_verified" not in profile_columns:
+            profile_missing_columns.append(("email_verified", "INTEGER DEFAULT 0 NOT NULL"))
+
+        if "password_hash" not in profile_columns:
+            profile_missing_columns.append(("password_hash", "VARCHAR"))
+
+        if "email_verification_token" not in profile_columns:
+            profile_missing_columns.append(("email_verification_token", "VARCHAR"))
+
+        if "email_verification_sent_at" not in profile_columns:
+            profile_missing_columns.append(("email_verification_sent_at", "TIMESTAMP"))
+
+        if "password_reset_token" not in profile_columns:
+            profile_missing_columns.append(("password_reset_token", "VARCHAR"))
+
+        if "password_reset_sent_at" not in profile_columns:
+            profile_missing_columns.append(("password_reset_sent_at", "TIMESTAMP"))
+
         if "referred_by" not in profile_columns:
             profile_missing_columns.append(("referred_by", "VARCHAR"))
 
@@ -144,6 +178,30 @@ def ensure_database_schema() -> None:
 
         if "signup_fingerprint" not in profile_columns:
             profile_missing_columns.append(("signup_fingerprint", "VARCHAR"))
+
+        if "terms_accepted_at" not in profile_columns:
+            profile_missing_columns.append(("terms_accepted_at", "TIMESTAMP"))
+
+        if "terms_version" not in profile_columns:
+            profile_missing_columns.append(("terms_version", "VARCHAR"))
+
+        if "author_bio" not in profile_columns:
+            profile_missing_columns.append(("author_bio", "TEXT"))
+
+        if "email_notifications_enabled" not in profile_columns:
+            profile_missing_columns.append(("email_notifications_enabled", "INTEGER DEFAULT 1 NOT NULL"))
+
+        if "author_notifications_enabled" not in profile_columns:
+            profile_missing_columns.append(("author_notifications_enabled", "INTEGER DEFAULT 1 NOT NULL"))
+
+        if "bank_name" not in profile_columns:
+            profile_missing_columns.append(("bank_name", "VARCHAR"))
+
+        if "bank_account_name" not in profile_columns:
+            profile_missing_columns.append(("bank_account_name", "VARCHAR"))
+
+        if "bank_account_number" not in profile_columns:
+            profile_missing_columns.append(("bank_account_number", "VARCHAR"))
 
         if profile_missing_columns:
             with engine.begin() as connection:
@@ -162,3 +220,108 @@ def ensure_database_schema() -> None:
                 connection.execute(
                     text("ALTER TABLE coupon_claims ADD COLUMN fingerprint VARCHAR")
                 )
+
+    if inspector.has_table("paystack_events"):
+        event_columns = {
+            column["name"]
+            for column in inspector.get_columns("paystack_events")
+        }
+        event_missing_columns = []
+
+        if "paystack_fee" not in event_columns:
+            event_missing_columns.append(("paystack_fee", "INTEGER DEFAULT 0 NOT NULL"))
+
+        if "net_amount" not in event_columns:
+            event_missing_columns.append(("net_amount", "INTEGER DEFAULT 0 NOT NULL"))
+
+        if "referral_code" not in event_columns:
+            event_missing_columns.append(("referral_code", "VARCHAR"))
+
+        if "partner_code" not in event_columns:
+            event_missing_columns.append(("partner_code", "VARCHAR"))
+
+        if event_missing_columns:
+            with engine.begin() as connection:
+                for name, column_type in event_missing_columns:
+                    connection.execute(
+                        text(f"ALTER TABLE paystack_events ADD COLUMN {name} {column_type}")
+                    )
+
+    if not inspector.has_table("pending_payments"):
+        Base.metadata.tables["pending_payments"].create(bind=engine, checkfirst=True)
+
+    if inspector.has_table("drafts"):
+        draft_columns = {
+            column["name"]
+            for column in inspector.get_columns("drafts")
+        }
+        if "manuscript_metadata_json" not in draft_columns:
+            with engine.begin() as connection:
+                connection.execute(
+                    text("ALTER TABLE drafts ADD COLUMN manuscript_metadata_json TEXT")
+                )
+
+    if inspector.has_table("stories"):
+        story_columns = {
+            column["name"]
+            for column in inspector.get_columns("stories")
+        }
+        story_missing_columns = []
+
+        if "review_feedback" not in story_columns:
+            story_missing_columns.append(("review_feedback", "TEXT"))
+
+        if "reviewed_at" not in story_columns:
+            story_missing_columns.append(("reviewed_at", "TIMESTAMP"))
+
+        if "published_at" not in story_columns:
+            story_missing_columns.append(("published_at", "TIMESTAMP"))
+
+        if "unpublished_at" not in story_columns:
+            story_missing_columns.append(("unpublished_at", "TIMESTAMP"))
+
+        if story_missing_columns:
+            with engine.begin() as connection:
+                for name, column_type in story_missing_columns:
+                    connection.execute(
+                        text(f"ALTER TABLE stories ADD COLUMN {name} {column_type}")
+                    )
+
+    for table_name in (
+        "reader_engagement",
+        "author_earnings",
+        "withdrawal_requests",
+        "author_follows",
+        "reader_achievements",
+        "story_review_audits",
+        "author_notifications",
+        "app_settings",
+    ):
+        if not inspector.has_table(table_name):
+            Base.metadata.tables[table_name].create(bind=engine, checkfirst=True)
+
+    if inspector.has_table("reader_engagement"):
+        engagement_columns = {
+            column["name"]
+            for column in inspector.get_columns("reader_engagement")
+        }
+        engagement_missing_columns = []
+
+        if "report_count" not in engagement_columns:
+            engagement_missing_columns.append(("report_count", "INTEGER DEFAULT 0 NOT NULL"))
+
+        if "report_reason" not in engagement_columns:
+            engagement_missing_columns.append(("report_reason", "TEXT"))
+
+        if "moderation_note" not in engagement_columns:
+            engagement_missing_columns.append(("moderation_note", "TEXT"))
+
+        if "edited_at" not in engagement_columns:
+            engagement_missing_columns.append(("edited_at", "TIMESTAMP"))
+
+        if engagement_missing_columns:
+            with engine.begin() as connection:
+                for name, column_type in engagement_missing_columns:
+                    connection.execute(
+                        text(f"ALTER TABLE reader_engagement ADD COLUMN {name} {column_type}")
+                    )
