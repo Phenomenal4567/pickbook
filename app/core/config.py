@@ -24,9 +24,9 @@ class Settings(BaseSettings):
     # Scraper feature flags
     use_playwright: bool = False
     nf_enrich_details: bool = False  # legacy flag — kept for .env compatibility
-    max_chapters_per_book: int = 50
-    max_cached_chapter_bytes: int = 2_000_000
-    initial_chapters_per_book: int = 2
+    max_chapters_per_book: int = 10
+    max_cached_chapter_bytes: int = 250_000
+    initial_chapters_per_book: int = 0
     anystories_pages_per_genre: int = 3
 
     @property
