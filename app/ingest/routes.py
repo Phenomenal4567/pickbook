@@ -207,6 +207,16 @@ def save_books(db, books: list[dict]) -> dict:
         if not b.get("download"):
             continue
 
+        if (
+            b.get("chapter_content")
+            and not _within_chapter_cache_limit(b["chapter_content"])
+        ):
+            print(
+                "[chapter cache SKIP] initial chapter payload exceeds "
+                "MAX_CACHED_CHAPTER_BYTES"
+            )
+            b["chapter_content"] = None
+
         existing_book = existing.get(b["download"])
 
         if existing_book:
@@ -399,6 +409,14 @@ WEB_NOVEL_SOURCES = {
         "paths": ["/genre-all/"],
         "genre": "Light Novel",
         "link_re": re.compile(r"^/novel/[^/?#]+/?$", re.IGNORECASE),
+        "chapter_selectors": (
+            "#chapter-content",
+            ".chapter-content",
+            ".chapter-body",
+            ".reading-content",
+            ".chapter-text",
+            "article",
+        ),
     },
     "freewebnovel": {
         "label": "FreeWebNovel",
@@ -406,6 +424,15 @@ WEB_NOVEL_SOURCES = {
         "paths": ["/newest"],
         "genre": "Web Novel",
         "link_re": re.compile(r"^/(novel|book|webnovel)/[^/?#]+/?$", re.IGNORECASE),
+        "chapter_selectors": (
+            "#chapter-content",
+            "#chr-content",
+            ".chapter-content",
+            ".chapter-c",
+            ".reading-content",
+            ".chapter-body",
+            "article",
+        ),
     },
     "royalroad": {
         "label": "Royal Road",
@@ -413,6 +440,11 @@ WEB_NOVEL_SOURCES = {
         "paths": ["/fictions/best-rated"],
         "genre": "Progression Fantasy",
         "link_re": re.compile(r"^/fiction/\d+/[^/?#]+/?$", re.IGNORECASE),
+        "chapter_selectors": (
+            ".chapter-content",
+            ".fiction-content",
+            "article",
+        ),
     },
 }
 
@@ -819,7 +851,10 @@ def _extract_author_from_text(text: str) -> str | None:
     return author[:150] if author else None
 
 
-def _clean_web_chapter_text(text: str) -> str:
+def _clean_web_chapter_text(
+    text: str,
+    source: str | None = None,
+) -> str:
 
     text = normalize_text(text)
 
@@ -835,11 +870,54 @@ def _clean_web_chapter_text(text: str) -> str:
         "support the author",
         "advertisement",
         "please enable javascript",
+        "novel chapters",
+        "user reviews",
+        "be the first to review",
+        "if you find any errors",
+        "latest chapters",
+        "chapter list",
+        "table of contents",
     )
 
     lowered = text.lower()
 
     if any(marker in lowered for marker in blocked_markers):
+        return ""
+
+    if source == "lightnovelworld" and any(
+        marker in lowered
+        for marker in (
+            "novel is a popular novel covering",
+            "chapters have been translated",
+            "currently ranked #",
+            "add to library",
+            "library boost",
+        )
+    ):
+        return ""
+
+    if source == "freewebnovel" and any(
+        marker in lowered
+        for marker in (
+            "freewebnovel.com",
+            "copyright 2019",
+            "navigation",
+            "novel list",
+            "bookmark",
+        )
+    ):
+        return ""
+
+    if source == "royalroad" and any(
+        marker in lowered
+        for marker in (
+            "follow author",
+            "support the author's work",
+            "fiction breaking rules",
+            "leave a review",
+            "remove advertisement",
+        )
+    ):
         return ""
 
     return text
@@ -848,12 +926,40 @@ def _clean_web_chapter_text(text: str) -> str:
 def _parse_web_chapter(
     html: str,
     chapter_number: int,
+    source: str | None = None,
 ) -> dict | None:
 
     soup = BeautifulSoup(html, "html.parser")
 
-    for tag in soup(["script", "style", "noscript", "iframe", "svg", "form"]):
+    for tag in soup(
+        [
+            "script",
+            "style",
+            "noscript",
+            "iframe",
+            "svg",
+            "form",
+            "nav",
+            "footer",
+            "aside",
+        ]
+    ):
         tag.decompose()
+
+    for selector in (
+        ".navbar",
+        ".breadcrumb",
+        ".comments",
+        ".review",
+        ".reviews",
+        ".chapter-nav",
+        ".chapter-navigation",
+        ".ads",
+        ".ad",
+        ".advertisement",
+    ):
+        for tag in soup.select(selector):
+            tag.decompose()
 
     title = _first_text(
         soup,
@@ -866,25 +972,45 @@ def _parse_web_chapter(
         ),
     ) or _meta_content(soup, "og:title", "twitter:title")
 
-    containers = soup.select(
-        ".chapter-content, .chapter-inner, .chapter, .text-left, "
-        ".fiction-content, #chapter-content, article, main"
-    )
+    selectors = ()
+    if source and source in WEB_NOVEL_SOURCES:
+        selectors = WEB_NOVEL_SOURCES[source].get("chapter_selectors", ())
+
+    containers = []
+    for selector in selectors:
+        containers.extend(soup.select(selector))
+
+    if not containers:
+        containers = soup.select(
+            ".chapter-content, .chapter-inner, .chapter, .text-left, "
+            ".fiction-content, #chapter-content, article"
+        )
 
     paragraphs: list[str] = []
     roots = containers or [soup]
 
     for root in roots:
-        for el in root.find_all(["p", "div"]):
+        root_paragraphs: list[str] = []
+
+        for br in root.find_all("br"):
+            br.replace_with("\n")
+
+        for el in root.find_all(["p", "div", "section"]):
             if el.find(["p", "div"]):
                 continue
 
-            text = _clean_web_chapter_text(el.get_text(" ", strip=True))
+            text = _clean_web_chapter_text(
+                el.get_text("\n", strip=True),
+                source=source,
+            )
 
             if len(text) < 35:
                 continue
 
-            paragraphs.append(text)
+            root_paragraphs.append(text)
+
+        if len(root_paragraphs) >= max(2, len(paragraphs)):
+            paragraphs = root_paragraphs
 
         if len(paragraphs) >= 4:
             break
@@ -936,12 +1062,40 @@ def _extract_web_chapter_links(
     for a in soup.select("a[href]"):
         href = a.get("href", "").strip()
         text = normalize_text(a.get_text(" ", strip=True))
+        parsed_path = urlparse(href).path if href.startswith("http") else href
         combined = f"{href} {text}".lower()
 
-        if "chapter" not in combined and not re.search(
-            r"/fiction/\d+/[^/]+/chapter/\d+",
-            href,
-        ):
+        if source == "royalroad":
+            is_chapter = bool(
+                re.search(
+                    r"/fiction/\d+/[^/]+/chapter/\d+",
+                    parsed_path,
+                    re.IGNORECASE,
+                )
+            )
+        elif source == "lightnovelworld":
+            is_chapter = bool(
+                re.search(
+                    r"/novel/[^/]+/chapter/\d+/?$",
+                    parsed_path,
+                    re.IGNORECASE,
+                )
+            )
+        elif source == "freewebnovel":
+            is_chapter = (
+                "chapter" in combined
+                and bool(
+                    re.search(
+                        r"^/(novel|book|webnovel)/[^/?#]+",
+                        parsed_path,
+                        re.IGNORECASE,
+                    )
+                )
+            )
+        else:
+            is_chapter = "chapter" in combined
+
+        if not is_chapter:
             continue
 
         chapter_url = urljoin(config["base_url"], href)
@@ -984,6 +1138,9 @@ def _parse_webnovel_listing(
         if not link_re.match(parsed_path):
             continue
 
+        if "/chapter/" in parsed_path.lower():
+            continue
+
         full_url = urljoin(base_url, href)
         if full_url in seen:
             continue
@@ -1002,6 +1159,9 @@ def _parse_webnovel_listing(
             or (img.get("alt") if img else "")
             or a.get_text(" ", strip=True)
         )
+
+        title = re.sub(r"^Read\s+", "", title, flags=re.IGNORECASE)
+        title = re.sub(r"\s+Novel$", "", title, flags=re.IGNORECASE)
 
         if len(title) < 2 or title.lower() in {"read", "novel", "chapter"}:
             slug = parsed_path.rstrip("/").split("/")[-1]
@@ -1107,6 +1267,7 @@ def _parse_webnovel_details(
             chapter = _parse_web_chapter(
                 fetch(chapter_url),
                 chapter_number,
+                source=source,
             )
         except RequestException as e:
             print(f"[{source} chapter ERROR] {chapter_url}: {e}")
@@ -1461,6 +1622,25 @@ def _cached_chapter_count(
     )
 
 
+def _encode_cached_chapters(
+    chapters: list[dict],
+) -> str:
+
+    return json.dumps(
+        chapters,
+        ensure_ascii=False,
+    )
+
+
+def _within_chapter_cache_limit(
+    chapter_content: str,
+) -> bool:
+
+    limit = settings.max_cached_chapter_bytes
+
+    return limit <= 0 or len(chapter_content.encode("utf-8")) <= limit
+
+
 def _load_chapters_from_book(
     book: Book,
 ) -> list[dict]:
@@ -1481,7 +1661,7 @@ def _store_chapter(
     book: Book,
     chapter_number: int,
     chapter: dict,
-) -> None:
+) -> bool:
 
     chapters = _load_chapters_from_book(book)
     index = chapter_number - 1
@@ -1500,10 +1680,16 @@ def _store_chapter(
         "html": _clean_chapter_html(chapter.get("html") or ""),
     }
 
-    book.chapter_content = json.dumps(
-        chapters,
-        ensure_ascii=False,
-    )
+    chapter_content = _encode_cached_chapters(chapters)
+
+    if not _within_chapter_cache_limit(chapter_content):
+        print(
+            f"[chapter cache SKIP] book_id={book.id} "
+            f"chapter={chapter_number} exceeds MAX_CACHED_CHAPTER_BYTES"
+        )
+        return False
+
+    book.chapter_content = chapter_content
 
     if (
         not book.chapters_count
@@ -1513,6 +1699,7 @@ def _store_chapter(
 
     db.add(book)
     db.commit()
+    return True
 
 
 def _fetch_chapter_from_source(
@@ -1590,6 +1777,7 @@ def _fetch_chapter_from_source(
                 return _parse_web_chapter(
                     fetch(chapter_links[index][1]),
                     chapter_number,
+                    source=source,
                 )
             except RequestException as e:
                 print(
@@ -1671,12 +1859,18 @@ def _cache_book_chapters(
                         unavailable += 1
                         continue
 
-                    _store_chapter(
+                    stored = _store_chapter(
                         db,
                         book,
                         chapter_number,
                         chapter,
                     )
+                    if not stored:
+                        note = (
+                            "Chapter cache stopped because this book reached "
+                            "the configured storage limit."
+                        )
+                        break
                     db.refresh(book)
                     fetched += 1
 
@@ -1741,12 +1935,18 @@ def _cache_book_chapters(
             unavailable += 1
             continue
 
-        _store_chapter(
+        stored = _store_chapter(
             db,
             book,
             chapter_number,
             chapter,
         )
+        if not stored:
+            note = (
+                "Chapter cache stopped because this book reached "
+                "the configured storage limit."
+            )
+            break
         db.refresh(book)
         fetched += 1
         time.sleep(0.2)
@@ -2305,7 +2505,7 @@ def _run_all_webnovel_ingests(
 def ingest_anystories(
     request: Request,
     pages_per_genre: int | None = Query(None, ge=1, le=20),
-    chapters_per_book: int | None = Query(None, ge=0, le=1000),
+    chapters_per_book: int | None = Query(None, ge=0, le=100),
 ):
 
     return _run_anystories_ingest(
@@ -2394,7 +2594,7 @@ def stop_source_ingest(
 def backfill_webnovel_full_chapters(
     request: Request,
     limit: int = Query(2, ge=1, le=50),
-    max_chapters: int | None = Query(25, ge=1, le=1000),
+    max_chapters: int | None = Query(25, ge=1, le=100),
     force: bool = Query(False),
 ):
 
@@ -2440,7 +2640,7 @@ def backfill_source_full_chapters(
     source: str,
     request: Request,
     limit: int = Query(5, ge=1, le=50),
-    max_chapters: int | None = Query(25, ge=1, le=1000),
+    max_chapters: int | None = Query(25, ge=1, le=100),
     force: bool = Query(False),
     book_id: int | None = Query(None, ge=1),
     title: str | None = Query(None),
@@ -2598,7 +2798,7 @@ def stop_source_full_chapters(
 def backfill_anystories_full_chapters(
     request: Request,
     limit: int = Query(5, ge=1, le=50),
-    max_chapters: int | None = Query(25, ge=1, le=1000),
+    max_chapters: int | None = Query(25, ge=1, le=100),
     force: bool = Query(False),
     book_id: int | None = Query(None, ge=1),
     title: str | None = Query(None),

@@ -1,4 +1,5 @@
 from pathlib import Path
+from time import sleep
 
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.exc import SQLAlchemyError
@@ -8,7 +9,10 @@ from app.core.config import settings
 
 def _connect_args_for(database_url: str) -> dict:
     if database_url.startswith("postgres"):
-        return {"sslmode": settings.database_sslmode}
+        return {
+            "sslmode": settings.database_sslmode,
+            "connect_timeout": settings.database_connect_timeout_seconds,
+        }
     if database_url.startswith("sqlite"):
         return {"check_same_thread": False}
     return {}
@@ -33,17 +37,45 @@ SessionLocal = sessionmaker(
 Base = declarative_base()
 
 
+def _initialize_configured_database() -> None:
+    Base.metadata.create_all(bind=engine)
+    ensure_database_schema()
+
+
 def initialize_database() -> None:
     """Create and patch tables, falling back to SQLite for local dev only."""
     global engine
 
-    try:
-        Base.metadata.create_all(bind=engine)
-        ensure_database_schema()
-        return
-    except SQLAlchemyError:
-        if not settings.local_database_fallback:
-            raise
+    attempts = 1 if settings.local_database_fallback else max(
+        1,
+        settings.database_startup_retries,
+    )
+    last_error: SQLAlchemyError | None = None
+
+    for attempt in range(1, attempts + 1):
+        try:
+            _initialize_configured_database()
+            if attempt > 1:
+                print(f"[database] connected after {attempt} attempts")
+            return
+        except SQLAlchemyError as exc:
+            last_error = exc
+            if settings.local_database_fallback:
+                break
+            if attempt >= attempts:
+                break
+
+            print(
+                "[database] startup connection failed "
+                f"(attempt {attempt}/{attempts}); retrying in "
+                f"{settings.database_startup_retry_seconds}s: {exc}"
+            )
+            engine.dispose()
+            sleep(settings.database_startup_retry_seconds)
+
+    if not settings.local_database_fallback:
+        assert last_error is not None
+        raise last_error
 
     fallback_path = Path.cwd() / "pickbook_local.db"
     fallback_url = f"sqlite:///{fallback_path.as_posix()}"

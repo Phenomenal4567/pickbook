@@ -35,6 +35,13 @@
   .status { min-height: 22px; margin: 14px 0 0; color: var(--muted); font-size: 14px; }
   .status.ok { color: var(--success); }
   .status.err { color: var(--danger); }
+  .full-span { grid-column: 1 / -1; }
+  .metric-grid { display: grid; grid-template-columns: repeat(4, minmax(130px, 1fr)); gap: 10px; margin: 12px 0; }
+  .metric { background: var(--panel2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; min-height: 76px; }
+  .metric-label { color: var(--muted); font-size: 12px; line-height: 1.3; }
+  .metric-value { color: var(--text); font-size: 20px; font-weight: 800; margin-top: 6px; overflow-wrap: anywhere; }
+  .split-grid { display: grid; grid-template-columns: repeat(3, minmax(160px, 1fr)); gap: 12px; }
+  .note { color: var(--muted); font-size: 13px; line-height: 1.5; margin-top: 10px; }
   .table-wrap { width: 100%; overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 14px; table-layout: fixed; }
   th, td { text-align: left; border-bottom: 1px solid var(--border); padding: 10px 8px; vertical-align: top; overflow-wrap: anywhere; word-break: break-word; }
@@ -45,6 +52,7 @@
   @media (max-width: 780px) {
     header, .grid, .token-row { display: block; }
     .grid { grid-template-columns: 1fr; }
+    .metric-grid, .split-grid { grid-template-columns: 1fr; }
     section { margin-bottom: 16px; }
     .token-row button { margin-top: 10px; width: 100%; }
   }
@@ -104,6 +112,63 @@
       <div id="coupon-list" class="empty">Enter token, then load coupons.</div>
     </section>
 
+    <section class="full-span">
+      <h2>Accounting</h2>
+      <p style="margin-bottom:12px">Monthly revenue and payout estimates based on the partnership and micro-investment agreements.</p>
+      <div class="split-grid">
+        <label>Active marketing partners
+          <input id="active-partners" type="number" min="1" value="1">
+        </label>
+        <label>Investor plan
+          <select id="investor-plan">
+            <option value="revenue_share">Revenue share</option>
+            <option value="subscriber_slots">Subscriber slots</option>
+          </select>
+        </label>
+        <label>Investment amount
+          <input id="investment-amount" type="number" min="0" value="15000">
+        </label>
+        <label>ROI cap multiplier
+          <input id="investor-cap-multiplier" type="number" min="1" max="10" step="0.1" value="2">
+        </label>
+        <label>Investor share %
+          <input id="investor-share-percent" type="number" min="0" max="100" step="0.1" value="15">
+        </label>
+        <label>Already paid to investor
+          <input id="investor-paid-to-date" type="number" min="0" value="0">
+        </label>
+        <label>Subscriber slots
+          <input id="investor-slots" type="number" min="0" max="100" value="2">
+        </label>
+      </div>
+      <div class="actions">
+        <button onclick="loadAccounting()">Load Accounting</button>
+      </div>
+      <div class="status" id="accounting-status"></div>
+      <div id="accounting-results" class="empty">Enter token, then load accounting.</div>
+    </section>
+
+    <section class="full-span">
+      <h2>Storage Trim</h2>
+      <p style="margin-bottom:12px">Remove rows from Royal Road, FreeWebNovel, and LightNovelWorld so those sources keep the target percentage of their current stored weight.</p>
+      <div class="split-grid">
+        <label>Target remaining %
+          <input id="trim-target-percent" type="number" min="1" max="99" value="65">
+        </label>
+        <label>Mode
+          <select id="trim-dry-run">
+            <option value="true">Preview only</option>
+            <option value="false">Delete selected rows</option>
+          </select>
+        </label>
+      </div>
+      <div class="actions">
+        <button onclick="trimWebnovelSources()">Run Storage Trim</button>
+      </div>
+      <div class="status" id="storage-status"></div>
+      <div id="storage-results" class="empty">Preview first, then run delete if the numbers look right.</div>
+    </section>
+
     <section>
       <h2>Source Ingest</h2>
       <p style="margin-bottom:12px">LightNovelWorld, FreeWebNovel, and Royal Road are now part of the PickBook story setup. Use All Web Novel Sources to ingest them together, then run Chapter Backfill for the same source group.</p>
@@ -150,7 +215,7 @@
         <input id="backfill-limit" type="number" min="1" max="50" value="2">
       </label>
       <label>Max chapters per book
-        <input id="backfill-max-chapters" type="number" min="1" max="1000" value="25">
+        <input id="backfill-max-chapters" type="number" min="1" max="100" value="25">
       </label>
       <label>Exact story ID
         <input id="backfill-book-id" type="number" min="1" placeholder="Optional book ID">
@@ -286,6 +351,109 @@
         </tbody>
       </table>
       </div>
+    `;
+  }
+
+  async function loadAccounting() {
+    if (!token()) {
+      document.getElementById('accounting-results').innerHTML = '<div class="empty">Admin token is required.</div>';
+      return;
+    }
+
+    const params = new URLSearchParams({
+      active_partners: document.getElementById('active-partners').value || '1',
+      investor_plan: document.getElementById('investor-plan').value,
+      investment_amount_naira: document.getElementById('investment-amount').value || '0',
+      investor_cap_multiplier: document.getElementById('investor-cap-multiplier').value || '2',
+      investor_revenue_share_percent: document.getElementById('investor-share-percent').value || '15',
+      investor_paid_to_date_naira: document.getElementById('investor-paid-to-date').value || '0',
+      investor_slots: document.getElementById('investor-slots').value || '0'
+    });
+
+    setStatus('accounting-status', 'Loading accounting summary...', true);
+    const res = await fetch(`/admin/accounting/summary?${params.toString()}`, {
+      headers: headers()
+    });
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      setStatus('accounting-status', data.detail || 'Could not load accounting.', false);
+      return;
+    }
+
+    setStatus('accounting-status', 'Accounting summary loaded.', true);
+    document.getElementById('accounting-results').innerHTML = `
+      <div class="metric-grid">
+        <div class="metric"><div class="metric-label">Gross subscriptions</div><div class="metric-value">${money(data.revenue.gross_subscription_naira)}</div></div>
+        <div class="metric"><div class="metric-label">Organic revenue</div><div class="metric-value">${money(data.revenue.organic_revenue_naira)}</div></div>
+        <div class="metric"><div class="metric-label">Direct referral revenue</div><div class="metric-value">${money(data.revenue.direct_referral_revenue_naira)}</div></div>
+        <div class="metric"><div class="metric-label">Donations</div><div class="metric-value">${money(data.revenue.donations_naira)}</div></div>
+        <div class="metric"><div class="metric-label">15% marketing pool</div><div class="metric-value">${money(data.payouts.marketing_pool_naira)}</div></div>
+        <div class="metric"><div class="metric-label">Pool share / partner</div><div class="metric-value">${money(data.payouts.marketing_pool_share_per_partner_naira)}</div></div>
+        <div class="metric"><div class="metric-label">20% direct commission</div><div class="metric-value">${money(data.payouts.direct_referral_commission_naira)}</div></div>
+        <div class="metric"><div class="metric-label">Investor due</div><div class="metric-value">${money(data.payouts.investor_due_naira)}</div></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <tbody>
+            <tr><th>Subscriptions</th><td>${data.revenue.subscription_count}</td><th>Total payout due</th><td>${money(data.payouts.total_due_naira)}</td></tr>
+            <tr><th>Investor cap</th><td>${money(data.terms.investor_cap_naira)}</td><th>Cap remaining</th><td>${money(data.terms.investor_cap_remaining_naira)}</td></tr>
+            <tr><th>Investor plan</th><td>${escapeHtml(data.terms.investor_plan)}</td><th>Investment amount</th><td>${money(data.terms.investment_amount_naira)}</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note">${escapeHtml(data.terms.investor_note)}</div>
+    `;
+  }
+
+  async function trimWebnovelSources() {
+    if (!token()) {
+      setStatus('storage-status', 'Admin token is required.', false);
+      return;
+    }
+
+    const dryRun = document.getElementById('trim-dry-run').value === 'true';
+    if (!dryRun && !window.confirm('Delete selected Royal Road, FreeWebNovel, and LightNovelWorld rows now? Preview first if you are unsure.')) {
+      return;
+    }
+
+    const params = new URLSearchParams({
+      target_remaining_percent: document.getElementById('trim-target-percent').value || '65',
+      dry_run: String(dryRun)
+    });
+
+    setStatus('storage-status', dryRun ? 'Previewing storage trim...' : 'Deleting selected rows...', true);
+    const res = await fetch(`/admin/storage/trim-webnovel-sources?${params.toString()}`, {
+      method: 'POST',
+      headers: headers()
+    });
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      setStatus('storage-status', data.detail || 'Storage trim failed.', false);
+      return;
+    }
+
+    const removed = dryRun ? data.approx_bytes_that_would_be_removed : data.approx_bytes_removed;
+    setStatus('storage-status', dryRun ? 'Preview complete.' : 'Storage trim complete.', true);
+    document.getElementById('storage-results').innerHTML = `
+      <div class="metric-grid">
+        <div class="metric"><div class="metric-label">Matched rows</div><div class="metric-value">${data.matched}</div></div>
+        <div class="metric"><div class="metric-label">${dryRun ? 'Rows to delete' : 'Rows deleted'}</div><div class="metric-value">${data.selected}</div></div>
+        <div class="metric"><div class="metric-label">Target remaining</div><div class="metric-value">${data.target_remaining_percent}%</div></div>
+        <div class="metric"><div class="metric-label">Approx removed</div><div class="metric-value">${bytes(removed)}</div></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Source</th><th>Matched</th><th>${dryRun ? 'To delete' : 'Deleted'}</th></tr></thead>
+          <tbody>
+            ${Object.entries(data.by_source || {}).map(([source, item]) => `
+              <tr><td>${escapeHtml(source)}</td><td>${item.matched}</td><td>${item.selected}</td></tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="note">${escapeHtml(data.note || '')}</div>
     `;
   }
 
@@ -525,6 +693,21 @@
 
     setStatus('backfill-status', 'Stop requested. Current chapter will finish first.', true);
     document.getElementById('backfill-stop-btn').disabled = true;
+  }
+
+  function money(value) {
+    return new Intl.NumberFormat('en-NG', {
+      style: 'currency',
+      currency: 'NGN',
+      maximumFractionDigits: 0
+    }).format(Number(value || 0));
+  }
+
+  function bytes(value) {
+    const amount = Number(value || 0);
+    if (amount >= 1024 * 1024) return `${(amount / 1024 / 1024).toFixed(1)} MB`;
+    if (amount >= 1024) return `${(amount / 1024).toFixed(1)} KB`;
+    return `${amount} B`;
   }
 
   function escapeHtml(value) {

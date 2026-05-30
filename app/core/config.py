@@ -8,6 +8,9 @@ class Settings(BaseSettings):
     allowed_origins: str = "http://localhost:3000"
     database_url: str = "postgresql://pickbook:pickbook@localhost:5432/pickbook"
     database_sslmode: str = "require"
+    database_connect_timeout_seconds: int = 10
+    database_startup_retries: int = 36
+    database_startup_retry_seconds: int = 5
     local_database_fallback: bool = False
     redis_url: str = "redis://localhost:6379/0"
     plausible_domain: str = "pickbook.com"
@@ -21,7 +24,8 @@ class Settings(BaseSettings):
     # Scraper feature flags
     use_playwright: bool = False
     nf_enrich_details: bool = False  # legacy flag — kept for .env compatibility
-    max_chapters_per_book: int = 500
+    max_chapters_per_book: int = 50
+    max_cached_chapter_bytes: int = 2_000_000
     initial_chapters_per_book: int = 2
     anystories_pages_per_genre: int = 3
 
