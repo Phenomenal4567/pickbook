@@ -169,6 +169,16 @@
       <div id="storage-results" class="empty">Preview first, then run delete if the numbers look right.</div>
     </section>
 
+    <section class="full-span">
+      <h2>Recovery Seed</h2>
+      <p style="margin-bottom:12px">Load the compact book seed after a fresh database reset. It restores metadata only, without cached chapter text.</p>
+      <div class="actions">
+        <button onclick="seedCompactBooks()">Seed Compact Books</button>
+      </div>
+      <div class="status" id="seed-status"></div>
+      <div id="seed-results" class="empty">Use this once after Railway recreates empty tables.</div>
+    </section>
+
     <section>
       <h2>Source Ingest</h2>
       <p style="margin-bottom:12px">LightNovelWorld, FreeWebNovel, and Royal Road are now part of the PickBook story setup. Use All Web Novel Sources to ingest them together, then run Chapter Backfill for the same source group.</p>
@@ -454,6 +464,39 @@
         </table>
       </div>
       <div class="note">${escapeHtml(data.note || '')}</div>
+    `;
+  }
+
+  async function seedCompactBooks() {
+    if (!token()) {
+      setStatus('seed-status', 'Admin token is required.', false);
+      return;
+    }
+
+    if (!window.confirm('Seed compact book metadata into the current database? Existing downloads will be skipped.')) {
+      return;
+    }
+
+    setStatus('seed-status', 'Seeding compact books...', true);
+    const res = await fetch('/admin/seed/compact-books', {
+      method: 'POST',
+      headers: headers()
+    });
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      setStatus('seed-status', data.detail || 'Could not seed compact books.', false);
+      return;
+    }
+
+    setStatus('seed-status', 'Compact seed loaded.', true);
+    document.getElementById('seed-results').innerHTML = `
+      <div class="metric-grid">
+        <div class="metric"><div class="metric-label">Inserted</div><div class="metric-value">${data.inserted}</div></div>
+        <div class="metric"><div class="metric-label">Skipped</div><div class="metric-value">${data.skipped}</div></div>
+        <div class="metric"><div class="metric-label">Highest ID</div><div class="metric-value">${data.max_id}</div></div>
+        <div class="metric"><div class="metric-label">Source</div><div class="metric-value">${escapeHtml(data.source)}</div></div>
+      </div>
     `;
   }
 

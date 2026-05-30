@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel
-from sqlalchemy import func
+from sqlalchemy import func, text
 from app.core.limiter import limiter
 from app.core.database import SessionLocal
 from app.core.config import settings
@@ -28,6 +29,7 @@ class CouponCreate(BaseModel):
 
 
 WEB_NOVEL_TRIM_SOURCES = ("royalroad", "freewebnovel", "lightnovelworld")
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
 def get_db():
@@ -245,6 +247,94 @@ def delete_coupon(coupon_id: int, request: Request):
             "id": coupon_id,
             "code": code,
         }
+
+
+@router.post("/seed/compact-books")
+@limiter.limit("3/hour")
+def seed_compact_books(request: Request):
+    seed_path = PROJECT_ROOT / "books.compact.sql"
+    if not seed_path.exists():
+        raise HTTPException(status_code=404, detail="books.compact.sql was not found.")
+
+    rows = []
+    in_books_copy = False
+
+    with seed_path.open("r", encoding="utf-8", errors="replace") as seed_file:
+        for line in seed_file:
+            if line.startswith("COPY public.books "):
+                in_books_copy = True
+                continue
+
+            if in_books_copy and line == "\\.\n":
+                break
+
+            if not in_books_copy:
+                continue
+
+            columns = line.rstrip("\n").split("\t")
+            if len(columns) != 11:
+                continue
+
+            rows.append(columns)
+
+    inserted = 0
+    skipped = 0
+    max_id = 0
+
+    with SessionLocal() as db:
+        existing_downloads = {
+            value
+            for (value,) in db.query(Book.download).filter(Book.download.isnot(None)).all()
+        }
+
+        for columns in rows:
+            book_id = int(columns[0])
+            download = None if columns[6] == r"\N" else columns[6]
+
+            if download and download in existing_downloads:
+                skipped += 1
+                continue
+
+            db.add(
+                Book(
+                    id=book_id,
+                    source=None if columns[1] == r"\N" else columns[1],
+                    title=None if columns[2] == r"\N" else columns[2],
+                    author=None if columns[3] == r"\N" else columns[3],
+                    genre=None if columns[4] == r"\N" else columns[4],
+                    cover=None if columns[5] == r"\N" else columns[5],
+                    download=download,
+                    language=None if columns[7] == r"\N" else columns[7],
+                    synopsis=None if columns[8] == r"\N" else columns[8],
+                    chapters_count=None if columns[9] == r"\N" else int(columns[9]),
+                    chapter_content=None if columns[10] == r"\N" else columns[10],
+                )
+            )
+            inserted += 1
+            max_id = max(max_id, book_id)
+            if download:
+                existing_downloads.add(download)
+
+        db.commit()
+
+        if inserted and db.bind and db.bind.dialect.name == "postgresql":
+            db.execute(
+                text(
+                    "SELECT setval("
+                    "'books_id_seq'::regclass, "
+                    "GREATEST((SELECT COALESCE(MAX(id), 1) FROM books), 1), "
+                    "true)"
+                )
+            )
+            db.commit()
+
+    return {
+        "status": "seeded",
+        "source": str(seed_path.name),
+        "inserted": inserted,
+        "skipped": skipped,
+        "max_id": max_id,
+    }
 
 
 @router.post("/storage/purge-chapter-cache")
