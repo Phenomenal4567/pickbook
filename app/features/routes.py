@@ -12,6 +12,7 @@ from app.core.auth import get_current_profile, profile_id_from_token, require_st
 from app.core.database import SessionLocal
 from app.core.limiter import limiter
 from app.models.book import (
+    Announcement,
     Book,
     AuthorEarning,
     AuthorFollow,
@@ -55,6 +56,23 @@ class EngagementPayload(BaseModel):
 
 class CommentReportPayload(BaseModel):
     reason: str | None = None
+
+
+def _announcement_public_row(row: Announcement) -> dict:
+    return {
+        "id": row.id,
+        "title": row.title,
+        "body_html": row.body_html,
+        "image_url": row.image_url,
+        "priority": row.priority,
+        "publish_at": row.publish_at,
+        "expires_at": row.expires_at,
+        "pinned": bool(row.pinned),
+        "audience": row.audience,
+        "deep_link_url": row.deep_link_url,
+        "critical_repeat_session": bool(row.critical_repeat_session),
+        "updated_at": row.updated_at or row.created_at,
+    }
 
 
 ACHIEVEMENT_DEFS = {
@@ -248,6 +266,41 @@ def _post_author_earning(
             note=note[:1000],
         )
     )
+
+
+@router.get("/announcements")
+def active_announcements(
+    limit: int = 20,
+    offset: int = 0,
+    audience: str = "all",
+    db=Depends(get_db),
+):
+    limit = max(1, min(int(limit or 20), 50))
+    offset = max(0, int(offset or 0))
+    now = datetime.now(timezone.utc)
+    allowed_audiences = {"all", audience} if audience and audience != "all" else {"all"}
+    rows = (
+        db.query(Announcement)
+        .filter(
+            Announcement.publish_at <= now,
+            (Announcement.expires_at.is_(None)) | (Announcement.expires_at > now),
+            Announcement.audience.in_(allowed_audiences),
+        )
+        .order_by(
+            Announcement.pinned.desc(),
+            Announcement.publish_at.desc(),
+            Announcement.id.desc(),
+        )
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+    return {
+        "items": [_announcement_public_row(row) for row in rows],
+        "limit": limit,
+        "offset": offset,
+        "has_more": len(rows) == limit,
+    }
 
 
 def _achievement_payload(row: ReaderAchievement) -> dict:

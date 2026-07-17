@@ -78,6 +78,64 @@ class Story(Base):
     unpublished_at = Column(DateTime(timezone=True), nullable=True)
 
 
+class AuthorApplication(Base):
+
+    __tablename__ = "author_applications"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    profile_id = Column(String, ForeignKey("profiles.id"), nullable=False, index=True)
+
+    pen_name = Column(String, nullable=False)
+
+    target_genres = Column(Text, nullable=True)
+
+    short_bio = Column(Text, nullable=True)
+
+    writing_sample_url = Column(String, nullable=True)
+
+    status = Column(String, default="pending", nullable=False, index=True)
+
+    admin_feedback = Column(Text, nullable=True)
+
+    submitted_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    reviewed_at = Column(DateTime(timezone=True), nullable=True)
+
+
+class Announcement(Base):
+
+    __tablename__ = "announcements"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    title = Column(String, nullable=False)
+
+    body_html = Column(Text, nullable=False)
+
+    image_url = Column(String, nullable=True)
+
+    priority = Column(String, default="normal", nullable=False, index=True)
+
+    publish_at = Column(DateTime(timezone=True), nullable=False, index=True)
+
+    expires_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    pinned = Column(Integer, default=0, nullable=False, index=True)
+
+    audience = Column(String, default="all", nullable=False, index=True)
+
+    deep_link_url = Column(String, nullable=True)
+
+    critical_repeat_session = Column(Integer, default=1, nullable=False)
+
+    created_by = Column(String, nullable=True)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    updated_at = Column(DateTime(timezone=True), nullable=True)
+
+
 class StoryVersion(Base):
 
     __tablename__ = "story_versions"
@@ -316,6 +374,29 @@ class ReaderEngagement(Base):
     updated_at = Column(DateTime(timezone=True), nullable=True)
 
 
+class PremiumRead(Base):
+
+    __tablename__ = "premium_reads"
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "book_id", name="uq_premium_read_user_book"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    user_id = Column(String, ForeignKey("profiles.id"), nullable=False, index=True)
+
+    book_id = Column(Integer, ForeignKey("books.id"), nullable=False, index=True)
+
+    author_id = Column(String, ForeignKey("profiles.id"), nullable=True, index=True)
+
+    story_id = Column(Integer, ForeignKey("stories.id"), nullable=True, index=True)
+
+    genre = Column(String, nullable=True, index=True)
+
+    first_read_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
 class StoryReviewAudit(Base):
 
     __tablename__ = "story_review_audits"
@@ -499,6 +580,10 @@ class Profile(Base):
     terms_accepted_at = Column(DateTime(timezone=True), nullable=True)
 
     terms_version = Column(String, nullable=True)
+
+    role = Column(String, default="reader", nullable=False)
+
+    author_application_status = Column(String, nullable=True, index=True)
 
     streak_count = Column(Integer, default=0, nullable=False)
 

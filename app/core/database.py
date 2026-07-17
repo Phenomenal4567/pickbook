@@ -185,6 +185,12 @@ def ensure_database_schema() -> None:
         if "terms_version" not in profile_columns:
             profile_missing_columns.append(("terms_version", "VARCHAR"))
 
+        if "role" not in profile_columns:
+            profile_missing_columns.append(("role", "VARCHAR DEFAULT 'reader' NOT NULL"))
+
+        if "author_application_status" not in profile_columns:
+            profile_missing_columns.append(("author_application_status", "VARCHAR"))
+
         if "author_bio" not in profile_columns:
             profile_missing_columns.append(("author_bio", "TEXT"))
 
@@ -271,6 +277,27 @@ def ensure_database_schema() -> None:
         if "review_feedback" not in story_columns:
             story_missing_columns.append(("review_feedback", "TEXT"))
 
+        if "slug" not in story_columns:
+            story_missing_columns.append(("slug", "VARCHAR"))
+
+        if "genre" not in story_columns:
+            story_missing_columns.append(("genre", "VARCHAR"))
+
+        if "cover" not in story_columns:
+            story_missing_columns.append(("cover", "VARCHAR"))
+
+        if "synopsis" not in story_columns:
+            story_missing_columns.append(("synopsis", "TEXT"))
+
+        if "published_version_id" not in story_columns:
+            story_missing_columns.append(("published_version_id", "INTEGER"))
+
+        if "scheduled_version_id" not in story_columns:
+            story_missing_columns.append(("scheduled_version_id", "INTEGER"))
+
+        if "updated_at" not in story_columns:
+            story_missing_columns.append(("updated_at", "TIMESTAMP"))
+
         if "reviewed_at" not in story_columns:
             story_missing_columns.append(("reviewed_at", "TIMESTAMP"))
 
@@ -293,6 +320,9 @@ def ensure_database_schema() -> None:
         "withdrawal_requests",
         "author_follows",
         "reader_achievements",
+        "author_applications",
+        "announcements",
+        "premium_reads",
         "story_review_audits",
         "author_notifications",
         "app_settings",
@@ -324,4 +354,29 @@ def ensure_database_schema() -> None:
                 for name, column_type in engagement_missing_columns:
                     connection.execute(
                         text(f"ALTER TABLE reader_engagement ADD COLUMN {name} {column_type}")
+                    )
+
+    if inspector.has_table("announcements"):
+        announcement_columns = {
+            column["name"]
+            for column in inspector.get_columns("announcements")
+        }
+        announcement_missing_columns = []
+
+        if "image_url" not in announcement_columns:
+            announcement_missing_columns.append(("image_url", "VARCHAR"))
+        if "audience" not in announcement_columns:
+            announcement_missing_columns.append(("audience", "VARCHAR DEFAULT 'all' NOT NULL"))
+        if "deep_link_url" not in announcement_columns:
+            announcement_missing_columns.append(("deep_link_url", "VARCHAR"))
+        if "critical_repeat_session" not in announcement_columns:
+            announcement_missing_columns.append(("critical_repeat_session", "INTEGER DEFAULT 1 NOT NULL"))
+        if "updated_at" not in announcement_columns:
+            announcement_missing_columns.append(("updated_at", "TIMESTAMP"))
+
+        if announcement_missing_columns:
+            with engine.begin() as connection:
+                for name, column_type in announcement_missing_columns:
+                    connection.execute(
+                        text(f"ALTER TABLE announcements ADD COLUMN {name} {column_type}")
                     )

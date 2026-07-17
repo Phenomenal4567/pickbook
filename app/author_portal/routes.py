@@ -22,9 +22,12 @@ from app.core.storage import (
 )
 from app.models.book import (
     AppSetting,
+    AuthorApplication,
     AuthorEarning,
     AuthorNotification,
+    Book,
     Draft,
+    PremiumRead,
     Profile,
     Story,
     StoryReviewAudit,
@@ -83,12 +86,21 @@ class AuthorDashboardResponse(BaseModel):
     withdrawals: list[dict] = []
     notifications: list[dict] = []
     minimum_payout_naira: int = 1000
+    application_status: str | None = None
+    premium_analytics: dict | None = None
 
 
 class StoryUpdatePayload(BaseModel):
     title: str | None = None
     synopsis: str | None = None
     content: str | None = None
+
+
+class AuthorApplicationPayload(BaseModel):
+    pen_name: str
+    target_genres: list[str] = []
+    short_bio: str | None = None
+    writing_sample_url: str | None = None
 
 
 class BankDetailsPayload(BaseModel):
@@ -305,6 +317,57 @@ def _notify_author(db, story: Story, kind: str, title: str, message: str | None)
     )
 
 
+def _author_application_status(profile: Profile) -> str | None:
+    return profile.author_application_status or (
+        "approved" if getattr(profile, "role", "reader") == "author" else None
+    )
+
+
+def _require_approved_author(profile: Profile) -> None:
+    if getattr(profile, "role", "reader") != "author" and _author_application_status(profile) != "approved":
+        raise HTTPException(
+            status_code=403,
+            detail="Your author application is under review! Check back soon to see if your account has been activated.",
+        )
+
+
+def _premium_analytics(db, author_id: str) -> dict:
+    rows = (
+        db.query(PremiumRead, Book, Story)
+        .outerjoin(Book, PremiumRead.book_id == Book.id)
+        .outerjoin(Story, PremiumRead.story_id == Story.id)
+        .filter(PremiumRead.author_id == author_id)
+        .all()
+    )
+    unique_readers = {row.user_id for row, _book, _story in rows}
+    by_book = {}
+    for row, book, story in rows:
+        key = row.book_id
+        item = by_book.setdefault(
+            key,
+            {
+                "book_id": row.book_id,
+                "story_id": row.story_id,
+                "title": (book.title if book else None) or (story.title if story else "Untitled"),
+                "premium_readers": set(),
+            },
+        )
+        item["premium_readers"].add(row.user_id)
+    books = [
+        {
+            **{key: value for key, value in item.items() if key != "premium_readers"},
+            "premium_readers": len(item["premium_readers"]),
+        }
+        for item in by_book.values()
+    ]
+    books.sort(key=lambda item: (-item["premium_readers"], item["title"]))
+    return {
+        "unique_premium_readers": len(unique_readers),
+        "total_premium_book_reads": len(rows),
+        "books": books,
+    }
+
+
 def _audit_story(db, story: Story, action: str, from_status: str | None, to_status: str | None, note: str | None = None) -> None:
     db.add(
         StoryReviewAudit(
@@ -318,12 +381,90 @@ def _audit_story(db, story: Story, action: str, from_status: str | None, to_stat
     )
 
 
+@router.post("/application")
+@limiter.limit("5/hour")
+def submit_author_application(
+    payload: AuthorApplicationPayload,
+    request: Request,
+    authorization: str | None = Header(None),
+    x_user_id: str | None = Header(None),
+):
+    db = SessionLocal()
+    try:
+        profile = _author_profile_or_401(db, authorization, x_user_id)
+        pen_name = _safe_text(payload.pen_name)
+        if not pen_name:
+            raise HTTPException(status_code=400, detail="Pen name is required.")
+        genres = [
+            _safe_text(genre)
+            for genre in payload.target_genres[:8]
+            if _safe_text(genre)
+        ]
+        existing = (
+            db.query(AuthorApplication)
+            .filter(AuthorApplication.profile_id == profile.id)
+            .order_by(AuthorApplication.id.desc())
+            .first()
+        )
+        if existing and existing.status == "approved":
+            return {"status": "approved", "message": "Your author account is active."}
+        application = existing if existing and existing.status == "pending" else AuthorApplication(profile_id=profile.id)
+        application.pen_name = pen_name
+        application.target_genres = json.dumps(genres)
+        application.short_bio = _safe_long_text(payload.short_bio, 1600)
+        application.writing_sample_url = _safe_text(payload.writing_sample_url or "") or None
+        application.status = "pending"
+        application.admin_feedback = None
+        application.submitted_at = datetime.now(timezone.utc)
+        profile.username = profile.username or _available_username(db, pen_name, profile.id)
+        profile.author_bio = application.short_bio
+        profile.author_application_status = "pending"
+        db.add(application)
+        db.add(profile)
+        db.commit()
+        return {
+            "status": "pending",
+            "message": "Your author application is under review! Check back soon to see if your account has been activated.",
+        }
+    finally:
+        db.close()
+
+
+@router.get("/application")
+def get_author_application(
+    authorization: str | None = Header(None),
+    x_user_id: str | None = Header(None),
+):
+    db = SessionLocal()
+    try:
+        profile = _author_profile_or_401(db, authorization, x_user_id)
+        application = (
+            db.query(AuthorApplication)
+            .filter(AuthorApplication.profile_id == profile.id)
+            .order_by(AuthorApplication.id.desc())
+            .first()
+        )
+        return {
+            "status": _author_application_status(profile) or (application.status if application else None),
+            "role": getattr(profile, "role", "reader"),
+            "pen_name": application.pen_name if application else profile.username,
+            "target_genres": json.loads(application.target_genres or "[]") if application and application.target_genres else [],
+            "short_bio": application.short_bio if application else profile.author_bio,
+            "writing_sample_url": application.writing_sample_url if application else None,
+            "admin_feedback": application.admin_feedback if application else None,
+        }
+    finally:
+        db.close()
+
+
 @router.post("/submit", response_model=SubmissionResponse)
 @limiter.limit("10/minute")
 async def submit_novel(
     request: Request,
     title: str = Form(..., min_length=1, max_length=500),
     author: str = Form(..., min_length=1, max_length=200),
+    genre: str | None = Form(None),
+    tags: str | None = Form(None),
     consent: bool = Form(...),
     terms_accepted: bool = Form(False),
     file: UploadFile = File(...),
@@ -366,6 +507,8 @@ async def submit_novel(
     # Sanitize free-text inputs before storing / echoing back.
     safe_title = _safe_text(title)
     safe_author = _safe_text(author)
+    safe_genre = _safe_text(genre or "") or "Original"
+    safe_tags = _safe_text(tags or "")
     if not safe_title:
         raise HTTPException(status_code=400, detail="Title is required.")
     if not safe_author:
@@ -378,6 +521,8 @@ async def submit_novel(
         "content_type": file.content_type,
         "size_bytes": len(chunk),
         "stored_text": extension == ".txt" and len(chunk) <= MAX_STORED_TEXT_BYTES,
+        "genre": safe_genre,
+        "tags": safe_tags,
         "submitted_at": now.isoformat(),
     }
     draft_content = None
@@ -392,6 +537,7 @@ async def submit_novel(
             authorization,
             x_user_id,
         )
+        _require_approved_author(profile)
         profile.terms_accepted_at = now
         profile.terms_version = TERMS_VERSION
         db.add(profile)
@@ -399,6 +545,7 @@ async def submit_novel(
             author_id=profile.id,
             title=safe_title,
             slug=_unique_story_slug(db, safe_title),
+            genre=safe_genre,
             status="pending_review",
             updated_at=now,
         )
@@ -462,6 +609,7 @@ def list_author_submissions(
         profile = db.query(Profile).filter(Profile.id == author_id).first()
         if not profile:
             raise HTTPException(status_code=404, detail="Author profile not found.")
+        application_status = _author_application_status(profile)
 
         rows = (
             db.query(Story, Draft)
@@ -500,6 +648,8 @@ def list_author_submissions(
             author_name=profile.username,
             submissions=submissions,
             earnings=_author_totals(db, profile.id),
+            application_status=application_status,
+            premium_analytics=_premium_analytics(db, profile.id),
             minimum_payout_naira=_minimum_payout_naira(db),
             withdrawals=[
                 {

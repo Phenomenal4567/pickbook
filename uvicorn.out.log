@@ -1,3 +1,106 @@
-INFO:     127.0.0.1:60271 - "GET /health HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60331 - "GET / HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60331 - "GET /ingest/books?limit=5000 HTTP/1.1" 200 OK
+DATABASE_URL from os.environ:
+sqlite:///C:/Users/Phenomenal/Desktop/Pickbook/pickbook_local.db
+INFO:     127.0.0.1:49644 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49652 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49652 - "GET /ingest/books?limit=5000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49757 - "GET /admin/tools HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49782 - "GET /admin/announcements?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49782 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:49784 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:49786 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:49791 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:49792 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:49833 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49833 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:49835 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:49844 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:49847 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:49857 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49857 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49857 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49857 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:49904 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:49906 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:50080 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:50081 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:50082 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:50115 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:50117 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:50118 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:50119 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:50120 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:50129 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:50130 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:50132 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:50171 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:50179 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:50180 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:50182 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:50260 - "GET /admin/announcements?status=all HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:50261 - "GET /admin/announcements?status=all HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:50263 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:50543 - "GET /admin/dashboard HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:50543 - "GET /admin/dashboard HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:50543 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50543 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:50555 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:50556 - "POST /admin/announcements HTTP/1.1" 429 Too Many Requests
+INFO:     127.0.0.1:50556 - "POST /admin/announcements HTTP/1.1" 429 Too Many Requests
+INFO:     127.0.0.1:50556 - "POST /admin/announcements HTTP/1.1" 429 Too Many Requests
+INFO:     127.0.0.1:50556 - "POST /admin/announcements HTTP/1.1" 429 Too Many Requests
+INFO:     127.0.0.1:50556 - "POST /admin/announcements HTTP/1.1" 429 Too Many Requests
+INFO:     127.0.0.1:50556 - "POST /admin/announcements HTTP/1.1" 429 Too Many Requests
+INFO:     127.0.0.1:50632 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50632 - "POST /admin/coupons HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50632 - "GET /admin/coupons HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50675 - "DELETE /admin/coupons/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50675 - "GET /admin/coupons HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50726 - "GET /admin/authors/applications?status=pending HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50726 - "GET /admin/authors/applications?status=approved HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50726 - "GET /admin/authors/applications?status=rejected HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50726 - "GET /admin/authors/applications?status=rejected HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50726 - "GET /admin/authors/applications?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50726 - "POST /admin/announcements HTTP/1.1" 429 Too Many Requests
+INFO:     127.0.0.1:50738 - "POST /admin/announcements HTTP/1.1" 429 Too Many Requests
+INFO:     127.0.0.1:50738 - "POST /admin/announcements HTTP/1.1" 429 Too Many Requests
+INFO:     127.0.0.1:50738 - "POST /admin/announcements HTTP/1.1" 429 Too Many Requests
+INFO:     127.0.0.1:50738 - "POST /admin/announcements HTTP/1.1" 429 Too Many Requests
+INFO:     127.0.0.1:50738 - "POST /admin/announcements HTTP/1.1" 429 Too Many Requests
+INFO:     127.0.0.1:50738 - "POST /admin/announcements HTTP/1.1" 429 Too Many Requests
+INFO:     127.0.0.1:50738 - "POST /admin/announcements HTTP/1.1" 429 Too Many Requests
+INFO:     127.0.0.1:50738 - "POST /admin/announcements HTTP/1.1" 429 Too Many Requests
+INFO:     127.0.0.1:50738 - "POST /admin/announcements HTTP/1.1" 429 Too Many Requests
+INFO:     127.0.0.1:50752 - "GET /admin/books/source-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50752 - "GET /admin/books/source-summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50772 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50772 - "GET /ingest/books?limit=5000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51450 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51450 - "GET /ingest/books?limit=5000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51652 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51652 - "GET /ingest/books?limit=5000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53286 - "POST /admin/storage/trim-sources?source=all&target_remaining_percent=65&dry_run=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53296 - "POST /admin/storage/trim-sources?source=all&target_remaining_percent=90&dry_run=false HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53296 - "POST /admin/storage/trim-sources?source=all&target_remaining_percent=90&dry_run=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53357 - "POST /admin/storage/trim-sources?source=all&target_remaining_percent=99&dry_run=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53357 - "POST /admin/storage/trim-sources?source=all&target_remaining_percent=99&dry_run=false HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53588 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53588 - "GET /ingest/books?limit=5000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53588 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53588 - "GET /ingest/books?limit=5000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53588 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53588 - "GET /ingest/books?limit=5000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53596 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53596 - "GET /ingest/books?limit=5000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53596 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53596 - "GET /ingest/books?limit=5000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53596 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53596 - "GET /ingest/books?limit=5000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53598 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53598 - "GET /ingest/books?limit=5000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53598 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53598 - "GET /ingest/books?limit=5000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53598 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53598 - "GET /ingest/books?limit=5000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53605 - "POST /admin/storage/trim-sources?source=all&target_remaining_percent=100&dry_run=false HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:53611 - "POST /admin/storage/trim-sources?source=all&target_remaining_percent=99.99&dry_run=false HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:53614 - "POST /admin/storage/trim-sources?source=all&target_remaining_percent=99&dry_run=false HTTP/1.1" 200 OK

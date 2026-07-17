@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 import json
 from pathlib import Path
 
+import bleach
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel
 from sqlalchemy import func, text
@@ -9,6 +10,8 @@ from app.core.limiter import limiter
 from app.core.database import SessionLocal
 from app.core.config import settings
 from app.models.book import (
+    Announcement,
+    AuthorApplication,
     AuthorEarning,
     AuthorNotification,
     AppSetting,
@@ -17,6 +20,7 @@ from app.models.book import (
     CouponClaim,
     Draft,
     PaystackEvent,
+    PremiumRead,
     Profile,
     ReaderEngagement,
     Story,
@@ -47,6 +51,10 @@ class ReviewDecisionPayload(BaseModel):
     feedback: str | None = None
 
 
+class AuthorApplicationDecisionPayload(BaseModel):
+    feedback: str | None = None
+
+
 class CommentModerationPayload(BaseModel):
     moderation_note: str | None = None
 
@@ -60,6 +68,19 @@ class PayoutSettingsPayload(BaseModel):
     minimum_payout_naira: int = 1000
 
 
+class AnnouncementPayload(BaseModel):
+    title: str
+    body_html: str
+    image_url: str | None = None
+    priority: str = "normal"
+    publish_at: datetime | None = None
+    expires_at: datetime | None = None
+    pinned: bool = False
+    audience: str = "all"
+    deep_link_url: str | None = None
+    critical_repeat_session: bool = True
+
+
 TRIM_SOURCE_OPTIONS = (
     "anystories",
     "royalroad",
@@ -68,6 +89,15 @@ TRIM_SOURCE_OPTIONS = (
 )
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 MINIMUM_PAYOUT_KEY = "minimum_author_payout_naira"
+ANNOUNCEMENT_TAGS = [
+    "p", "br", "strong", "b", "em", "i", "u", "ul", "ol", "li",
+    "a", "blockquote", "code", "pre", "h3", "h4",
+]
+ANNOUNCEMENT_ATTRS = {
+    "a": ["href", "title", "target", "rel"],
+}
+ANNOUNCEMENT_PRIORITIES = {"normal", "important", "critical"}
+ANNOUNCEMENT_AUDIENCES = {"all", "free", "premium", "authors", "admins"}
 
 
 def get_db():
@@ -131,6 +161,114 @@ def _minimum_payout_naira(db) -> int:
         return 1000
 
 
+def _now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _clean_announcement_html(value: str) -> str:
+    html = bleach.clean(
+        value or "",
+        tags=ANNOUNCEMENT_TAGS,
+        attributes=ANNOUNCEMENT_ATTRS,
+        protocols=["http", "https", "mailto"],
+        strip=True,
+    ).strip()
+    if not html:
+        raise HTTPException(status_code=400, detail="Announcement message is required.")
+    return html[:20000]
+
+
+def _clean_optional_url(value: str | None, *, allow_relative: bool = False) -> str | None:
+    clean = (value or "").strip()
+    if not clean:
+        return None
+    if allow_relative and clean.startswith("/"):
+        return clean[:1000]
+    if clean.startswith("https://") or clean.startswith("http://"):
+        return clean[:1000]
+    raise HTTPException(status_code=400, detail="URL must be http(s) or a PickBook relative path.")
+
+
+def _announcement_row(row: Announcement, include_body: bool = True) -> dict:
+    return {
+        "id": row.id,
+        "title": row.title,
+        "body_html": row.body_html if include_body else None,
+        "image_url": row.image_url,
+        "priority": row.priority,
+        "publish_at": row.publish_at,
+        "expires_at": row.expires_at,
+        "pinned": bool(row.pinned),
+        "audience": row.audience,
+        "deep_link_url": row.deep_link_url,
+        "critical_repeat_session": bool(row.critical_repeat_session),
+        "created_by": row.created_by,
+        "created_at": row.created_at,
+        "updated_at": row.updated_at,
+        "is_active": (
+            row.publish_at <= _now()
+            and (row.expires_at is None or row.expires_at > _now())
+        ) if row.publish_at else False,
+    }
+
+
+def _apply_announcement_payload(row: Announcement, payload: AnnouncementPayload, request: Request) -> Announcement:
+    title = bleach.clean(payload.title or "", tags=[], strip=True).strip()
+    if not title:
+        raise HTTPException(status_code=400, detail="Announcement title is required.")
+
+    priority = (payload.priority or "normal").lower().strip()
+    if priority not in ANNOUNCEMENT_PRIORITIES:
+        raise HTTPException(status_code=400, detail="Priority must be normal, important, or critical.")
+
+    audience = (payload.audience or "all").lower().strip()
+    if audience not in ANNOUNCEMENT_AUDIENCES:
+        raise HTTPException(status_code=400, detail="Invalid announcement audience.")
+
+    publish_at = payload.publish_at or _now()
+    expires_at = payload.expires_at
+    if publish_at.tzinfo is None:
+        publish_at = publish_at.replace(tzinfo=timezone.utc)
+    if expires_at and expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    if expires_at and expires_at <= publish_at:
+        raise HTTPException(status_code=400, detail="Expiration date must be after publish date.")
+
+    row.title = title[:255]
+    row.body_html = _clean_announcement_html(payload.body_html)
+    row.image_url = _clean_optional_url(payload.image_url)
+    row.priority = priority
+    row.publish_at = publish_at
+    row.expires_at = expires_at
+    row.pinned = 1 if payload.pinned else 0
+    row.audience = audience
+    row.deep_link_url = _clean_optional_url(payload.deep_link_url, allow_relative=True)
+    row.critical_repeat_session = 1 if payload.critical_repeat_session else 0
+    row.created_by = row.created_by or _admin_id(request)
+    row.updated_at = _now()
+    return row
+
+
+def _premium_read_rows(db, start: datetime | None = None, end: datetime | None = None, author_id: str | None = None, book_id: int | None = None, genre: str | None = None):
+    query = (
+        db.query(PremiumRead, Book, Story, Profile)
+        .outerjoin(Book, PremiumRead.book_id == Book.id)
+        .outerjoin(Story, PremiumRead.story_id == Story.id)
+        .outerjoin(Profile, PremiumRead.author_id == Profile.id)
+    )
+    if start:
+        query = query.filter(PremiumRead.first_read_at >= start)
+    if end:
+        query = query.filter(PremiumRead.first_read_at < end)
+    if author_id:
+        query = query.filter(PremiumRead.author_id == author_id)
+    if book_id:
+        query = query.filter(PremiumRead.book_id == book_id)
+    if genre:
+        query = query.filter(func.lower(PremiumRead.genre) == genre.lower())
+    return query.all()
+
+
 @router.get("/dashboard")
 @limiter.limit("60/minute")
 def dashboard(request: Request):
@@ -150,6 +288,13 @@ def dashboard(request: Request):
         pending_withdrawals = db.query(WithdrawalRequest).filter(
             WithdrawalRequest.status == "pending",
         ).count()
+        pending_authors = db.query(AuthorApplication).filter(
+            AuthorApplication.status == "pending",
+        ).count()
+        active_announcements = db.query(Announcement).filter(
+            Announcement.publish_at <= _now(),
+            (Announcement.expires_at.is_(None)) | (Announcement.expires_at > _now()),
+        ).count()
         return {
             "system_status": "healthy",
             "pending_reviews": pending_reviews,
@@ -158,6 +303,211 @@ def dashboard(request: Request):
             "active_users": active_users,
             "pending_comments": pending_comments,
             "pending_withdrawals": pending_withdrawals,
+            "pending_authors": pending_authors,
+            "active_announcements": active_announcements,
+        }
+
+
+@router.get("/announcements")
+@limiter.limit("60/minute")
+def list_admin_announcements(
+    request: Request,
+    status: str = Query("all"),
+):
+    if status not in {"all", "active", "scheduled", "expired"}:
+        raise HTTPException(status_code=400, detail="Invalid announcement status filter.")
+    now = _now()
+    with SessionLocal() as db:
+        query = db.query(Announcement)
+        if status == "active":
+            query = query.filter(
+                Announcement.publish_at <= now,
+                (Announcement.expires_at.is_(None)) | (Announcement.expires_at > now),
+            )
+        elif status == "scheduled":
+            query = query.filter(Announcement.publish_at > now)
+        elif status == "expired":
+            query = query.filter(Announcement.expires_at.isnot(None), Announcement.expires_at <= now)
+        rows = (
+            query.order_by(
+                Announcement.pinned.desc(),
+                Announcement.publish_at.desc(),
+                Announcement.id.desc(),
+            )
+            .limit(200)
+            .all()
+        )
+        return [_announcement_row(row) for row in rows]
+
+
+@router.post("/announcements")
+@limiter.limit("30/hour")
+def create_announcement(payload: AnnouncementPayload, request: Request):
+    with SessionLocal() as db:
+        row = _apply_announcement_payload(Announcement(), payload, request)
+        db.add(row)
+        db.commit()
+        db.refresh(row)
+        return _announcement_row(row)
+
+
+@router.put("/announcements/{announcement_id}")
+@limiter.limit("60/hour")
+def update_announcement(announcement_id: int, payload: AnnouncementPayload, request: Request):
+    with SessionLocal() as db:
+        row = db.query(Announcement).filter(Announcement.id == announcement_id).first()
+        if not row:
+            raise HTTPException(status_code=404, detail="Announcement not found.")
+        row = _apply_announcement_payload(row, payload, request)
+        db.add(row)
+        db.commit()
+        db.refresh(row)
+        return _announcement_row(row)
+
+
+@router.delete("/announcements/{announcement_id}")
+@limiter.limit("60/hour")
+def delete_announcement(announcement_id: int, request: Request):
+    with SessionLocal() as db:
+        row = db.query(Announcement).filter(Announcement.id == announcement_id).first()
+        if not row:
+            raise HTTPException(status_code=404, detail="Announcement not found.")
+        db.delete(row)
+        db.commit()
+        return {"status": "deleted", "id": announcement_id}
+
+
+@router.get("/authors/applications")
+@limiter.limit("60/minute")
+def list_author_applications(request: Request, status: str = Query("pending")):
+    allowed = {"pending", "approved", "rejected", "all"}
+    if status not in allowed:
+        raise HTTPException(status_code=400, detail="Invalid application status filter.")
+    with SessionLocal() as db:
+        query = (
+            db.query(AuthorApplication, Profile)
+            .outerjoin(Profile, AuthorApplication.profile_id == Profile.id)
+        )
+        if status != "all":
+            query = query.filter(AuthorApplication.status == status)
+        rows = query.order_by(AuthorApplication.submitted_at.desc(), AuthorApplication.id.desc()).limit(100).all()
+        return [
+            {
+                "id": application.id,
+                "profile_id": application.profile_id,
+                "email": profile.email if profile else None,
+                "pen_name": application.pen_name,
+                "target_genres": json.loads(application.target_genres or "[]") if application.target_genres else [],
+                "short_bio": application.short_bio,
+                "writing_sample_url": application.writing_sample_url,
+                "status": application.status,
+                "admin_feedback": application.admin_feedback,
+                "submitted_at": application.submitted_at,
+                "reviewed_at": application.reviewed_at,
+            }
+            for application, profile in rows
+        ]
+
+
+@router.post("/authors/applications/{application_id}/approve")
+@limiter.limit("60/minute")
+def approve_author_application(application_id: int, payload: AuthorApplicationDecisionPayload, request: Request):
+    with SessionLocal() as db:
+        application = db.query(AuthorApplication).filter(AuthorApplication.id == application_id).first()
+        if not application:
+            raise HTTPException(status_code=404, detail="Author application not found.")
+        profile = db.query(Profile).filter(Profile.id == application.profile_id).first()
+        if not profile:
+            raise HTTPException(status_code=404, detail="Profile not found.")
+        now = datetime.now(timezone.utc)
+        application.status = "approved"
+        application.admin_feedback = payload.feedback or "Approved. Your author workspace is active."
+        application.reviewed_at = now
+        profile.role = "author"
+        profile.author_application_status = "approved"
+        profile.username = profile.username or application.pen_name
+        profile.author_bio = profile.author_bio or application.short_bio
+        db.add(application)
+        db.add(profile)
+        db.commit()
+        return {"status": "approved", "profile_id": profile.id, "role": profile.role}
+
+
+@router.post("/authors/applications/{application_id}/reject")
+@limiter.limit("60/minute")
+def reject_author_application(application_id: int, payload: AuthorApplicationDecisionPayload, request: Request):
+    feedback = (payload.feedback or "").strip()
+    if not feedback:
+        raise HTTPException(status_code=400, detail="Rejection feedback is required.")
+    with SessionLocal() as db:
+        application = db.query(AuthorApplication).filter(AuthorApplication.id == application_id).first()
+        if not application:
+            raise HTTPException(status_code=404, detail="Author application not found.")
+        profile = db.query(Profile).filter(Profile.id == application.profile_id).first()
+        now = datetime.now(timezone.utc)
+        application.status = "rejected"
+        application.admin_feedback = feedback[:5000]
+        application.reviewed_at = now
+        if profile:
+            profile.author_application_status = "rejected"
+            if getattr(profile, "role", "reader") != "author":
+                profile.role = "reader"
+            db.add(profile)
+        db.add(application)
+        db.commit()
+        return {"status": "rejected", "application_id": application.id}
+
+
+@router.get("/premium-analytics")
+@limiter.limit("60/minute")
+def premium_analytics(
+    request: Request,
+    date_from: datetime | None = Query(None),
+    date_to: datetime | None = Query(None),
+    author_id: str | None = Query(None),
+    book_id: int | None = Query(None),
+    genre: str | None = Query(None),
+):
+    with SessionLocal() as db:
+        rows = _premium_read_rows(db, date_from, date_to, author_id, book_id, genre)
+        subscribers = db.query(Profile).filter(Profile.current_plan == "standard").count()
+        users = {row.user_id for row, _book, _story, _profile in rows}
+
+        by_book = {}
+        by_author = {}
+        by_day = {}
+        by_week = {}
+        by_month = {}
+        for row, book, story, author in rows:
+            book_item = by_book.setdefault(
+                row.book_id,
+                {"book_id": row.book_id, "title": (book.title if book else None) or "Untitled", "premium_reads": 0},
+            )
+            book_item["premium_reads"] += 1
+            author_key = row.author_id or "unknown"
+            author_item = by_author.setdefault(
+                author_key,
+                {"author_id": row.author_id, "author_name": author.username if author else "Unknown", "premium_reads": 0},
+            )
+            author_item["premium_reads"] += 1
+            stamp = row.first_read_at
+            if stamp:
+                by_day[stamp.date().isoformat()] = by_day.get(stamp.date().isoformat(), 0) + 1
+                iso = stamp.date().isocalendar()
+                week_key = f"{iso.year}-W{iso.week:02d}"
+                by_week[week_key] = by_week.get(week_key, 0) + 1
+                month_key = stamp.strftime("%Y-%m")
+                by_month[month_key] = by_month.get(month_key, 0) + 1
+
+        return {
+            "total_premium_subscribers": subscribers,
+            "total_premium_book_reads": len(rows),
+            "total_unique_premium_readers": len(users),
+            "top_premium_read_books": sorted(by_book.values(), key=lambda item: -item["premium_reads"])[:10],
+            "top_authors_by_premium_reads": sorted(by_author.values(), key=lambda item: -item["premium_reads"])[:10],
+            "premium_reads_by_day": [{"period": key, "reads": value} for key, value in sorted(by_day.items())],
+            "premium_reads_by_week": [{"period": key, "reads": value} for key, value in sorted(by_week.items())],
+            "premium_reads_by_month": [{"period": key, "reads": value} for key, value in sorted(by_month.items())],
         }
 
 

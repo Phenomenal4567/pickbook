@@ -47,7 +47,7 @@
   }
   h2 { font-size: 18px; margin: 0 0 14px; }
   label { display: block; color: var(--muted); font-size: 13px; margin: 12px 0 6px; }
-  input, select {
+  input, select, textarea {
     width: 100%;
     border: 1px solid rgba(212,168,83,0.22);
     background: #1F100A;
@@ -55,8 +55,11 @@
     border-radius: 8px;
     padding: 10px 11px;
     font-size: 14px;
+    font-family: inherit;
   }
-  input:focus, select:focus { outline: 2px solid rgba(212,168,83,0.25); border-color: var(--accent); }
+  textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
+  input:focus, select:focus, textarea:focus { outline: 2px solid rgba(212,168,83,0.25); border-color: var(--accent); }
+  button, a, input, select { min-height: 48px; }
   button { border: 0; border-radius: 8px; background: var(--accent); color: #160f08; font-weight: 700; padding: 10px 14px; cursor: pointer; }
   button.secondary { background: var(--panel2); border: 1px solid var(--border); color: var(--text); }
   button.danger { background: var(--danger); color: #fff; }
@@ -132,15 +135,20 @@
         <input id="admin-token" type="password" placeholder="Paste ADMIN_TOKEN">
       </label>
       <button class="secondary" onclick="saveToken()">Save Token</button>
+      <button class="secondary" onclick="validateAdminToken()">Test Token</button>
       <button onclick="loadCoupons()">Load Coupons</button>
       <button class="secondary" onclick="loadSourceSummary()">Load Sources</button>
     </div>
+    <div class="status" id="admin-token-status"></div>
   </section>
 
   <div class="admin-toolbar">
     <button type="button" onclick="expandAdminSections()">Expand All</button>
     <button type="button" onclick="collapseAdminSections()">Collapse All</button>
     <button type="button" onclick="focusAdminSection('Author Review Queue')">Review Queue</button>
+    <button type="button" onclick="focusAdminSection('Author Applications')">Applications</button>
+    <button type="button" onclick="focusAdminSection('Premium Analytics')">Premium</button>
+    <button type="button" onclick="focusAdminSection('Announcements')">Announcements</button>
     <button type="button" onclick="focusAdminSection('Author Withdrawals')">Withdrawals</button>
     <button type="button" onclick="focusAdminSection('Source Ingest')">Ingest</button>
   </div>
@@ -234,6 +242,118 @@
       </div>
       <div class="status" id="accounting-status"></div>
       <div id="accounting-results" class="empty">Enter token, then load accounting.</div>
+    </section>
+
+    <section class="full-span">
+      <h2>Announcements</h2>
+      <p style="margin-bottom:12px">Create app-wide updates, maintenance notices, releases, promotions, and community news.</p>
+      <input id="announcement-id" type="hidden">
+      <div class="split-grid">
+        <label>Title
+          <input id="announcement-title" type="text" maxlength="255" placeholder="New PickBook feature">
+        </label>
+        <label>Priority
+          <select id="announcement-priority">
+            <option value="normal">Normal</option>
+            <option value="important">Important</option>
+            <option value="critical">Critical</option>
+          </select>
+        </label>
+        <label>Publish date
+          <input id="announcement-publish-at" type="datetime-local">
+        </label>
+        <label>Expiration date
+          <input id="announcement-expires-at" type="datetime-local">
+        </label>
+        <label>Image/banner URL
+          <input id="announcement-image-url" type="url" placeholder="https://...">
+        </label>
+        <label>Deep link
+          <input id="announcement-deep-link" type="text" placeholder="/ or /?book=123">
+        </label>
+        <label>Audience
+          <select id="announcement-audience">
+            <option value="all">All users</option>
+            <option value="free">Free users</option>
+            <option value="premium">Premium users</option>
+            <option value="authors">Authors</option>
+            <option value="admins">Admins</option>
+          </select>
+        </label>
+        <label>Status filter
+          <select id="announcement-status-filter">
+            <option value="all">All</option>
+            <option value="active">Active</option>
+            <option value="scheduled">Scheduled</option>
+            <option value="expired">Expired</option>
+          </select>
+        </label>
+      </div>
+      <label>Message body (rich text HTML allowed)
+        <textarea id="announcement-body" placeholder="<p>Tell readers what changed...</p>"></textarea>
+      </label>
+      <div class="split-grid">
+        <label style="display:flex;gap:8px;align-items:center;color:var(--muted)">
+          <input id="announcement-pinned" type="checkbox" style="width:auto">
+          Pin to top
+        </label>
+        <label style="display:flex;gap:8px;align-items:center;color:var(--muted)">
+          <input id="announcement-critical-repeat" type="checkbox" style="width:auto" checked>
+          Critical announcements repeat each session
+        </label>
+      </div>
+      <div class="actions">
+        <button onclick="saveAnnouncement()">Save Announcement</button>
+        <button class="secondary" onclick="resetAnnouncementForm()">New</button>
+        <button class="secondary" onclick="loadAnnouncements()">Load Announcements</button>
+      </div>
+      <div class="status" id="announcement-status"></div>
+      <div id="announcement-list" class="empty">Enter token, then load announcements.</div>
+    </section>
+
+    <section class="full-span">
+      <h2>Author Applications</h2>
+      <p style="margin-bottom:12px">Approve authors to change their role from Reader to Author, or reject with feedback.</p>
+      <label>Application status filter
+        <select id="author-application-filter">
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+          <option value="all">All</option>
+        </select>
+      </label>
+      <div class="actions">
+        <button onclick="loadAuthorApplications()">Load Applications</button>
+      </div>
+      <div class="status" id="author-application-admin-status"></div>
+      <div id="author-application-list" class="empty">Enter token, then load author applications.</div>
+    </section>
+
+    <section class="full-span">
+      <h2>Premium Analytics</h2>
+      <p style="margin-bottom:12px">Platform-wide Premium subscriber engagement across approved books.</p>
+      <div class="split-grid">
+        <label>Date from
+          <input id="premium-date-from" type="datetime-local">
+        </label>
+        <label>Date to
+          <input id="premium-date-to" type="datetime-local">
+        </label>
+        <label>Author ID
+          <input id="premium-author-id" type="text" placeholder="Optional author profile ID">
+        </label>
+        <label>Book ID
+          <input id="premium-book-id" type="number" min="1" placeholder="Optional book ID">
+        </label>
+        <label>Genre
+          <input id="premium-genre" type="text" placeholder="Optional genre">
+        </label>
+      </div>
+      <div class="actions">
+        <button onclick="loadPremiumAnalytics()">Load Premium Analytics</button>
+      </div>
+      <div class="status" id="premium-analytics-status"></div>
+      <div id="premium-analytics-results" class="empty">Enter token, then load Premium analytics.</div>
     </section>
 
     <section class="full-span">
@@ -422,7 +542,8 @@
 
   function saveToken() {
     localStorage.setItem('pb_admin_token', token());
-    setStatus('create-status', 'Token saved in this browser.', true);
+    setStatus('admin-token-status', 'Token saved in this browser. Testing access...', true);
+    validateAdminToken();
   }
 
   function setStatus(id, message, ok) {
@@ -436,6 +557,30 @@
       'Content-Type': 'application/json',
       'X-Admin-Token': token()
     };
+  }
+
+  async function validateAdminToken() {
+    if (!token()) {
+      setStatus('admin-token-status', 'Paste the exact ADMIN_TOKEN value first.', false);
+      return false;
+    }
+    try {
+      const res = await fetch('/admin/dashboard', { headers: headers() });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setStatus(
+          'admin-token-status',
+          `Token rejected (${res.status}): ${data.detail || 'admin access denied'}`,
+          false
+        );
+        return false;
+      }
+      setStatus('admin-token-status', 'Admin token accepted. Protected admin actions are available.', true);
+      return true;
+    } catch (err) {
+      setStatus('admin-token-status', `Could not reach admin backend: ${err.message || err}`, false);
+      return false;
+    }
   }
 
   function adminSectionKey(title) {
@@ -493,13 +638,13 @@
     section.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  function resetForm() {
+  function resetForm(clearStatus = true) {
     document.getElementById('code').value = '';
     document.getElementById('discount-type').value = 'free_days';
     document.getElementById('discount-value').value = '30';
     document.getElementById('max-uses').value = '1';
     document.getElementById('expiry-date').value = '';
-    setStatus('create-status', '', true);
+    if (clearStatus) setStatus('create-status', '', true);
   }
 
   async function createCoupon() {
@@ -507,17 +652,38 @@
       setStatus('create-status', 'Admin token is required.', false);
       return;
     }
+    if (!(await validateAdminToken())) {
+      setStatus('create-status', 'Admin token was rejected. Check the token above before creating coupons.', false);
+      return;
+    }
+
+    const code = document.getElementById('code').value.trim();
+    const discountValue = Number(document.getElementById('discount-value').value || 0);
+    const maxUses = Number(document.getElementById('max-uses').value || 1);
+    if (!code) {
+      setStatus('create-status', 'Coupon code is required.', false);
+      return;
+    }
+    if (!Number.isFinite(discountValue) || discountValue < 0) {
+      setStatus('create-status', 'Discount value must be 0 or higher.', false);
+      return;
+    }
+    if (!Number.isInteger(maxUses) || maxUses < 1) {
+      setStatus('create-status', 'Max uses must be at least 1.', false);
+      return;
+    }
 
     const expiryValue = document.getElementById('expiry-date').value;
     const payload = {
-      code: document.getElementById('code').value.trim(),
+      code,
       discount_type: document.getElementById('discount-type').value,
-      discount_value: Number(document.getElementById('discount-value').value || 0),
-      max_uses: Number(document.getElementById('max-uses').value || 1),
+      discount_value: discountValue,
+      max_uses: maxUses,
       plan_target: 'standard',
       expiry_date: expiryValue ? new Date(expiryValue).toISOString() : null
     };
 
+    setStatus('create-status', 'Creating coupon...', true);
     const res = await fetch('/admin/coupons', {
       method: 'POST',
       headers: headers(),
@@ -526,12 +692,12 @@
     const data = await res.json().catch(() => ({}));
 
     if (!res.ok) {
-      setStatus('create-status', data.detail || 'Could not create coupon.', false);
+      setStatus('create-status', `Could not create coupon (${res.status}): ${data.detail || 'Unknown backend error.'}`, false);
       return;
     }
 
     setStatus('create-status', `Created ${data.code}.`, true);
-    resetForm();
+    resetForm(false);
     loadCoupons();
   }
 
@@ -697,6 +863,263 @@
       <div class="metric"><div class="metric-label">Approved today</div><div class="metric-value">${data.approved_today || 0}</div></div>
       <div class="metric"><div class="metric-label">Pending comments</div><div class="metric-value">${data.pending_comments || 0}</div></div>
       <div class="metric"><div class="metric-label">Pending withdrawals</div><div class="metric-value">${data.pending_withdrawals || 0}</div></div>
+      <div class="metric"><div class="metric-label">Pending authors</div><div class="metric-value">${data.pending_authors || 0}</div></div>
+      <div class="metric"><div class="metric-label">Active announcements</div><div class="metric-value">${data.active_announcements || 0}</div></div>
+    `;
+  }
+
+  function localDateTimeValue(value) {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    const offsetMs = date.getTimezoneOffset() * 60000;
+    return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
+  }
+
+  function isoFromInput(id) {
+    const value = document.getElementById(id)?.value;
+    return value ? new Date(value).toISOString() : null;
+  }
+
+  function resetAnnouncementForm() {
+    [
+      'announcement-id',
+      'announcement-title',
+      'announcement-publish-at',
+      'announcement-expires-at',
+      'announcement-image-url',
+      'announcement-deep-link',
+      'announcement-body'
+    ].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    document.getElementById('announcement-priority').value = 'normal';
+    document.getElementById('announcement-audience').value = 'all';
+    document.getElementById('announcement-pinned').checked = false;
+    document.getElementById('announcement-critical-repeat').checked = true;
+    setStatus('announcement-status', '', true);
+  }
+
+  function announcementPayload() {
+    return {
+      title: document.getElementById('announcement-title')?.value.trim() || '',
+      body_html: document.getElementById('announcement-body')?.value.trim() || '',
+      image_url: document.getElementById('announcement-image-url')?.value.trim() || null,
+      priority: document.getElementById('announcement-priority')?.value || 'normal',
+      publish_at: isoFromInput('announcement-publish-at'),
+      expires_at: isoFromInput('announcement-expires-at'),
+      pinned: !!document.getElementById('announcement-pinned')?.checked,
+      audience: document.getElementById('announcement-audience')?.value || 'all',
+      deep_link_url: document.getElementById('announcement-deep-link')?.value.trim() || null,
+      critical_repeat_session: !!document.getElementById('announcement-critical-repeat')?.checked
+    };
+  }
+
+  async function saveAnnouncement() {
+    if (!token()) {
+      setStatus('announcement-status', 'Admin token is required.', false);
+      return;
+    }
+    const payload = announcementPayload();
+    if (!payload.title || !payload.body_html) {
+      setStatus('announcement-status', 'Title and message body are required.', false);
+      return;
+    }
+    const id = document.getElementById('announcement-id')?.value;
+    const res = await fetch(id ? `/admin/announcements/${id}` : '/admin/announcements', {
+      method: id ? 'PUT' : 'POST',
+      headers: headers(),
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setStatus('announcement-status', data.detail || 'Could not save announcement.', false);
+      return;
+    }
+    setStatus('announcement-status', `Announcement ${id ? 'updated' : 'created'}.`, true);
+    resetAnnouncementForm();
+    loadAnnouncements();
+  }
+
+  function editAnnouncement(row) {
+    document.getElementById('announcement-id').value = row.id;
+    document.getElementById('announcement-title').value = row.title || '';
+    document.getElementById('announcement-priority').value = row.priority || 'normal';
+    document.getElementById('announcement-publish-at').value = localDateTimeValue(row.publish_at);
+    document.getElementById('announcement-expires-at').value = localDateTimeValue(row.expires_at);
+    document.getElementById('announcement-image-url').value = row.image_url || '';
+    document.getElementById('announcement-deep-link').value = row.deep_link_url || '';
+    document.getElementById('announcement-audience').value = row.audience || 'all';
+    document.getElementById('announcement-body').value = row.body_html || '';
+    document.getElementById('announcement-pinned').checked = !!row.pinned;
+    document.getElementById('announcement-critical-repeat').checked = row.critical_repeat_session !== false;
+    setStatus('announcement-status', `Editing announcement #${row.id}.`, true);
+    focusAdminSection('Announcements');
+  }
+
+  async function deleteAnnouncement(id) {
+    if (!token()) return;
+    if (!window.confirm('Delete this announcement?')) return;
+    const res = await fetch(`/admin/announcements/${id}`, {
+      method: 'DELETE',
+      headers: headers()
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setStatus('announcement-status', data.detail || 'Could not delete announcement.', false);
+      return;
+    }
+    setStatus('announcement-status', 'Announcement deleted.', true);
+    loadAnnouncements();
+  }
+
+  async function loadAnnouncements() {
+    if (!token()) {
+      document.getElementById('announcement-list').innerHTML = '<div class="empty">Admin token is required.</div>';
+      return;
+    }
+    const status = document.getElementById('announcement-status-filter')?.value || 'all';
+    const res = await fetch(`/admin/announcements?status=${encodeURIComponent(status)}`, { headers: headers() });
+    const data = await res.json().catch(() => []);
+    if (!res.ok) {
+      document.getElementById('announcement-list').innerHTML = `<div class="empty">${escapeHtml(data.detail || 'Could not load announcements.')}</div>`;
+      return;
+    }
+    document.getElementById('announcement-list').innerHTML = data.length ? `
+      <div class="table-wrap"><table>
+        <thead><tr><th>Announcement</th><th>Priority</th><th>Schedule</th><th>Audience</th><th>Actions</th></tr></thead>
+        <tbody>${data.map(row => `
+          <tr>
+            <td>
+              ${row.image_url ? `<img src="${escapeHtml(row.image_url)}" alt="" style="width:96px;max-height:54px;object-fit:cover;border-radius:6px;border:1px solid var(--border);float:left;margin:0 10px 8px 0">` : ''}
+              <strong>${escapeHtml(row.title || '')}</strong>
+              ${row.pinned ? '<span class="note">Pinned</span>' : ''}
+              <div class="note">${row.body_html || ''}</div>
+              ${row.deep_link_url ? `<div class="note">Link: ${escapeHtml(row.deep_link_url)}</div>` : ''}
+            </td>
+            <td>${escapeHtml(row.priority || '')}</td>
+            <td>
+              <strong>${row.is_active ? 'Active' : 'Inactive'}</strong><br>
+              <span class="note">Publish: ${row.publish_at ? new Date(row.publish_at).toLocaleString() : 'Now'}</span><br>
+              <span class="note">Expires: ${row.expires_at ? new Date(row.expires_at).toLocaleString() : 'Never'}</span>
+            </td>
+            <td>${escapeHtml(row.audience || 'all')}</td>
+            <td style="display:flex;gap:6px;flex-wrap:wrap">
+              <button class="secondary" onclick='editAnnouncement(${JSON.stringify(row).replace(/'/g, '&#39;')})'>Edit</button>
+              <button class="danger" onclick="deleteAnnouncement(${row.id})">Delete</button>
+            </td>
+          </tr>
+        `).join('')}</tbody>
+      </table></div>
+    ` : '<div class="empty">No announcements found.</div>';
+  }
+
+  async function loadAuthorApplications() {
+    if (!token()) {
+      document.getElementById('author-application-list').innerHTML = '<div class="empty">Admin token is required.</div>';
+      return;
+    }
+    const status = document.getElementById('author-application-filter')?.value || 'pending';
+    setStatus('author-application-admin-status', 'Loading author applications...', true);
+    const res = await fetch(`/admin/authors/applications?status=${encodeURIComponent(status)}`, { headers: headers() });
+    const data = await res.json().catch(() => []);
+    if (!res.ok) {
+      setStatus('author-application-admin-status', data.detail || 'Could not load applications.', false);
+      return;
+    }
+    setStatus('author-application-admin-status', 'Author applications loaded.', true);
+    document.getElementById('author-application-list').innerHTML = data.length ? `
+      <div class="table-wrap"><table>
+        <thead><tr><th>Applicant</th><th>Genres</th><th>Sample</th><th>Status</th><th>Feedback</th><th>Actions</th></tr></thead>
+        <tbody>${data.map(row => `
+          <tr>
+            <td><strong>${escapeHtml(row.pen_name || '')}</strong><br>${escapeHtml(row.email || row.profile_id || '')}<br><span class="note">${escapeHtml(row.short_bio || '')}</span></td>
+            <td>${(row.target_genres || []).map(escapeHtml).join(', ') || 'None listed'}</td>
+            <td>${row.writing_sample_url ? `<a class="back-link" style="display:inline-block;padding:4px 8px;border-radius:6px" href="${escapeHtml(row.writing_sample_url)}" target="_blank" rel="noopener">Open sample</a>` : 'None'}</td>
+            <td>${escapeHtml(row.status || '')}</td>
+            <td><input id="author-application-feedback-${row.id}" type="text" placeholder="Approval note or rejection reason" value="${escapeAttr(row.admin_feedback || '')}"></td>
+            <td style="display:flex;gap:6px;flex-wrap:wrap">
+              <button onclick="approveAuthorApplication(${row.id})">Approve</button>
+              <button class="danger" onclick="rejectAuthorApplication(${row.id})">Reject</button>
+            </td>
+          </tr>
+        `).join('')}</tbody>
+      </table></div>
+    ` : '<div class="empty">No author applications found.</div>';
+  }
+
+  async function decideAuthorApplication(id, decision) {
+    if (!token()) return;
+    const feedback = document.getElementById(`author-application-feedback-${id}`)?.value.trim() || '';
+    if (decision === 'reject' && !feedback) {
+      setStatus('author-application-admin-status', 'Rejection feedback is required.', false);
+      return;
+    }
+    const res = await fetch(`/admin/authors/applications/${id}/${decision}`, {
+      method: 'POST',
+      headers: headers(),
+      body: JSON.stringify({ feedback })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setStatus('author-application-admin-status', data.detail || `Could not ${decision} application.`, false);
+      return;
+    }
+    setStatus('author-application-admin-status', `Application ${data.status}.`, true);
+    loadAuthorApplications();
+  }
+  function approveAuthorApplication(id) { decideAuthorApplication(id, 'approve'); }
+  function rejectAuthorApplication(id) { decideAuthorApplication(id, 'reject'); }
+
+  async function loadPremiumAnalytics() {
+    if (!token()) {
+      document.getElementById('premium-analytics-results').innerHTML = '<div class="empty">Admin token is required.</div>';
+      return;
+    }
+    const params = new URLSearchParams();
+    const from = document.getElementById('premium-date-from')?.value;
+    const to = document.getElementById('premium-date-to')?.value;
+    const authorId = document.getElementById('premium-author-id')?.value.trim();
+    const bookId = document.getElementById('premium-book-id')?.value;
+    const genre = document.getElementById('premium-genre')?.value.trim();
+    if (from) params.set('date_from', new Date(from).toISOString());
+    if (to) params.set('date_to', new Date(to).toISOString());
+    if (authorId) params.set('author_id', authorId);
+    if (bookId) params.set('book_id', bookId);
+    if (genre) params.set('genre', genre);
+    setStatus('premium-analytics-status', 'Loading Premium analytics...', true);
+    const res = await fetch(`/admin/premium-analytics?${params.toString()}`, { headers: headers() });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setStatus('premium-analytics-status', data.detail || 'Could not load Premium analytics.', false);
+      return;
+    }
+    setStatus('premium-analytics-status', 'Premium analytics loaded.', true);
+    const bookRows = data.top_premium_read_books || [];
+    const authorRows = data.top_authors_by_premium_reads || [];
+    document.getElementById('premium-analytics-results').innerHTML = `
+      <div class="metric-grid">
+        <div class="metric"><div class="metric-label">Total Premium Subscribers</div><div class="metric-value">${Number(data.total_premium_subscribers || 0).toLocaleString()}</div></div>
+        <div class="metric"><div class="metric-label">Total Premium Book Reads</div><div class="metric-value">${Number(data.total_premium_book_reads || 0).toLocaleString()}</div></div>
+        <div class="metric"><div class="metric-label">Total Unique Premium Readers</div><div class="metric-value">${Number(data.total_unique_premium_readers || 0).toLocaleString()}</div></div>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Top Premium Read Books</th><th>Reads</th><th>Top Authors</th><th>Reads</th></tr></thead>
+        <tbody>${Array.from({ length: Math.max(bookRows.length, authorRows.length, 1) }).map((_, i) => `
+          <tr>
+            <td>${bookRows[i] ? escapeHtml(bookRows[i].title || '') : ''}</td>
+            <td>${bookRows[i] ? Number(bookRows[i].premium_reads || 0).toLocaleString() : ''}</td>
+            <td>${authorRows[i] ? escapeHtml(authorRows[i].author_name || authorRows[i].author_id || '') : ''}</td>
+            <td>${authorRows[i] ? Number(authorRows[i].premium_reads || 0).toLocaleString() : ''}</td>
+          </tr>
+        `).join('')}</tbody>
+      </table></div>
+      <div class="table-wrap" style="margin-top:12px"><table>
+        <thead><tr><th>Daily</th><th>Weekly</th><th>Monthly</th></tr></thead>
+        <tbody><tr>
+          <td>${(data.premium_reads_by_day || []).map(row => `${escapeHtml(row.period)}: ${row.reads}`).join('<br>') || 'No reads'}</td>
+          <td>${(data.premium_reads_by_week || []).map(row => `${escapeHtml(row.period)}: ${row.reads}`).join('<br>') || 'No reads'}</td>
+          <td>${(data.premium_reads_by_month || []).map(row => `${escapeHtml(row.period)}: ${row.reads}`).join('<br>') || 'No reads'}</td>
+        </tr></tbody>
+      </table></div>
     `;
   }
 

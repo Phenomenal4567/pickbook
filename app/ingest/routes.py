@@ -22,7 +22,7 @@ from app.core.auth import profile_id_from_token
 from app.core.config import settings
 from app.core.database import SessionLocal
 from app.core.limiter import limiter
-from app.models.book import Book, Profile, Story
+from app.models.book import Book, PremiumRead, Profile, Story
 
 router = APIRouter(prefix="/ingest", tags=["Ingestion"])
 
@@ -69,6 +69,33 @@ def _profile_can_read_locked_chapters(profile: Profile | None) -> bool:
         if expiry > datetime.now(timezone.utc):
             return True
     return (profile.streak_count or 0) >= STREAK_UNLOCK_DAYS
+
+
+def _record_premium_read(db, profile: Profile | None, book: Book) -> None:
+    if not profile or profile.current_plan != "standard":
+        return
+    story = db.query(Story).filter(
+        Story.published_version_id == book.id,
+        Story.author_id.isnot(None),
+    ).first()
+    if not story or not story.author_id:
+        return
+    existing = db.query(PremiumRead).filter(
+        PremiumRead.user_id == profile.id,
+        PremiumRead.book_id == book.id,
+    ).first()
+    if existing:
+        return
+    db.add(
+        PremiumRead(
+            user_id=profile.id,
+            book_id=book.id,
+            author_id=story.author_id,
+            story_id=story.id,
+            genre=book.genre or story.genre,
+        )
+    )
+    db.commit()
 
 
 # =========================================================
@@ -2248,6 +2275,7 @@ def get_book_chapter(
             chapter = chapters[index]
 
             if isinstance(chapter, dict) and chapter.get("html"):
+                _record_premium_read(db, profile, book)
                 return {
                     "book_id": book.id,
                     "chapter": chapter_number,
@@ -2270,6 +2298,7 @@ def get_book_chapter(
                 chapter_number,
                 fetched_chapter,
             )
+            _record_premium_read(db, profile, book)
 
             return {
                 "book_id": book.id,

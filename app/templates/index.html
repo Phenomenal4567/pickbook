@@ -31,11 +31,13 @@
   html { scroll-behavior: smooth; }
   body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 15px; line-height: 1.6; transition: background var(--transition), color var(--transition); min-height: 100vh; }
   .hidden { display: none !important; }
+  button, a, input, select, textarea, .genre-tab, .mood-chip, .source-chip, .shelf-btn, .theme-btn, .mobile-theme-btn, .menu-btn { min-height: 48px; }
+  button, a { touch-action: manipulation; }
 
   /* OVERLAYS */
   .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.72); z-index: 200; align-items: center; justify-content: center; padding: 1rem; backdrop-filter: blur(2px); }
   .overlay.active { display: flex; }
-  .modal { background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius-lg); padding: 2rem; max-width: 480px; width: 100%; position: relative; animation: slideUp 0.22s ease; }
+  .modal { background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius-lg); padding: clamp(1.15rem, 3vw, 2rem); max-width: 480px; width: min(100%, 480px); max-height: calc(100vh - 2rem); overflow-y: auto; position: relative; animation: slideUp 0.22s ease; }
   @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
   .modal h2 { font-family: var(--font-display); font-size: 1.6rem; margin-bottom: 0.5rem; color: var(--text); }
   .modal p { color: var(--text-muted); margin-bottom: 1.2rem; font-size: 0.9rem; }
@@ -119,9 +121,15 @@
   .donate-form input { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); padding: 0.65rem 0.8rem; font-family: var(--font-body); font-size: 0.95rem; }
   .donate-notice { background: rgba(212,168,83,0.08); border: 1px solid var(--border); border-radius: 8px; padding: 0.7rem 0.85rem; color: var(--text-muted); font-size: 0.78rem; line-height: 1.5; margin-top: 0.8rem; }
   .form-stack label { display: block; color: var(--text-muted); font-size: 0.78rem; margin: 0.7rem 0 0.3rem; }
-  .form-stack input, .form-stack select { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); padding: 0.65rem 0.8rem; font-family: var(--font-body); font-size: 0.92rem; }
+  .form-stack input, .form-stack select, .form-stack textarea { width: 100%; min-height: 48px; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); padding: 0.72rem 0.85rem; font-family: var(--font-body); font-size: 0.94rem; line-height: 1.35; }
+  .form-stack input:focus, .form-stack select:focus, .form-stack textarea:focus { outline: 2px solid rgba(212,168,83,0.22); border-color: var(--accent); }
+  .form-stack input::placeholder, .form-stack textarea::placeholder { color: rgba(168,136,120,0.82); }
   .terms-link { color: var(--accent); text-decoration: none; }
   .terms-link:hover { text-decoration: underline; }
+  .account-mode-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; margin-bottom: 1rem; padding: 0.25rem; border: 1px solid var(--border); border-radius: 10px; background: rgba(26,14,7,0.28); }
+  .account-mode-btn { min-height: 48px; background: transparent; border: 1px solid transparent; border-radius: 8px; color: var(--text-muted); padding: 0.62rem 0.45rem; font-family: var(--font-body); cursor: pointer; font-size: 0.86rem; white-space: nowrap; }
+  .account-mode-btn.active { background: var(--surface2); border-color: var(--border2); color: var(--accent); box-shadow: 0 0 0 1px rgba(212,168,83,0.12) inset; }
+  .account-modal .form-stack { display: grid; gap: 0.15rem; }
 
   /* DONATE NUDGE */
   .donate-nudge { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 400; background: var(--surface); border: 1px solid var(--accent); border-radius: var(--radius-lg); padding: 1.1rem 1.3rem; max-width: 310px; box-shadow: 0 12px 36px rgba(0,0,0,0.55); opacity: 0; transform: translateY(20px); transition: opacity 0.4s, transform 0.4s; pointer-events: none; }
@@ -154,14 +162,14 @@
   /* MOOD FILTER */
   .mood-filter-bar, .source-filter-bar { padding: 0.6rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; gap: 0.55rem; align-items: center; overflow-x: auto; scrollbar-width: none; background: var(--bg); }
   .mood-filter-bar::-webkit-scrollbar, .source-filter-bar::-webkit-scrollbar { display: none; }
-  .source-filter-bar.hidden { display: none !important; }
+  .source-filter-bar { display: none !important; }
   .mood-label { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; margin-right: 0.3rem; }
   .mood-chip, .source-chip { min-height: 34px; padding: 0.38rem 0.8rem; border-radius: 20px; border: 1px solid var(--border2); background: none; color: var(--text-muted); font-size: 0.78rem; font-family: var(--font-body); cursor: pointer; white-space: nowrap; transition: all 0.18s; display: inline-flex; align-items: center; justify-content: center; gap: 5px; line-height: 1.15; }
   .mood-chip:hover, .source-chip:hover { border-color: var(--accent2); color: var(--text); }
   .mood-chip.active, .source-chip.active { background: var(--accent2); border-color: var(--accent2); color: var(--bg); }
 
   /* SOURCE PILL */
-  .source-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 0.65rem; padding: 2px 7px; border-radius: 4px; background: rgba(200,149,108,0.12); color: var(--accent2); border: 1px solid rgba(200,149,108,0.25); margin-top: 4px; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .source-pill { display: none; }
 
   /* LOADING SKELETON */
   .skeleton-card { border-radius: var(--radius); overflow: hidden; background: var(--surface); border: 1px solid var(--border); }
@@ -326,16 +334,32 @@
   .deal-panel { display: none; }
   .deal-panel.active { display: block; }
   .author-studio-grid { display: grid; grid-template-columns: minmax(260px, 0.9fr) minmax(320px, 1.3fr); gap: 0.9rem; align-items: start; }
-  .author-upload-form input[type="text"], .author-upload-form input[type="file"] { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); padding: 0.65rem 0.8rem; font-family: var(--font-body); font-size: 0.92rem; }
+  .author-upload-form input[type="text"], .author-upload-form input[type="url"], .author-upload-form input[type="file"] { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); padding: 0.65rem 0.8rem; font-family: var(--font-body); font-size: 0.92rem; }
   .author-upload-form input[type="file"] { color: var(--text-muted); }
-  .author-consent { display: grid; grid-template-columns: 20px 1fr; gap: 0.65rem; align-items: flex-start; color: var(--text-muted); font-size: 0.8rem; line-height: 1.45; margin-top: 0.8rem; padding: 0.72rem 0.78rem; border: 1px solid var(--border); border-radius: 8px; background: rgba(212,168,83,0.055); cursor: pointer; transition: border-color 0.2s, background 0.2s, box-shadow 0.2s; }
+  .genre-picker { position: relative; }
+  .genre-picker-toggle { width: 100%; min-height: 48px; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); padding: 0.65rem 0.8rem; font-family: var(--font-body); font-size: 0.92rem; text-align: left; cursor: pointer; }
+  .genre-picker-toggle span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .genre-picker-toggle::after { content: "\25BE"; color: var(--accent); flex-shrink: 0; }
+  .genre-picker.open .genre-picker-toggle { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(212,168,83,0.12); }
+  .genre-picker-menu { display: none; position: absolute; z-index: 40; left: 0; right: 0; top: calc(100% + 6px); background: var(--surface); border: 1px solid var(--border2); border-radius: 8px; padding: 0.55rem; box-shadow: 0 18px 42px rgba(0,0,0,0.38); max-height: 340px; overflow-y: auto; }
+  .genre-picker.open .genre-picker-menu { display: block; }
+  .genre-option { min-height: 48px; display: flex; align-items: center; gap: 0.65rem; padding: 0.45rem 0.5rem; border-radius: 7px; color: var(--text); cursor: pointer; }
+  .genre-option:hover { background: rgba(212,168,83,0.08); }
+  .genre-option input { width: 20px; height: 20px; accent-color: var(--accent); flex-shrink: 0; }
+  .genre-custom-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.5rem; padding-top: 0.55rem; margin-top: 0.45rem; border-top: 1px solid var(--border); }
+  .genre-custom-row input { min-width: 0; }
+  .genre-selected-chips { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.55rem; min-height: 24px; }
+  .genre-chip { min-height: 32px; display: inline-flex; align-items: center; gap: 0.35rem; border: 1px solid var(--border2); border-radius: 999px; background: rgba(212,168,83,0.09); color: var(--accent); padding: 0.25rem 0.65rem; font-size: 0.78rem; }
+  .genre-chip button { min-height: 24px; width: 24px; border: 0; background: transparent; color: var(--accent); padding: 0; font-size: 1rem; line-height: 1; }
+  .author-consent { display: grid !important; grid-template-columns: 28px minmax(0, 1fr); gap: 0.75rem; align-items: flex-start; color: var(--text-muted); font-size: 0.84rem; line-height: 1.5; margin-top: 0.85rem !important; padding: 0.82rem 0.88rem; min-height: 56px; border: 1px solid var(--border); border-radius: 8px; background: rgba(212,168,83,0.055); cursor: pointer; transition: border-color 0.2s, background 0.2s, box-shadow 0.2s; }
   .author-consent:hover { border-color: var(--border2); background: rgba(212,168,83,0.085); }
-  .author-consent input[type="checkbox"] { appearance: none; width: 20px; height: 20px; margin: 0.05rem 0 0; border: 1.5px solid var(--border2); border-radius: 5px; background: var(--surface2); flex-shrink: 0; display: grid; place-items: center; cursor: pointer; transition: background 0.18s, border-color 0.18s, box-shadow 0.18s; }
-  .author-consent input[type="checkbox"]::before { content: ""; width: 9px; height: 5px; border-left: 2px solid var(--bg); border-bottom: 2px solid var(--bg); transform: rotate(-45deg) scale(0); transform-origin: center; transition: transform 0.16s ease; }
+  .author-consent input[type="checkbox"] { appearance: none; width: 24px; height: 24px; min-height: 24px; margin: 0.05rem 0 0; border: 1.5px solid var(--border2); border-radius: 7px; background: var(--surface2); flex-shrink: 0; display: grid; place-items: center; cursor: pointer; transition: background 0.18s, border-color 0.18s, box-shadow 0.18s; }
+  .author-consent input[type="checkbox"]::before { content: ""; width: 11px; height: 6px; border-left: 2px solid var(--bg); border-bottom: 2px solid var(--bg); transform: rotate(-45deg) scale(0); transform-origin: center; transition: transform 0.16s ease; }
   .author-consent input[type="checkbox"]:checked { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 0 3px rgba(212,168,83,0.16); }
   .author-consent input[type="checkbox"]:checked::before { transform: rotate(-45deg) scale(1); }
   .author-consent input[type="checkbox"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .author-consent:has(input[type="checkbox"]:checked) { border-color: rgba(212,168,83,0.5); background: rgba(212,168,83,0.12); }
+  .author-consent span { min-width: 0; overflow-wrap: anywhere; }
   .author-status-row { display: grid; grid-template-columns: 1fr auto; gap: 0.75rem; padding: 0.9rem 0; border-bottom: 1px solid var(--border); }
   .author-status-row:last-child { border-bottom: none; }
   .author-status-title { color: var(--text); font-weight: 600; line-height: 1.25; }
@@ -422,9 +446,6 @@
   .btn-secondary.on-shelf { border-color: var(--success); color: var(--success); }
   .btn-danger { background: transparent; color: var(--danger); border: 1px solid rgba(201,64,64,0.5); border-radius: 8px; padding: 0.65rem 1.2rem; font-family: var(--font-body); font-size: 0.9rem; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
   .btn-danger:hover { border-color: var(--danger); background: rgba(201,64,64,0.08); }
-  .account-mode-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.45rem; margin-bottom: 0.9rem; }
-  .account-mode-btn { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text-muted); padding: 0.55rem 0.75rem; font-family: var(--font-body); cursor: pointer; }
-  .account-mode-btn.active { border-color: var(--accent); color: var(--accent); }
   .account-summary { background: rgba(212,168,83,0.08); border: 1px solid var(--border); border-radius: 8px; padding: 0.85rem; color: var(--text-muted); font-size: 0.86rem; line-height: 1.55; margin: 0.8rem 0; }
   .account-summary strong { color: var(--text); }
   .settings-grid { display: grid; grid-template-columns: minmax(260px, 0.85fr) minmax(300px, 1.15fr); gap: 0.9rem; align-items: start; }
@@ -446,7 +467,7 @@
   .chapter-read-badge { font-size: 0.65rem; color: var(--success); margin-left: 4px; }
   .chapter-cache-badge { font-size: 0.65rem; color: var(--text-muted); margin-left: 4px; }
   .chapter-source-badge { font-size: 0.65rem; color: var(--accent); margin-left: 4px; }
-  .attribution-box { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: var(--radius); padding: 0.75rem 1rem; font-size: 0.78rem; color: var(--text-muted); margin-top: 1rem; }
+  .attribution-box { display: none; }
 
   /* AGE GATE */
   .age-gate-modal { text-align: center; }
@@ -554,6 +575,24 @@
   .thanks-copy, .referral-copy { color: var(--text-muted); line-height: 1.75; margin-bottom: 1rem; }
   .referral-code-row { display: flex; gap: 0.6rem; align-items: center; margin: 1rem 0; flex-wrap: wrap; }
   .referral-code { background: var(--surface2); border: 1px dashed var(--accent); border-radius: 8px; color: var(--accent); padding: 0.65rem 0.85rem; font-weight: 700; letter-spacing: 0.06em; }
+  .announcement-modal { max-width: 620px; }
+  .announcement-close { position: absolute; top: 0.85rem; right: 0.85rem; width: 48px; height: 48px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-size: 1.1rem; }
+  .announcement-banner { width: 100%; max-height: 220px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); margin: 0.75rem 0 1rem; }
+  .announcement-priority { display: inline-flex; align-items: center; min-height: 30px; border-radius: 999px; padding: 0.2rem 0.65rem; font-size: 0.74rem; border: 1px solid var(--border2); color: var(--accent); text-transform: capitalize; margin-bottom: 0.55rem; }
+  .announcement-priority.critical { border-color: rgba(201,64,64,0.65); color: #ff8f8f; background: rgba(201,64,64,0.08); }
+  .announcement-priority.important { color: var(--accent); background: rgba(212,168,83,0.08); }
+  .announcement-body { color: var(--text-muted); line-height: 1.75; overflow-wrap: anywhere; }
+  .announcement-body p { margin: 0.55rem 0; }
+  .announcement-body a { color: var(--accent); }
+  .announcement-grid { display: grid; gap: 0.75rem; }
+  .announcement-card { border: 1px solid var(--border); border-radius: 8px; background: var(--surface); padding: 1rem; cursor: pointer; transition: border-color 0.18s, background 0.18s; }
+  .announcement-card:hover { border-color: var(--accent); background: rgba(212,168,83,0.055); }
+  .announcement-card.unread { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+  .announcement-card.pinned { background: rgba(212,168,83,0.08); }
+  .announcement-card-top { display: flex; align-items: center; gap: 0.55rem; flex-wrap: wrap; margin-bottom: 0.35rem; }
+  .announcement-card-title { color: var(--text); font-weight: 700; font-size: 1rem; line-height: 1.25; }
+  .announcement-date { color: var(--text-muted); font-size: 0.78rem; }
+  .announcement-card-preview { color: var(--text-muted); font-size: 0.88rem; line-height: 1.55; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
   @media (max-width: 640px) {
     .detail-cover { width: 110px; } .detail-title { font-size: 1.4rem; }
@@ -569,14 +608,14 @@
     .nav-actions { display: none; }
     .streak-badge { display: none; }
     .sync-chip { display: none; }
-    .shelf-btn, .theme-btn { min-width: 34px; height: 34px; justify-content: center; padding: 0.35rem 0.5rem; font-size: 0.82rem; }
+    .shelf-btn, .theme-btn { min-width: 48px; height: 48px; justify-content: center; padding: 0.35rem 0.5rem; font-size: 0.82rem; }
     .shelf-btn .nav-label { display: none; }
     .donate-nav-btn { display: none; }
     .plan-pill { display: none; }
     .genre-bar { padding: 0.35rem 0.75rem 0; gap: 0.25rem; }
-    .genre-tab { min-height: 38px; padding: 0.5rem 0.72rem; font-size: 0.8rem; }
+    .genre-tab { min-height: 48px; padding: 0.5rem 0.72rem; font-size: 0.8rem; }
     .mood-filter-bar, .source-filter-bar { padding: 0.55rem 0.75rem; }
-    .mood-chip, .source-chip { min-height: 32px; padding: 0.35rem 0.7rem; }
+    .mood-chip, .source-chip { min-height: 48px; padding: 0.35rem 0.7rem; }
     .hub-hero { grid-template-columns: 1fr; }
     .hub-actions { justify-content: flex-start; }
     .deal-tabs { width: 100%; max-width: none; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.4rem; padding: 0.4rem; }
@@ -593,6 +632,12 @@
     .taste-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.55rem; }
     .taste-option { min-height: 74px; padding: 0.62rem 0.5rem; }
     .streak-dots { grid-template-columns: repeat(10, 1fr); }
+    .account-modal { width: min(100%, 440px); }
+    .account-mode-row { gap: 0.35rem; }
+    .account-mode-btn { font-size: 0.8rem; padding-left: 0.25rem; padding-right: 0.25rem; }
+    .author-consent { grid-template-columns: 26px minmax(0, 1fr); padding: 0.78rem; }
+    .genre-picker-menu { position: fixed; left: 1rem; right: 1rem; top: auto; bottom: 1rem; max-height: min(70vh, 460px); }
+    .genre-custom-row { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -603,6 +648,14 @@
     <div class="app-loading-text" id="app-loading-text">Loading your library</div>
     <div class="app-loading-sub">Getting books and filters ready.</div>
     <div class="app-loading-spinner" aria-hidden="true"></div>
+  </div>
+</div>
+
+<!-- ANNOUNCEMENT POPUP -->
+<div class="overlay" id="announcement-overlay">
+  <div class="modal announcement-modal">
+    <button class="announcement-close" type="button" onclick="dismissAnnouncementPopup()" aria-label="Close announcement">&times;</button>
+    <div id="announcement-popup-content"></div>
   </div>
 </div>
 
@@ -694,7 +747,7 @@
 
 <!-- ACCOUNT EMAIL MODAL -->
 <div class="overlay" id="account-email-overlay">
-  <div class="modal">
+  <div class="modal account-modal">
     <h2 id="account-modal-title">Create your PickBook account</h2>
     <p id="account-modal-copy">Add your username, email, and password so reading progress and payments stay connected to you.</p>
     <div class="account-mode-row">
@@ -704,13 +757,13 @@
     </div>
     <div class="form-stack">
       <div id="account-username-row">
-        <label>Username</label>
-        <input id="account-username-input" type="text" placeholder="yourname">
+        <label>Display name</label>
+        <input id="account-username-input" type="text" autocomplete="username" placeholder="e.g. AmakaReads">
       </div>
       <label>Email address</label>
-      <input id="account-email-input" type="email" placeholder="you@gmail.com">
+      <input id="account-email-input" type="email" autocomplete="email" placeholder="you@gmail.com">
       <label>Password</label>
-      <input id="account-password-input" type="password" minlength="8" autocomplete="current-password" placeholder="At least 8 characters">
+      <input id="account-password-input" type="password" minlength="8" autocomplete="current-password" placeholder="8 characters or more">
       <div id="account-reset-token-row" class="hidden">
         <label>Reset token</label>
         <input id="account-reset-token-input" type="text" placeholder="Paste token from reset link">
@@ -766,18 +819,14 @@
     <div class="search-results-drop" id="search-drop"></div>
   </div>
   <div class="nav-actions">
-    <button class="shelf-btn" onclick="showWebNovelTab()" title="Web Novels"><span class="nav-icon">&#9889;</span><span class="nav-label">Web Novels</span></button>
-    <button class="shelf-btn" onclick="showView('author')" title="Author Studio"><span class="nav-icon">&#9998;</span><span class="nav-label">Author</span></button>
-    <button class="shelf-btn" onclick="showView('features')" title="Progress"><span class="nav-icon">&#9673;</span><span class="nav-label">Progress</span></button>
     <button class="shelf-btn" onclick="openUpgrade('Standard unlocks full chapters and offline reading.')" title="Upgrade"><span class="nav-icon">&#9733;</span><span class="nav-label">Upgrade</span></button>
-    <button class="shelf-btn" onclick="showView('deals')" title="Investors and Partners"><span class="nav-icon">&#8358;</span><span class="nav-label">Deals</span></button>
+    <button class="shelf-btn" onclick="showView('author')" title="Submit a Novel"><span class="nav-icon">&#9998;</span><span class="nav-label">Become an Author</span></button>
     <button class="shelf-btn account-btn" id="account-nav-btn" onclick="openAccountControls()" title="Account and sync"><span class="nav-icon">&#128100;</span><span class="nav-label" id="account-nav-label">Account</span></button>
     <div class="sync-chip" id="sync-status-chip" title="Reader sync status">Local only</div>
     <div class="plan-pill" id="plan-pill">Free</div>
     <div class="streak-badge" id="streak-badge">&#128293; <span id="streak-count">0</span> day streak</div>
     <button class="shelf-btn" onclick="showView('downloads')" title="Downloads"><span class="nav-icon">&#11015;</span><span class="nav-label">Downloads</span><span class="shelf-count" id="download-count-badge">0</span></button>
     <button class="shelf-btn" onclick="showView('shelf')" title="My Shelf"><span class="nav-icon">&#128218;</span><span class="nav-label">My Shelf</span><span class="shelf-count" id="shelf-count-badge">0</span></button>
-    <button class="donate-nav-btn" onclick="openDonate()">&#10084;&#65039; <span class="donate-label">Donate</span></button>
     <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">&#9728;&#65039;</button>
   </div>
   <div class="mobile-nav-tools">
@@ -1248,15 +1297,40 @@
     <div class="hub-hero">
       <div>
         <h1 class="hub-title">Author Studio</h1>
-        <p class="hub-copy">Upload a manuscript draft and track review status from the same browser or account session. Your stories remain yours. Always.</p>
+        <p class="hub-copy">Apply as a PickBook author, then create book profiles, upload chapters, track analytics, and request payouts after approval.</p>
       </div>
       <div class="hub-actions">
-        <button class="btn-secondary" onclick="loadAuthorSubmissions()">Refresh</button>
+        <button class="btn-secondary" onclick="loadAuthorWorkspace()">Refresh</button>
       </div>
     </div>
-    <div class="author-studio-grid">
+    <section class="deal-card" id="author-application-card">
+      <h2 class="section-title">Author Onboarding</h2>
+      <div class="deal-note" id="author-application-status">Submit your application to unlock the author dashboard after admin approval.</div>
+      <div class="author-upload-form form-stack" id="author-application-form">
+        <label>Pen name</label>
+        <input id="author-pen-name" type="text" maxlength="200" placeholder="Name readers will see">
+        <label>Target genres</label>
+        <div class="genre-picker" id="author-genre-picker">
+          <button class="genre-picker-toggle" type="button" onclick="toggleAuthorGenreMenu()"><span id="author-genre-summary">Choose target genres</span></button>
+          <div class="genre-picker-menu" id="author-genre-menu">
+            <div id="author-genre-options"></div>
+            <div class="genre-custom-row">
+              <input id="author-custom-genre" type="text" maxlength="40" placeholder="Add another genre" onkeydown="handleCustomAuthorGenreKey(event)">
+              <button class="btn-secondary" type="button" onclick="addCustomAuthorGenre()">Add</button>
+            </div>
+          </div>
+          <div class="genre-selected-chips" id="author-selected-genres"></div>
+        </div>
+        <label>Short bio</label>
+        <textarea id="author-short-bio" placeholder="A short introduction for PickBook review" style="width:100%;min-height:96px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);padding:0.65rem 0.8rem;font-family:var(--font-body)"></textarea>
+        <label>Writing sample / previous work link</label>
+        <input id="author-writing-sample" type="url" placeholder="https://">
+        <button class="btn-primary" style="width:100%;margin-top:0.9rem" onclick="submitAuthorApplication()">Submit Application</button>
+      </div>
+    </section>
+    <div class="author-studio-grid hidden" id="author-dashboard-grid">
       <section class="deal-card">
-        <h2 class="section-title">Submit Draft</h2>
+        <h2 class="section-title">Create Book Profile</h2>
         <div class="author-rights-note"><strong>Your stories remain yours. Always.</strong> PickBook only needs a non-exclusive license to host and distribute work you choose to submit.</div>
         <div class="author-rules">
           Manuscripts: TXT, DOCX, or EPUB only. Maximum size: 50 MB.<br>
@@ -1267,6 +1341,20 @@
           <input id="author-title" type="text" maxlength="500" placeholder="Story title">
           <label>Author name</label>
           <input id="author-name" type="text" maxlength="200" placeholder="Pen name">
+          <label>Genre</label>
+          <select id="author-book-genre">
+            <option>Romance</option>
+            <option>Fantasy</option>
+            <option>Thriller</option>
+            <option>Action & Adventure</option>
+            <option>Billionaire</option>
+            <option>Dark Romance</option>
+            <option>Paranormal</option>
+            <option>Werewolf</option>
+            <option>Science Fiction</option>
+          </select>
+          <label>Tags</label>
+          <input id="author-book-tags" type="text" placeholder="slow burn, revenge, royal court">
           <label>Manuscript file</label>
           <input id="author-file" type="file" accept=".txt,.docx,.epub">
           <label>Book cover</label>
@@ -1297,6 +1385,10 @@
         <div id="author-submission-list" style="margin-top:0.6rem">
           <div class="author-empty">No submissions loaded yet.</div>
         </div>
+        <div class="section-header" style="margin:1.2rem 0 0.4rem">
+          <h2 class="section-title">Premium Reader Analytics</h2>
+        </div>
+        <div id="author-premium-analytics" class="deal-note">Premium reads will appear after Standard readers begin reading your approved books.</div>
         <div class="section-header" style="margin:1.2rem 0 0.4rem">
           <h2 class="section-title">Earnings & Withdrawals</h2>
         </div>
@@ -1365,10 +1457,6 @@
           <button class="btn-primary" onclick="startReading()">Read Now</button>
           <button class="btn-secondary" id="shelf-toggle-btn" onclick="toggleShelf()">+ My Shelf</button>
           <button class="btn-secondary" onclick="downloadCurrentNovel()">Download</button>
-        </div>
-        <div class="attribution-box">
-          &#128204; Sourced from: <strong style="color:var(--text)" id="detail-source"></strong><br>
-          License: <span id="detail-license"></span>
         </div>
       </div>
     </div>
@@ -1444,9 +1532,6 @@
       <div class="section-header" style="margin-top:0"><h2 class="section-title" style="font-size:1rem">You May Also Like</h2></div>
       <div class="novel-grid" id="also-like-grid"></div>
     </div>
-    <div class="attribution-box">
-      &#128204; Content sourced from: <strong style="color:var(--text)" id="reader-attribution"></strong>
-    </div>
   </div>
 </div>
 
@@ -1458,9 +1543,9 @@
     <a href="#" onclick="openDonate()">&#10084;&#65039; Donate</a>
     <a href="#" onclick="showView('referral')">Referral Offer</a>
     <a href="https://wa.me/2349042427548?text=PickBook%20Feedback%3A%20" target="_blank">&#128172; Feedback</a>
-    <a href="#" onclick="showView('author')">Submit a Novel</a>
+    <a href="#" onclick="showView('author')">Become an Author</a>
   </div>
-  <div>&copy; 2026 PickBook &middot; Public domain and web novel reading &middot; Sources include FreeWebNovel and other web novel catalogues</div>
+  <div>&copy; 2026 PickBook</div>
 </footer>
 
 <div class="toast" id="toast"></div>
@@ -1584,6 +1669,9 @@ function inferRating(index) { return Math.min(5.0, 4.0 + (Math.sin(index * 7.3) 
 function inferChapters(book, index) { if (book.chapters && Number.isInteger(book.chapters)) return book.chapters; return Math.floor(10 + ((index * 17) % 71)); }
 function escapeHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escapeAttr(s) {
+  return escapeHtml(s).replace(/'/g, '&#39;');
 }
 function money(value) {
   return `₦${Number(value || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
@@ -2591,7 +2679,7 @@ async function startCheckout() {
       email: state.userEmail,
       planType: 'standard',
       paidMonths: state.selectedPlanMonths || 1,
-      couponCode: state.couponCode || document.getElementById('coupon-code').value.trim() || null,
+      couponCode: state.couponCode || null,
       fingerprint: getDeviceFingerprint(),
       referralCode: state.referredBy || null
     })
@@ -2708,7 +2796,7 @@ function showView(v, pushHistory = true) {
   if (v === 'donation-thanks') renderDonationThanks();
   if (v === 'referral') renderReferralView();
   if (v === 'deals') { renderInvestorCalculator(); renderDealCalculator(); }
-  if (v === 'author') loadAuthorSubmissions();
+  if (v === 'author') loadAuthorWorkspace();
   closeMobileMenu();
   if (pushHistory && !suppressHistoryPush) {
     window.history.pushState({ view: v }, '', window.location.pathname + window.location.search);
@@ -2867,6 +2955,166 @@ async function loadDealSummary() {
 // -------------------------------------------------------
 //  AUTHOR STUDIO
 // -------------------------------------------------------
+const AUTHOR_GENRE_OPTIONS = [
+  'Action & Adventure',
+  'Billionaire',
+  'Dark Romance',
+  'Fantasy',
+  'Historical Fiction',
+  'Horror',
+  'Paranormal',
+  'Romance',
+  'Science Fiction',
+  'Thriller',
+  'Werewolf',
+  'YA/Teen'
+];
+let authorSelectedGenres = [];
+
+function normalizeAuthorGenre(value) {
+  return String(value || '').trim().replace(/\s+/g, ' ').slice(0, 40);
+}
+
+function renderAuthorGenrePicker() {
+  const options = document.getElementById('author-genre-options');
+  const chips = document.getElementById('author-selected-genres');
+  const summary = document.getElementById('author-genre-summary');
+  if (options) {
+    const allGenres = Array.from(new Set([...AUTHOR_GENRE_OPTIONS, ...authorSelectedGenres]));
+    options.innerHTML = allGenres.map(genre => {
+      const checked = authorSelectedGenres.includes(genre) ? 'checked' : '';
+      return `<label class="genre-option">
+        <input type="checkbox" value="${escapeAttr(genre)}" ${checked} onchange="toggleAuthorGenre('${escapeAttr(genre)}', this.checked)">
+        <span>${escapeHtml(genre)}</span>
+      </label>`;
+    }).join('');
+  }
+  if (chips) {
+    chips.innerHTML = authorSelectedGenres.length
+      ? authorSelectedGenres.map(genre => `<span class="genre-chip">${escapeHtml(genre)} <button type="button" aria-label="Remove ${escapeAttr(genre)}" onclick="removeAuthorGenre('${escapeAttr(genre)}')">&times;</button></span>`).join('')
+      : '<span class="feature-note">No genres selected yet.</span>';
+  }
+  if (summary) {
+    summary.textContent = authorSelectedGenres.length
+      ? `${authorSelectedGenres.length} genre${authorSelectedGenres.length === 1 ? '' : 's'} selected`
+      : 'Choose target genres';
+  }
+}
+
+function toggleAuthorGenreMenu() {
+  document.getElementById('author-genre-picker')?.classList.toggle('open');
+}
+
+function toggleAuthorGenre(genre, checked) {
+  const clean = normalizeAuthorGenre(genre);
+  if (!clean) return;
+  authorSelectedGenres = checked
+    ? Array.from(new Set([...authorSelectedGenres, clean])).slice(0, 8)
+    : authorSelectedGenres.filter(item => item !== clean);
+  renderAuthorGenrePicker();
+}
+
+function removeAuthorGenre(genre) {
+  toggleAuthorGenre(genre, false);
+}
+
+function addCustomAuthorGenre() {
+  const input = document.getElementById('author-custom-genre');
+  const clean = normalizeAuthorGenre(input?.value);
+  if (!clean) {
+    showToast('Enter a genre name first.');
+    return;
+  }
+  authorSelectedGenres = Array.from(new Set([...authorSelectedGenres, clean])).slice(0, 8);
+  if (input) input.value = '';
+  renderAuthorGenrePicker();
+}
+
+function handleCustomAuthorGenreKey(event) {
+  if (event.key !== 'Enter') return;
+  event.preventDefault();
+  addCustomAuthorGenre();
+}
+
+function setAuthorGenres(genres) {
+  authorSelectedGenres = Array.from(new Set((Array.isArray(genres) ? genres : []).map(normalizeAuthorGenre).filter(Boolean))).slice(0, 8);
+  renderAuthorGenrePicker();
+}
+
+function selectedAuthorGenres() {
+  return authorSelectedGenres;
+}
+async function submitAuthorApplication() {
+  const userId = await ensureLocalProfile();
+  if (!userId) return;
+  const penName = document.getElementById('author-pen-name')?.value.trim() || state.username || '';
+  const targetGenres = selectedAuthorGenres();
+  const shortBio = document.getElementById('author-short-bio')?.value.trim() || '';
+  const writingSampleUrl = document.getElementById('author-writing-sample')?.value.trim() || '';
+  const status = document.getElementById('author-application-status');
+  if (!penName) {
+    if (status) status.textContent = 'Pen name is required.';
+    return;
+  }
+  const res = await fetch('/author/application', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authorAuthHeaders() },
+    body: JSON.stringify({ pen_name: penName, target_genres: targetGenres, short_bio: shortBio, writing_sample_url: writingSampleUrl })
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    if (status) status.textContent = data.detail || 'Could not submit author application.';
+    return;
+  }
+  if (status) status.textContent = data.message || 'Your author application is under review! Check back soon to see if your account has been activated.';
+  showToast('Author application submitted.');
+  loadAuthorWorkspace();
+}
+async function loadAuthorApplication() {
+  if (!state.userId && !state.accessToken) return { status: null };
+  const res = await fetch('/author/application', { headers: authorAuthHeaders() });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) return { status: null };
+  const penInput = document.getElementById('author-pen-name');
+  const bioInput = document.getElementById('author-short-bio');
+  const sampleInput = document.getElementById('author-writing-sample');
+  if (penInput && data.pen_name) penInput.value = data.pen_name;
+  if (bioInput && data.short_bio) bioInput.value = data.short_bio;
+  if (sampleInput && data.writing_sample_url) sampleInput.value = data.writing_sample_url;
+  setAuthorGenres(data.target_genres || []);
+  return data;
+}
+function renderAuthorApplicationState(application) {
+  const status = application?.status || null;
+  const statusEl = document.getElementById('author-application-status');
+  const form = document.getElementById('author-application-form');
+  const dashboard = document.getElementById('author-dashboard-grid');
+  const approved = status === 'approved' || application?.role === 'author';
+  if (dashboard) dashboard.classList.toggle('hidden', !approved);
+  if (form) form.classList.toggle('hidden', approved || status === 'pending');
+  if (statusEl) {
+    statusEl.textContent = approved
+      ? 'Your author account is active. Create a book profile or manage submitted chapters below.'
+      : (status === 'pending'
+        ? 'Your author application is under review! Check back soon to see if your account has been activated.'
+        : (status === 'rejected'
+          ? `Application needs changes. ${application.admin_feedback || ''}`.trim()
+          : 'Submit your application to unlock the author dashboard after admin approval.'));
+  }
+  const authorName = document.getElementById('author-name');
+  if (authorName && application?.pen_name) authorName.value = application.pen_name;
+  return approved;
+}
+async function loadAuthorWorkspace() {
+  if (!state.userId && !state.accessToken) {
+    renderAuthorApplicationState({ status: null });
+    return false;
+  }
+  const application = await loadAuthorApplication();
+  const approved = renderAuthorApplicationState(application);
+  if (!approved) return false;
+  return loadAuthorSubmissions();
+}
 function setAuthorUploadStatus(message, ok = false) {
   const el = document.getElementById('author-upload-status');
   if (!el) return;
@@ -2933,6 +3181,7 @@ function renderAuthorMoney(data) {
   const list = document.getElementById('author-withdrawal-list');
   const minimumNote = document.getElementById('author-minimum-payout-note');
   const notifications = document.getElementById('author-notification-list');
+  const premiumPanel = document.getElementById('author-premium-analytics');
   const earnings = data?.earnings || {};
   const minimumPayout = Number(data?.minimum_payout_naira || 1000);
   const withdrawalInput = document.getElementById('author-withdrawal-amount');
@@ -2945,6 +3194,23 @@ function renderAuthorMoney(data) {
     `;
   }
   if (minimumNote) minimumNote.textContent = `(minimum ${money(minimumPayout)})`;
+  if (premiumPanel) {
+    const analytics = data?.premium_analytics || {};
+    const books = Array.isArray(analytics.books) ? analytics.books : [];
+    premiumPanel.innerHTML = `
+      <div class="metric-grid">
+        <div class="metric"><div class="metric-label">Unique Premium Readers</div><div class="metric-value">${Number(analytics.unique_premium_readers || 0).toLocaleString()}</div></div>
+        <div class="metric"><div class="metric-label">Total Premium Book Reads</div><div class="metric-value">${Number(analytics.total_premium_book_reads || 0).toLocaleString()}</div></div>
+      </div>
+      <div class="chapter-list-title" style="font-size:0.95rem;margin-top:0.8rem">Premium Reads by Book</div>
+      ${books.length ? books.map(book => `<div class="author-status-row">
+        <div>
+          <div class="author-status-title">${escapeHtml(book.title || 'Untitled')}</div>
+          <div class="author-status-meta">${Number(book.premium_readers || 0).toLocaleString()} Premium Readers</div>
+        </div>
+      </div>`).join('') : '<div class="author-empty">No Premium reads recorded yet.</div>'}
+    `;
+  }
   const notificationRows = Array.isArray(data?.notifications) ? data.notifications : [];
   if (notifications) {
     notifications.innerHTML = notificationRows.length
@@ -3182,6 +3448,8 @@ async function submitAuthorDraft() {
   const payload = new FormData();
   payload.append('title', title);
   payload.append('author', author);
+  payload.append('genre', document.getElementById('author-book-genre')?.value || 'Original');
+  payload.append('tags', document.getElementById('author-book-tags')?.value.trim() || '');
   payload.append('consent', 'true');
   payload.append('terms_accepted', 'true');
   payload.append('file', file);
@@ -4039,8 +4307,6 @@ function showDetail(novelId) {
       : `by ${escapeHtml(n.author)}`;
   }
   document.getElementById('detail-synopsis').textContent = n.synopsis || 'No synopsis available.';
-  document.getElementById('detail-source').textContent  = SOURCE_LABELS[(n.source || '').toLowerCase()] || n.source || 'Unknown';
-  document.getElementById('detail-license').textContent = n.license || 'Public Domain';
   document.getElementById('detail-rating-text').textContent = `${n.rating} / 5`;
 
   const detailCoverWrapper = document.querySelector('#detail-view .detail-cover');
@@ -4278,7 +4544,6 @@ function renderReaderView() {
   document.getElementById('reader-novel-title').textContent  = n.title;
   document.getElementById('reader-chapter-info').textContent = `Chapter ${ch} of ${n.chapters}`;
   document.getElementById('reader-crumb-title').textContent  = n.title;
-  document.getElementById('reader-attribution').textContent  = SOURCE_LABELS[(n.source || '').toLowerCase()] || n.source || 'PickBook Library';
 
   const key = `${n.id}_${ch}`;
   if (!state.chaptersRead.includes(key)) { state.chaptersRead.push(key); saveState(); checkMilestones(); }
@@ -4404,7 +4669,7 @@ function showToast(msg, extraClass = '') {
 // -------------------------------------------------------
 //  INIT
 // -------------------------------------------------------
-(function init() {
+function initPickBook() {
   window.history.replaceState({ view: 'home' }, '', window.location.pathname + window.location.search);
   window.addEventListener('popstate', e => {
     const target = (e.state && e.state.view) || 'home';
@@ -4441,13 +4706,33 @@ function showToast(msg, extraClass = '') {
       if (e.target === overlay) overlay.classList.remove('active');
     });
   });
+  document.addEventListener('click', e => {
+    const picker = document.getElementById('author-genre-picker');
+    if (picker && !picker.contains(e.target)) picker.classList.remove('open');
+  });
+  renderAuthorGenrePicker();
 
   // FIX 3: Show taste picker on first visit (with slight delay for smooth UX)
   if (!state.tastePicked) {
     setTimeout(showTastePicker, 900);
   }
   loadBooks();
-})();
+}
+
+try {
+  initPickBook();
+} catch (err) {
+  console.error('[PickBook] Startup failed:', err);
+  setCatalogueLoading(false);
+  const errDiv = document.getElementById('home-error');
+  if (errDiv) {
+    errDiv.style.display = 'block';
+    errDiv.innerHTML = `<div class="load-error">
+      <p><strong>PickBook could not finish loading.</strong><br>${escapeHtml(err.message || 'Please refresh and try again.')}</p>
+      <button class="retry-btn" onclick="window.location.reload()">Refresh</button>
+    </div>`;
+  }
+}
 </script>
 </body>
 </html>
