@@ -232,7 +232,6 @@ Still needed:
 - Rename or conceptually wrap current `books` table as Managed Catalog
 - Add metadata quality/status fields
 - Add source/license tracking
-- Add safer ingest audit trail
 
 ### Stories Platform
 

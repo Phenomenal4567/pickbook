@@ -2,9 +2,9 @@ import json
 from datetime import date, datetime, timedelta, timezone
 
 import bleach
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from pydantic import BaseModel
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from sqlalchemy.exc import IntegrityError
 from starlette.requests import Request
 
@@ -102,6 +102,63 @@ def _chapter_list(book: Book) -> list[dict]:
         return []
 
     return chapters if isinstance(chapters, list) else []
+
+
+def _published_author_book_query(db):
+    return (
+        db.query(Book, Story, Profile)
+        .join(Story, Story.published_version_id == Book.id)
+        .outerjoin(Profile, Story.author_id == Profile.id)
+        .filter(
+            Story.status == "published",
+            Story.author_id.isnot(None),
+            Story.published_version_id.isnot(None),
+        )
+    )
+
+
+def _author_book_or_404(db, book_id: int) -> Book:
+    row = (
+        _published_author_book_query(db)
+        .filter(Book.id == book_id)
+        .first()
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="Book not found.")
+    book, _story, _profile = row
+    return book
+
+
+def _book_public_row(book: Book, story: Story, profile: Profile | None) -> dict:
+    chapters = _chapter_list(book)
+    original_status = story.original_status or book.original_status or "standard"
+    author_name = (
+        profile.username
+        if profile and profile.username
+        else book.author
+        or "PickBook Author"
+    )
+    return {
+        "id": book.id,
+        "title": book.title,
+        "author": author_name,
+        "author_id": story.author_id,
+        "genre": book.genre or story.genre or "Original",
+        "original_status": original_status,
+        "is_pickbook_original": original_status == "pickbook_original",
+        "cover": book.cover or story.cover,
+        "synopsis": book.synopsis or story.synopsis,
+        "chapters": book.chapters_count or len(chapters) or 1,
+        "cached_chapters": len([chapter for chapter in chapters if isinstance(chapter, dict) and chapter.get("html")]),
+        "has_content": bool(chapters),
+        "created_at": story.published_at or book.created_at,
+        "source": "pickbook-author",
+        "license": "Author submitted",
+        "subjects": [
+            *(["PickBook Original"] if original_status == "pickbook_original" else []),
+            book.genre or story.genre or "Original",
+        ],
+    }
 
 
 def _bounded_percent(value: int | None) -> int:
@@ -268,6 +325,21 @@ def _post_author_earning(
     )
 
 
+def _optional_profile_from_headers(
+    authorization: str | None,
+    x_user_id: str | None,
+    db,
+) -> Profile | None:
+    profile_id = None
+    if authorization and authorization.lower().startswith("bearer "):
+        profile_id = profile_id_from_token(authorization.split(" ", 1)[1].strip())
+    if not profile_id:
+        profile_id = x_user_id
+    if not profile_id:
+        return None
+    return db.query(Profile).filter(Profile.id == profile_id).first()
+
+
 @router.get("/announcements")
 def active_announcements(
     limit: int = 20,
@@ -300,6 +372,85 @@ def active_announcements(
         "limit": limit,
         "offset": offset,
         "has_more": len(rows) == limit,
+    }
+
+
+@router.get("/books")
+def list_author_books(
+    limit: int = Query(5000, ge=1, le=5000),
+    q: str | None = Query(None),
+    genre: str | None = Query(None),
+    db=Depends(get_db),
+):
+    query = _published_author_book_query(db)
+    if q:
+        term = f"%{q.strip()}%"
+        query = query.filter(
+            or_(
+                Book.title.ilike(term),
+                Book.author.ilike(term),
+                Book.genre.ilike(term),
+                Book.synopsis.ilike(term),
+                Story.title.ilike(term),
+                Story.synopsis.ilike(term),
+            )
+        )
+    if genre:
+        genre_term = genre.strip()
+        if genre_term.lower().replace(" ", "_").replace("-", "_") in {"pickbook_original", "pickbook_originals"}:
+            query = query.filter(Story.original_status == "pickbook_original")
+        else:
+            query = query.filter(
+                or_(
+                    Book.genre.ilike(genre_term),
+                    Story.genre.ilike(genre_term),
+                )
+            )
+
+    rows = (
+        query.order_by(Story.published_at.desc(), Story.id.desc())
+        .limit(limit)
+        .all()
+    )
+    return [_book_public_row(book, story, profile) for book, story, profile in rows]
+
+
+@router.get("/books/{book_id}/chapters/{chapter_number}")
+def get_author_book_chapter(
+    book_id: int,
+    chapter_number: int,
+    authorization: str | None = Header(None),
+    x_user_id: str | None = Header(None),
+    db=Depends(get_db),
+):
+    book = _author_book_or_404(db, book_id)
+    profile = _optional_profile_from_headers(authorization, x_user_id, db)
+    chapters = _chapter_list(book)
+    if chapter_number < 1:
+        raise HTTPException(status_code=404, detail="Chapter not found.")
+    if chapter_number > 9 and (not profile or profile.current_plan != "standard"):
+        raise HTTPException(
+            status_code=402,
+            detail="Chapter 10 and beyond require Standard access.",
+        )
+    if chapter_number > len(chapters):
+        return {
+            "book_id": book_id,
+            "chapter": chapter_number,
+            "available": False,
+            "html": "",
+            "title": f"Chapter {chapter_number}",
+        }
+    chapter = chapters[chapter_number - 1]
+    if not isinstance(chapter, dict):
+        chapter = {}
+    html = chapter.get("html") or ""
+    return {
+        "book_id": book_id,
+        "chapter": chapter_number,
+        "available": bool(html),
+        "html": html,
+        "title": chapter.get("title") or f"Chapter {chapter_number}",
     }
 
 
@@ -362,9 +513,7 @@ def download_novel(
     profile: Profile = Depends(require_standard_profile),
     db=Depends(get_db),
 ):
-    book = db.query(Book).filter(Book.id == book_id).first()
-    if not book:
-        raise HTTPException(status_code=404, detail="Book not found.")
+    book = _author_book_or_404(db, book_id)
 
     chapters = _chapter_list(book)
     if not chapters:
@@ -396,7 +545,7 @@ def download_novel(
             "title": book.title,
             "author": book.author,
             "genre": book.genre,
-            "source": book.source,
+            "source": "pickbook-author",
             "cover": book.cover,
             "synopsis": book.synopsis,
             "download": book.download,
@@ -409,9 +558,7 @@ def download_novel(
 
 @router.get("/novels/{book_id}/engagement")
 def get_book_engagement(book_id: int, db=Depends(get_db)):
-    book = db.query(Book).filter(Book.id == book_id).first()
-    if not book:
-        raise HTTPException(status_code=404, detail="Book not found.")
+    _author_book_or_404(db, book_id)
     return _engagement_summary(db, book_id)
 
 
@@ -421,9 +568,7 @@ def get_own_book_engagement(
     profile: Profile = Depends(get_current_profile),
     db=Depends(get_db),
 ):
-    book = db.query(Book).filter(Book.id == book_id).first()
-    if not book:
-        raise HTTPException(status_code=404, detail="Book not found.")
+    _author_book_or_404(db, book_id)
     return _engagement_summary(db, book_id, profile)
 
 
@@ -436,9 +581,7 @@ def save_book_engagement(
     profile: Profile = Depends(get_current_profile),
     db=Depends(get_db),
 ):
-    book = db.query(Book).filter(Book.id == book_id).first()
-    if not book:
-        raise HTTPException(status_code=404, detail="Book not found.")
+    _author_book_or_404(db, book_id)
     if payload.rating is not None and payload.rating not in {1, 2, 3, 4, 5}:
         raise HTTPException(status_code=400, detail="Rating must be 1 to 5.")
 
@@ -474,6 +617,7 @@ def edit_book_comment(
     profile: Profile = Depends(get_current_profile),
     db=Depends(get_db),
 ):
+    _author_book_or_404(db, book_id)
     engagement = db.query(ReaderEngagement).filter(
         ReaderEngagement.user_id == profile.id,
         ReaderEngagement.book_id == book_id,
@@ -497,6 +641,7 @@ def delete_book_comment(
     profile: Profile = Depends(get_current_profile),
     db=Depends(get_db),
 ):
+    _author_book_or_404(db, book_id)
     engagement = db.query(ReaderEngagement).filter(
         ReaderEngagement.user_id == profile.id,
         ReaderEngagement.book_id == book_id,
@@ -525,6 +670,8 @@ def report_comment(
     engagement = db.query(ReaderEngagement).filter(ReaderEngagement.id == engagement_id).first()
     if not engagement or not engagement.comment:
         raise HTTPException(status_code=404, detail="Comment not found.")
+    if engagement.book_id:
+        _author_book_or_404(db, engagement.book_id)
     if engagement.user_id == profile.id:
         raise HTTPException(status_code=400, detail="You cannot report your own comment.")
     engagement.report_count = int(engagement.report_count or 0) + 1

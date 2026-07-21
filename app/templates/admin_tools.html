@@ -60,11 +60,25 @@
   textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
   input:focus, select:focus, textarea:focus { outline: 2px solid rgba(212,168,83,0.25); border-color: var(--accent); }
   button, a, input, select { min-height: 48px; }
-  button { border: 0; border-radius: 8px; background: var(--accent); color: #160f08; font-weight: 700; padding: 10px 14px; cursor: pointer; }
+  button {
+    border: 0;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #160f08;
+    font-weight: 700;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease, background-color 0.16s ease, filter 0.16s ease;
+  }
   button.secondary { background: var(--panel2); border: 1px solid var(--border); color: var(--text); }
-  button.danger { background: var(--danger); color: #fff; }
-  button:hover { filter: brightness(1.05); }
-  button:disabled { opacity: 0.55; cursor: not-allowed; }
+  button.danger { background: var(--danger); color: #fff; box-shadow: 0 0 0 rgba(215,95,95,0); }
+  button:hover { filter: brightness(1.07); transform: translateY(-1px); box-shadow: 0 8px 18px rgba(0,0,0,0.22); }
+  button.secondary:hover { border-color: var(--accent); background: rgba(212,168,83,0.12); }
+  button.danger:hover { background: #ef6f6f; box-shadow: 0 8px 20px rgba(215,95,95,0.24); }
+  button.danger.confirming { background: #ff7a45; color: #1a0e07; box-shadow: 0 0 0 3px rgba(255,122,69,0.18); }
+  button.danger.confirming:hover { background: #ff8f5f; box-shadow: 0 8px 22px rgba(255,122,69,0.28); }
+  button:active { transform: translateY(0); box-shadow: none; }
+  button:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
   .actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
   .status { min-height: 22px; margin: 14px 0 0; color: var(--muted); font-size: 14px; }
   .status.ok { color: var(--success); }
@@ -124,7 +138,7 @@
   <header>
     <div>
       <h1 class="admin-shell-title">PickBook Admin Tools</h1>
-      <p>Review submissions, moderate readers, manage payouts, coupons, ingest, and storage from one focused console.</p>
+      <p>Review author submissions, moderate readers, manage payouts, coupons, and announcements from one focused console.</p>
     </div>
     <a class="back-link" href="/">Back to app</a>
   </header>
@@ -137,7 +151,6 @@
       <button class="secondary" onclick="saveToken()">Save Token</button>
       <button class="secondary" onclick="validateAdminToken()">Test Token</button>
       <button onclick="loadCoupons()">Load Coupons</button>
-      <button class="secondary" onclick="loadSourceSummary()">Load Sources</button>
     </div>
     <div class="status" id="admin-token-status"></div>
   </section>
@@ -145,12 +158,11 @@
   <div class="admin-toolbar">
     <button type="button" onclick="expandAdminSections()">Expand All</button>
     <button type="button" onclick="collapseAdminSections()">Collapse All</button>
-    <button type="button" onclick="focusAdminSection('Author Review Queue')">Review Queue</button>
+    <button type="button" onclick="focusAdminSection('Author Review Queue', { loadStories: true })">Review Queue</button>
     <button type="button" onclick="focusAdminSection('Author Applications')">Applications</button>
     <button type="button" onclick="focusAdminSection('Premium Analytics')">Premium</button>
     <button type="button" onclick="focusAdminSection('Announcements')">Announcements</button>
     <button type="button" onclick="focusAdminSection('Author Withdrawals')">Withdrawals</button>
-    <button type="button" onclick="focusAdminSection('Source Ingest')">Ingest</button>
   </div>
 
   <div class="grid">
@@ -196,16 +208,6 @@
     <section>
       <h2>Coupons</h2>
       <div id="coupon-list" class="empty">Enter token, then load coupons.</div>
-    </section>
-
-    <section class="full-span">
-      <h2>Story Source Summary</h2>
-      <p style="margin-bottom:12px">Story counts by source, grouped by full, partial, or incomplete chapter ingest.</p>
-      <div class="actions">
-        <button onclick="loadSourceSummary()">Refresh Source Summary</button>
-      </div>
-      <div class="status" id="source-summary-status"></div>
-      <div id="source-summary-results" class="empty">Enter token, then load source summary.</div>
     </section>
 
     <section class="full-span">
@@ -306,6 +308,7 @@
         <button onclick="saveAnnouncement()">Save Announcement</button>
         <button class="secondary" onclick="resetAnnouncementForm()">New</button>
         <button class="secondary" onclick="loadAnnouncements()">Load Announcements</button>
+        <button class="danger" id="delete-all-announcements-btn" type="button">Delete All</button>
       </div>
       <div class="status" id="announcement-status"></div>
       <div id="announcement-list" class="empty">Enter token, then load announcements.</div>
@@ -360,7 +363,7 @@
       <h2>Author Review Queue</h2>
       <p style="margin-bottom:12px">Approve stories into the reader catalog or reject them with feedback authors can see.</p>
       <label>Story status filter
-        <select id="story-status-filter">
+        <select id="story-status-filter" onchange="loadPendingStories()">
           <option value="pending_review">Pending review</option>
           <option value="rejected">Rejected</option>
           <option value="published">Published</option>
@@ -404,131 +407,6 @@
       <div id="withdrawal-list" class="empty">Enter token, then load withdrawals.</div>
     </section>
 
-    <section class="full-span">
-      <h2>Storage Trim</h2>
-      <p style="margin-bottom:12px">Remove the largest stored rows from all sources or one selected source so the database keeps the target percentage of its current stored weight.</p>
-      <div class="split-grid">
-        <label>Source scope
-          <select id="trim-source">
-            <option value="all">All Sources</option>
-            <option value="anystories">Anystories</option>
-            <option value="lightnovelworld">LightNovelWorld</option>
-            <option value="freewebnovel">FreeWebNovel</option>
-            <option value="royalroad">Royal Road</option>
-          </select>
-        </label>
-        <label>Target remaining %
-          <input id="trim-target-percent" type="number" min="1" max="99" value="65">
-        </label>
-        <label>Mode
-          <select id="trim-dry-run">
-            <option value="true">Preview only</option>
-            <option value="false">Delete selected rows</option>
-          </select>
-        </label>
-      </div>
-      <div class="actions">
-        <button onclick="trimSources()">Run Storage Trim</button>
-      </div>
-      <div class="status" id="storage-status"></div>
-      <div id="storage-results" class="empty">Preview first, then run delete if the numbers look right.</div>
-    </section>
-
-    <section class="full-span">
-      <h2>Recovery Seed</h2>
-      <p style="margin-bottom:12px">Load the compact book seed after a fresh database reset. It restores metadata only, without cached chapter text.</p>
-      <div class="actions">
-        <button onclick="seedCompactBooks()">Seed Compact Books</button>
-      </div>
-      <div class="status" id="seed-status"></div>
-      <div id="seed-results" class="empty">Use this once after Railway recreates empty tables.</div>
-    </section>
-
-    <section>
-      <h2>Source Ingest</h2>
-      <p style="margin-bottom:12px">Run every active source together, or target one source for a smaller check.</p>
-      <label>Source
-        <select id="ingest-source">
-          <option value="all">All Active Sources</option>
-          <option value="webnovels">All Web Novel Sources</option>
-          <option value="lightnovelworld">LightNovelWorld</option>
-          <option value="freewebnovel">FreeWebNovel</option>
-          <option value="royalroad">Royal Road</option>
-
-        </select>
-      </label>
-      <label>Pages
-        <input id="ingest-pages" type="number" min="1" max="10" value="1">
-      </label>
-      <label>Preview chapters per book
-        <input id="ingest-chapters" type="number" min="0" max="500" value="0">
-      </label>
-      <label>Max stories per source page
-        <input id="ingest-max-books" type="number" min="1" max="500" value="10">
-      </label>
-      <div class="actions">
-        <button id="ingest-start-btn" onclick="runSourceIngest()">Run Ingest</button>
-        <button id="ingest-stop-btn" class="danger" onclick="stopSourceIngest()" disabled>Stop</button>
-      </div>
-      <div class="status" id="ingest-status"></div>
-      <div id="ingest-results" class="empty">Run an ingest to see saved book IDs.</div>
-    </section>
-
-    <section>
-      <h2>Chapter Backfill</h2>
-      <label>Source
-        <select id="backfill-source">
-          <option value="all">All Active Sources</option>
-          <option value="webnovels">All Web Novel Sources</option>
-          <option value="lightnovelworld">LightNovelWorld</option>
-          <option value="freewebnovel">FreeWebNovel</option>
-          <option value="royalroad">Royal Road</option>
-        </select>
-      </label>
-      <label>Books to process
-        <input id="backfill-limit" type="number" min="1" max="500" value="2">
-      </label>
-      <label>Max chapters per book
-        <input id="backfill-max-chapters" type="number" min="1" max="500" value="5">
-      </label>
-      <label>Exact story ID
-        <input id="backfill-book-id" type="number" min="1" placeholder="Optional book ID">
-      </label>
-      <label>Exact story title
-        <input id="backfill-title" type="text" placeholder="Optional title search">
-      </label>
-      <label style="display:flex;gap:8px;align-items:center;color:var(--muted)">
-        <input id="backfill-force" type="checkbox" style="width:auto">
-        Refill existing cached chapters
-      </label>
-      <div class="actions">
-        <button id="backfill-start-btn" onclick="backfillChapters()">Backfill Chapters</button>
-        <button id="backfill-stop-btn" class="danger" onclick="stopBackfill()" disabled>Stop</button>
-      </div>
-      <div class="status" id="backfill-status"></div>
-      <div id="backfill-results" class="empty">Run a backfill to see results.</div>
-    </section>
-
-    <section>
-      <h2>Ingest Chapters for Story</h2>
-      <p style="margin-bottom:12px">Fetch and cache all available chapters for a single story by ID. Use this to fully populate a specific book or top-up partially-cached chapters.</p>
-      <label>Story ID
-        <input id="single-book-id" type="number" min="1" placeholder="Book ID (required)">
-      </label>
-      <label>Max chapters
-        <input id="single-max-chapters" type="number" min="1" max="500" placeholder="Leave blank for server default">
-      </label>
-      <label style="display:flex;gap:8px;align-items:center;color:var(--muted)">
-        <input id="single-force" type="checkbox" style="width:auto">
-        Refill existing cached chapters
-      </label>
-      <div class="actions">
-        <button id="single-start-btn" onclick="runSingleBookIngest()">Ingest Chapters</button>
-        <button id="single-stop-btn" class="danger" onclick="stopSingleBookIngest()" disabled>Stop</button>
-      </div>
-      <div class="status" id="single-status"></div>
-      <div id="single-results" class="empty">Enter a story ID and click Ingest Chapters.</div>
-    </section>
   </div>
 </main>
 
@@ -559,6 +437,12 @@
     };
   }
 
+  const announcementRowsById = new Map();
+  let pendingAnnouncementDeleteId = null;
+  let pendingAnnouncementDeleteTimer = null;
+  let pendingDeleteAllAnnouncements = false;
+  let pendingDeleteAllAnnouncementsTimer = null;
+
   async function validateAdminToken() {
     if (!token()) {
       setStatus('admin-token-status', 'Paste the exact ADMIN_TOKEN value first.', false);
@@ -568,14 +452,18 @@
       const res = await fetch('/admin/dashboard', { headers: headers() });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
+        const authError = res.status === 401 || res.status === 403;
+        const fallback = authError ? 'admin access denied' : 'admin backend error';
+        const label = authError ? 'Token rejected' : 'Admin backend error';
         setStatus(
           'admin-token-status',
-          `Token rejected (${res.status}): ${data.detail || 'admin access denied'}`,
+          `${label} (${res.status}): ${data.detail || fallback}`,
           false
         );
         return false;
       }
       setStatus('admin-token-status', 'Admin token accepted. Protected admin actions are available.', true);
+      await loadDashboard({ includeStories: true });
       return true;
     } catch (err) {
       setStatus('admin-token-status', `Could not reach admin backend: ${err.message || err}`, false);
@@ -629,13 +517,14 @@
     });
   }
 
-  function focusAdminSection(title) {
+  function focusAdminSection(title, options = {}) {
     const section = [...document.querySelectorAll('.grid > section')]
       .find(item => item.dataset.sectionTitle === title);
     if (!section) return;
     section.classList.remove('collapsed');
     localStorage.setItem(adminSectionKey(title), 'open');
     section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (options.loadStories && token()) loadPendingStories();
   }
 
   function resetForm(clearStatus = true) {
@@ -802,51 +691,7 @@
     `;
   }
 
-  async function loadSourceSummary() {
-    if (!token()) {
-      document.getElementById('source-summary-results').innerHTML = '<div class="empty">Admin token is required.</div>';
-      return;
-    }
-
-    setStatus('source-summary-status', 'Loading source summary...', true);
-    const res = await fetch('/admin/books/source-summary', { headers: headers() });
-    const data = await res.json().catch(() => []);
-
-    if (!res.ok) {
-      setStatus('source-summary-status', data.detail || 'Could not load source summary.', false);
-      return;
-    }
-
-    setStatus('source-summary-status', 'Source summary loaded.', true);
-    document.getElementById('source-summary-results').innerHTML = data.length ? `
-      <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Source</th>
-            <th>Total Stories</th>
-            <th>Full Ingest</th>
-            <th>Partial Ingest</th>
-            <th>Incomplete</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${data.map(row => `
-            <tr>
-              <td><strong>${escapeHtml(row.source)}</strong></td>
-              <td>${row.total}</td>
-              <td>${row.full}</td>
-              <td>${row.partial}</td>
-              <td>${row.incomplete}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-      </div>
-    ` : '<div class="empty">No stories found.</div>';
-  }
-
-  async function loadDashboard() {
+  async function loadDashboard(options = {}) {
     if (!token()) {
       setStatus('review-status', 'Admin token is required.', false);
       return;
@@ -866,6 +711,7 @@
       <div class="metric"><div class="metric-label">Pending authors</div><div class="metric-value">${data.pending_authors || 0}</div></div>
       <div class="metric"><div class="metric-label">Active announcements</div><div class="metric-value">${data.active_announcements || 0}</div></div>
     `;
+    if (options.includeStories !== false) await loadPendingStories();
   }
 
   function localDateTimeValue(value) {
@@ -955,9 +801,47 @@
     focusAdminSection('Announcements');
   }
 
-  async function deleteAnnouncement(id) {
-    if (!token()) return;
-    if (!window.confirm('Delete this announcement?')) return;
+  function resetAnnouncementDeletePrompt() {
+    pendingAnnouncementDeleteId = null;
+    window.clearTimeout(pendingAnnouncementDeleteTimer);
+    document.querySelectorAll('[data-announcement-action="delete"]').forEach(button => {
+      button.textContent = 'Delete';
+      button.classList.remove('confirming');
+    });
+  }
+
+  function resetDeleteAllAnnouncementsPrompt() {
+    pendingDeleteAllAnnouncements = false;
+    window.clearTimeout(pendingDeleteAllAnnouncementsTimer);
+    const button = document.getElementById('delete-all-announcements-btn');
+    if (button) {
+      button.textContent = 'Delete All';
+      button.classList.remove('confirming');
+    }
+  }
+
+  async function deleteAnnouncement(id, button = null) {
+    if (!token()) {
+      setStatus('announcement-status', 'Admin token is required.', false);
+      return;
+    }
+    if (!id) {
+      setStatus('announcement-status', 'Announcement ID is missing.', false);
+      return;
+    }
+    if (pendingAnnouncementDeleteId !== String(id)) {
+      resetAnnouncementDeletePrompt();
+      pendingAnnouncementDeleteId = String(id);
+      if (button) {
+        button.textContent = 'Confirm Delete';
+        button.classList.add('confirming');
+      }
+      setStatus('announcement-status', 'Click Confirm Delete to remove this announcement.', false);
+      pendingAnnouncementDeleteTimer = window.setTimeout(resetAnnouncementDeletePrompt, 6000);
+      return;
+    }
+    resetAnnouncementDeletePrompt();
+    setStatus('announcement-status', 'Deleting announcement...', true);
     const res = await fetch(`/admin/announcements/${id}`, {
       method: 'DELETE',
       headers: headers()
@@ -968,6 +852,44 @@
       return;
     }
     setStatus('announcement-status', 'Announcement deleted.', true);
+    if (String(document.getElementById('announcement-id')?.value || '') === String(id)) {
+      resetAnnouncementForm();
+    }
+    loadDashboard();
+    loadAnnouncements();
+  }
+
+  async function deleteAllAnnouncements() {
+    if (!token()) {
+      setStatus('announcement-status', 'Admin token is required.', false);
+      return;
+    }
+    const button = document.getElementById('delete-all-announcements-btn');
+    if (!pendingDeleteAllAnnouncements) {
+      resetDeleteAllAnnouncementsPrompt();
+      pendingDeleteAllAnnouncements = true;
+      if (button) {
+        button.textContent = 'Confirm Delete All';
+        button.classList.add('confirming');
+      }
+      setStatus('announcement-status', 'Click Confirm Delete All to remove every announcement.', false);
+      pendingDeleteAllAnnouncementsTimer = window.setTimeout(resetDeleteAllAnnouncementsPrompt, 6000);
+      return;
+    }
+    resetDeleteAllAnnouncementsPrompt();
+    setStatus('announcement-status', 'Deleting all announcements...', true);
+    const res = await fetch('/admin/announcements', {
+      method: 'DELETE',
+      headers: headers()
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setStatus('announcement-status', data.detail || 'Could not delete announcements.', false);
+      return;
+    }
+    resetAnnouncementForm();
+    setStatus('announcement-status', `${data.deleted || 0} announcement(s) deleted.`, true);
+    loadDashboard();
     loadAnnouncements();
   }
 
@@ -983,6 +905,8 @@
       document.getElementById('announcement-list').innerHTML = `<div class="empty">${escapeHtml(data.detail || 'Could not load announcements.')}</div>`;
       return;
     }
+    announcementRowsById.clear();
+    data.forEach(row => announcementRowsById.set(String(row.id), row));
     document.getElementById('announcement-list').innerHTML = data.length ? `
       <div class="table-wrap"><table>
         <thead><tr><th>Announcement</th><th>Priority</th><th>Schedule</th><th>Audience</th><th>Actions</th></tr></thead>
@@ -1003,14 +927,34 @@
             </td>
             <td>${escapeHtml(row.audience || 'all')}</td>
             <td style="display:flex;gap:6px;flex-wrap:wrap">
-              <button class="secondary" onclick='editAnnouncement(${JSON.stringify(row).replace(/'/g, '&#39;')})'>Edit</button>
-              <button class="danger" onclick="deleteAnnouncement(${row.id})">Delete</button>
+              <button class="secondary" type="button" data-announcement-action="edit" data-announcement-id="${escapeAttr(row.id)}">Edit</button>
+              <button class="danger" type="button" data-announcement-action="delete" data-announcement-id="${escapeAttr(row.id)}">Delete</button>
             </td>
           </tr>
         `).join('')}</tbody>
       </table></div>
     ` : '<div class="empty">No announcements found.</div>';
   }
+
+  document.getElementById('delete-all-announcements-btn')?.addEventListener('click', deleteAllAnnouncements);
+
+  document.getElementById('announcement-list')?.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-announcement-action]');
+    if (!button) return;
+
+    const id = button.dataset.announcementId;
+    if (button.dataset.announcementAction === 'delete') {
+      deleteAnnouncement(id, button);
+      return;
+    }
+
+    const row = announcementRowsById.get(String(id));
+    if (!row) {
+      setStatus('announcement-status', 'Reload announcements, then try editing again.', false);
+      return;
+    }
+    editAnnouncement(row);
+  });
 
   async function loadAuthorApplications() {
     if (!token()) {
@@ -1146,7 +1090,9 @@
           <tr>
             <td>
               ${row.cover ? `<img src="${escapeHtml(row.cover)}" alt="" style="width:54px;aspect-ratio:2/3;object-fit:cover;border-radius:6px;border:1px solid var(--border);float:left;margin:0 10px 8px 0">` : ''}
-              <strong>${escapeHtml(row.title)}</strong><br>${escapeHtml(row.synopsis || '')}
+              <strong>${escapeHtml(row.title)}</strong><br>
+              <span class="note">${escapeHtml(storyOriginalLabel(row.original_status))}</span><br>
+              ${escapeHtml(row.synopsis || '')}
               ${row.cover ? `<div style="clear:both;margin-top:8px"><a class="back-link" style="display:inline-block;padding:4px 8px;border-radius:6px" href="${escapeHtml(row.cover)}" target="_blank" rel="noopener">Open cover</a></div>` : ''}
               <details style="margin-top:8px"><summary>Preview manuscript</summary><div class="note">${escapeHtml(row.preview || 'No manuscript preview stored for this submission.')}</div></details>
             </td>
@@ -1155,6 +1101,7 @@
             <td><input id="story-feedback-${row.story_id}" type="text" placeholder="Approval note or rejection reason"></td>
             <td style="display:flex;gap:6px;flex-wrap:wrap">
               <button onclick="approveStory(${row.story_id})">Approve</button>
+              <button class="secondary" onclick="overrideStoryOriginalStatus(${row.story_id}, '${escapeHtml(row.original_status || 'standard')}')">Original Status</button>
               <button class="danger" onclick="rejectStory(${row.story_id})">Reject</button>
               <button class="secondary" onclick="loadStoryAudit(${row.story_id})">Audit</button>
             </td>
@@ -1163,6 +1110,12 @@
       </table></div>
       <div id="story-audit-results" class="empty">Select Audit on a story to view review history.</div>
     `;
+  }
+
+  function storyOriginalLabel(value) {
+    return String(value || 'standard').toLowerCase().replaceAll('-', '_') === 'pickbook_original'
+      ? 'PickBook Original'
+      : 'Standard';
   }
 
   async function loadStoryAudit(storyId) {
@@ -1215,6 +1168,22 @@
     const data = await res.json().catch(() => ({}));
     setStatus('review-status', res.ok ? `Story ${storyId} rejected.` : (data.detail || 'Could not reject story.'), res.ok);
     if (res.ok) { loadPendingStories(); loadDashboard(); }
+  }
+
+  async function overrideStoryOriginalStatus(storyId, currentStatus) {
+    const next = String(currentStatus || 'standard').toLowerCase().replaceAll('-', '_') === 'pickbook_original'
+      ? 'standard'
+      : 'pickbook_original';
+    const label = storyOriginalLabel(next);
+    if (!confirm(`Set this story to ${label}?`)) return;
+    const res = await fetch(`/admin/stories/${storyId}/original-status`, {
+      method: 'PUT',
+      headers: headers(),
+      body: JSON.stringify({ original_status: next })
+    });
+    const data = await res.json().catch(() => ({}));
+    setStatus('review-status', res.ok ? `Story ${storyId} set to ${label}.` : (data.detail || 'Could not update original status.'), res.ok);
+    if (res.ok) loadPendingStories();
   }
 
   async function loadPendingComments() {
@@ -1350,296 +1319,6 @@
     setStatus('withdrawal-status', 'Receipt ID copied.', true);
   }
 
-  async function trimSources() {
-    if (!token()) {
-      setStatus('storage-status', 'Admin token is required.', false);
-      return;
-    }
-
-    const dryRun = document.getElementById('trim-dry-run').value === 'true';
-    const source = document.getElementById('trim-source').value || 'all';
-    if (!dryRun && !window.confirm(`Delete selected ${source === 'all' ? 'all-source' : source} rows now? Preview first if you are unsure.`)) {
-      return;
-    }
-
-    const params = new URLSearchParams({
-      source,
-      target_remaining_percent: document.getElementById('trim-target-percent').value || '65',
-      dry_run: String(dryRun)
-    });
-
-    setStatus('storage-status', dryRun ? 'Previewing storage trim...' : 'Deleting selected rows...', true);
-    const res = await fetch(`/admin/storage/trim-sources?${params.toString()}`, {
-      method: 'POST',
-      headers: headers()
-    });
-    const data = await res.json().catch(() => ({}));
-
-    if (!res.ok) {
-      setStatus('storage-status', data.detail || 'Storage trim failed.', false);
-      return;
-    }
-
-    const removed = dryRun ? data.approx_bytes_that_would_be_removed : data.approx_bytes_removed;
-    setStatus('storage-status', dryRun ? 'Preview complete.' : 'Storage trim complete.', true);
-    document.getElementById('storage-results').innerHTML = `
-      <div class="metric-grid">
-        <div class="metric"><div class="metric-label">Matched rows</div><div class="metric-value">${data.matched}</div></div>
-        <div class="metric"><div class="metric-label">${dryRun ? 'Rows to delete' : 'Rows deleted'}</div><div class="metric-value">${data.selected}</div></div>
-        <div class="metric"><div class="metric-label">Target remaining</div><div class="metric-value">${data.target_remaining_percent}%</div></div>
-        <div class="metric"><div class="metric-label">Approx removed</div><div class="metric-value">${bytes(removed)}</div></div>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Source</th><th>Matched</th><th>${dryRun ? 'To delete' : 'Deleted'}</th></tr></thead>
-          <tbody>
-            ${Object.entries(data.by_source || {}).map(([source, item]) => `
-              <tr><td>${escapeHtml(source)}</td><td>${item.matched}</td><td>${item.selected}</td></tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-      <div class="note">${escapeHtml(data.note || '')}</div>
-    `;
-  }
-
-  async function seedCompactBooks() {
-    if (!token()) {
-      setStatus('seed-status', 'Admin token is required.', false);
-      return;
-    }
-
-    if (!window.confirm('Seed compact book metadata into the current database? Existing downloads will be skipped.')) {
-      return;
-    }
-
-    setStatus('seed-status', 'Seeding compact books...', true);
-    const res = await fetch('/admin/seed/compact-books', {
-      method: 'POST',
-      headers: headers()
-    });
-    const data = await res.json().catch(() => ({}));
-
-    if (!res.ok) {
-      setStatus('seed-status', data.detail || 'Could not seed compact books.', false);
-      return;
-    }
-
-    setStatus('seed-status', 'Compact seed loaded.', true);
-    document.getElementById('seed-results').innerHTML = `
-      <div class="metric-grid">
-        <div class="metric"><div class="metric-label">Inserted</div><div class="metric-value">${data.inserted}</div></div>
-        <div class="metric"><div class="metric-label">Skipped</div><div class="metric-value">${data.skipped}</div></div>
-        <div class="metric"><div class="metric-label">Highest ID</div><div class="metric-value">${data.max_id}</div></div>
-        <div class="metric"><div class="metric-label">Source</div><div class="metric-value">${escapeHtml(data.source)}</div></div>
-      </div>
-    `;
-  }
-
-  async function runSourceIngest() {
-    if (!token()) {
-      setStatus('ingest-status', 'Admin token is required.', false);
-      return;
-    }
-
-    const source = document.getElementById('ingest-source').value;
-    const pages = Number(document.getElementById('ingest-pages').value || 1);
-    const chapters = Number(document.getElementById('ingest-chapters').value || 0);
-    const maxBooks = Number(document.getElementById('ingest-max-books').value || 10);
-    const params = new URLSearchParams();
-
-    if (['all', 'webnovels', 'lightnovelworld', 'freewebnovel', 'royalroad'].includes(source)) {
-      params.set('pages', String(pages));
-      params.set('chapters_per_book', String(chapters));
-      params.set('max_books_per_page', String(maxBooks));
-    } else if (source === 'anystories') {
-      params.set('pages_per_genre', String(pages));
-      params.set('chapters_per_book', String(chapters));
-    }
-
-    document.getElementById('ingest-start-btn').disabled = true;
-    document.getElementById('ingest-stop-btn').disabled = false;
-    setStatus('ingest-status', 'Ingest running. Keep this tab open.', true);
-    document.getElementById('ingest-results').innerHTML = '<div class="empty">Working...</div>';
-
-    let res;
-    let data = {};
-
-    try {
-      res = await fetch(`/ingest/${source}?${params.toString()}`, {
-        headers: headers()
-      });
-      data = await res.json().catch(() => ({}));
-    } finally {
-      document.getElementById('ingest-start-btn').disabled = false;
-      document.getElementById('ingest-stop-btn').disabled = true;
-    }
-
-    if (!res || !res.ok) {
-      setStatus('ingest-status', data.detail || 'Ingest failed.', false);
-      return;
-    }
-
-    const prefix = data.stopped ? 'Stopped.' : 'Finished.';
-    const newCount = Number(data.new_count ?? data.count ?? data.total ?? 0);
-    const savedCount = Number(data.saved ?? 0);
-    const scrapedCount = Number(data.scraped ?? 0);
-    setStatus('ingest-status', `${prefix} ${source} scraped ${scrapedCount}, saved/updated ${savedCount}, added ${newCount} new stories.`, true);
-    renderIngestResults(data);
-  }
-
-  function renderIngestResults(data) {
-    let rows = Array.isArray(data.books) ? data.books : [];
-    let sourceNotes = [];
-    if (!rows.length && data.sources && typeof data.sources === 'object') {
-      rows = Object.entries(data.sources).flatMap(([sourceName, sourceResult]) => {
-        const sourceRows = Array.isArray(sourceResult.books) ? sourceResult.books : [];
-        return sourceRows.map(row => ({ ...row, sourceName }));
-      });
-    }
-    if (data.sources && typeof data.sources === 'object') {
-      sourceNotes = Object.entries(data.sources).map(([sourceName, sourceResult]) => ({
-        sourceName,
-        scraped: Number(sourceResult.scraped || 0),
-        saved: Number(sourceResult.saved || 0),
-        newCount: Number(sourceResult.new_count ?? sourceResult.count ?? 0),
-        note: sourceResult.note || '',
-        errors: Array.isArray(sourceResult.errors) ? sourceResult.errors : []
-      }));
-    } else {
-      sourceNotes = [{
-        sourceName: data.source || '',
-        scraped: Number(data.scraped || 0),
-        saved: Number(data.saved || 0),
-        newCount: Number(data.new_count ?? data.count ?? 0),
-        note: data.note || '',
-        errors: Array.isArray(data.errors) ? data.errors : []
-      }];
-    }
-
-    const notesHtml = sourceNotes.length ? `
-      <div class="table-wrap">
-      <table>
-        <thead><tr><th>Source</th><th>Scraped</th><th>Saved/Updated</th><th>New</th><th>Note / Error</th></tr></thead>
-        <tbody>
-          ${sourceNotes.map(item => `
-            <tr>
-              <td>${escapeHtml(item.sourceName)}</td>
-              <td>${item.scraped}</td>
-              <td>${item.saved}</td>
-              <td>${item.newCount}</td>
-              <td>${escapeHtml(item.note || item.errors.map(err => `${err.genre || ''} page ${err.page || ''}: ${err.error || ''}`).join('; ') || '')}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-      </div>
-    ` : '';
-
-    const rowsHtml = rows.length ? `
-      <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Book</th>
-              <th>Source</th>
-              <th>Chapters</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${rows.map(row => `
-              <tr>
-                <td><strong>${row.id}</strong></td>
-                <td>${escapeHtml(row.title)}${row.is_new ? ' <span style="color:var(--success)">new</span>' : ''}</td>
-                <td>${escapeHtml(row.sourceName || row.source || '')}</td>
-                <td>${Number(row.cached_chapters || 0)} cached / ${escapeHtml(row.chapters || '?')}</td>
-                <td style="display:flex;gap:6px;flex-wrap:wrap">
-                  <button class="secondary" onclick="useBookIdForBackfill(${row.id})">Backfill ID</button>
-                  <button class="secondary" onclick="ingestBookChapters(${row.id}, ${escapeHtml(JSON.stringify(row.title))})">Ingest Chapters</button>
-                </td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-        </div>
-      ` : '<div class="empty">No saved book IDs were returned. Check the source notes above for blocked pages, changed layouts, or no new stories.</div>';
-
-    document.getElementById('ingest-results').innerHTML = notesHtml + rowsHtml;
-  }
-
-  function useBookIdForBackfill(bookId) {
-    document.getElementById('backfill-book-id').value = bookId;
-    setStatus('backfill-status', `Book ID ${bookId} added to Chapter Backfill.`, true);
-    document.getElementById('backfill-book-id').scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
-
-  async function ingestBookChapters(bookId, bookTitle) {
-    if (!token()) {
-      setStatus('ingest-status', 'Admin token is required.', false);
-      return;
-    }
-    const maxChapters = prompt(`Ingest chapters for:\n"${bookTitle}"\n\nMax chapters to fetch (leave blank for server default):`, '');
-    if (maxChapters === null) return; // cancelled
-    const params = new URLSearchParams({ force: 'false' });
-    if (maxChapters.trim()) params.set('max_chapters', maxChapters.trim());
-    setStatus('ingest-status', `Fetching chapters for book ID ${bookId}… keep this tab open.`, true);
-    document.getElementById('ingest-results').innerHTML = '<div class="empty">Fetching chapters…</div>';
-    let res, data = {};
-    try {
-      res = await fetch(`/ingest/books/${bookId}/ingest-chapters?${params.toString()}`, {
-        method: 'POST',
-        headers: headers()
-      });
-      data = await res.json().catch(() => ({}));
-    } catch (err) {
-      setStatus('ingest-status', 'Request failed: ' + err.message, false);
-      return;
-    }
-    if (!res || !res.ok) {
-      setStatus('ingest-status', data.detail || 'Chapter ingest failed.', false);
-      return;
-    }
-    const after = data.cached_after ?? 0;
-    const fetched = data.fetched ?? 0;
-    const note = data.note ? ` ${data.note}` : '';
-    setStatus('ingest-status', `Done. ${fetched} chapter(s) fetched — ${after} now cached for "${data.title}".${note}`, true);
-    document.getElementById('ingest-results').innerHTML = `
-      <div class="table-wrap"><table>
-        <thead><tr><th>Book</th><th>Target</th><th>Before</th><th>After</th><th>Fetched</th><th>Note</th></tr></thead>
-        <tbody><tr>
-          <td>${escapeHtml(data.title || '')}</td>
-          <td>${data.chapters_targeted ?? '?'}</td>
-          <td>${data.cached_before ?? 0}</td>
-          <td>${after}</td>
-          <td>${fetched}</td>
-          <td>${escapeHtml(data.note || '')}</td>
-        </tr></tbody>
-      </table></div>`;
-  }
-
-  async function stopSourceIngest() {
-    if (!token()) {
-      setStatus('ingest-status', 'Admin token is required.', false);
-      return;
-    }
-
-    const source = document.getElementById('ingest-source').value;
-    const res = await fetch(`/ingest/${source}/stop`, {
-      method: 'POST',
-      headers: headers()
-    });
-    const data = await res.json().catch(() => ({}));
-
-    if (!res.ok) {
-      setStatus('ingest-status', data.detail || 'Could not stop ingest.', false);
-      return;
-    }
-
-    setStatus('ingest-status', 'Stop requested. Current story fetch will finish first.', true);
-  }
-
   async function deleteCoupon(id, code) {
     if (!token()) {
       document.getElementById('coupon-list').innerHTML = '<div class="empty">Admin token is required.</div>';
@@ -1657,232 +1336,6 @@
       return;
     }
     loadCoupons();
-  }
-
-  async function backfillChapters() {
-    if (!token()) {
-      setStatus('backfill-status', 'Admin token is required.', false);
-      return;
-    }
-
-    const limit = Number(document.getElementById('backfill-limit').value || 5);
-    const maxChapters = Number(document.getElementById('backfill-max-chapters').value || 25);
-    const source = document.getElementById('backfill-source').value;
-    const bookId = document.getElementById('backfill-book-id').value.trim();
-    const title = document.getElementById('backfill-title').value.trim();
-    const force = document.getElementById('backfill-force').checked;
-    const params = new URLSearchParams({
-      limit: String(limit),
-      max_chapters: String(maxChapters),
-      force: String(force)
-    });
-    if (bookId) params.set('book_id', bookId);
-    if (title) params.set('title', title);
-    document.getElementById('backfill-start-btn').disabled = true;
-    document.getElementById('backfill-stop-btn').disabled = false;
-    setStatus('backfill-status', 'Backfill running. Keep this tab open.', true);
-    document.getElementById('backfill-results').innerHTML = '<div class="empty">Working...</div>';
-
-    let res;
-    let data = {};
-
-    try {
-      res = await fetch(`/ingest/${source}/full-chapters?${params.toString()}`, {
-        method: 'POST',
-        headers: headers()
-      });
-      data = await res.json().catch(() => ({}));
-    } finally {
-      document.getElementById('backfill-start-btn').disabled = false;
-      document.getElementById('backfill-stop-btn').disabled = true;
-    }
-
-    if (!res || !res.ok) {
-      setStatus('backfill-status', data.detail || 'Backfill failed.', false);
-      return;
-    }
-
-    const prefix = data.stopped ? 'Stopped.' : 'Finished.';
-    const note = data.note ? ` ${data.note}` : '';
-    setStatus('backfill-status', `${prefix} Fetched ${data.chapters_fetched || 0} chapters across ${data.books_checked || 0} books.${note}`, true);
-    let rows = Array.isArray(data.results) ? data.results : [];
-    let sourceNotes = [];
-    if (!rows.length && data.sources && typeof data.sources === 'object') {
-      rows = Object.entries(data.sources).flatMap(([sourceName, sourceResult]) => {
-        const sourceRows = Array.isArray(sourceResult.results) ? sourceResult.results : [];
-        return sourceRows.map(row => ({ ...row, sourceName }));
-      });
-    }
-    if (data.sources && typeof data.sources === 'object') {
-      sourceNotes = Object.entries(data.sources).map(([sourceName, sourceResult]) => ({
-        sourceName,
-        matched: Number(sourceResult.matched_books || 0),
-        checked: Number(sourceResult.books_checked || 0),
-        fetched: Number(sourceResult.chapters_fetched || 0),
-        note: sourceResult.note || ''
-      }));
-    } else {
-      sourceNotes = [{
-        sourceName: data.source || source,
-        matched: Number(data.matched_books || 0),
-        checked: Number(data.books_checked || 0),
-        fetched: Number(data.chapters_fetched || 0),
-        note: data.note || ''
-      }];
-    }
-    const notesHtml = sourceNotes.length ? `
-      <div class="table-wrap">
-      <table>
-        <thead><tr><th>Source</th><th>Matched DB Stories</th><th>Checked</th><th>Fetched</th><th>Note</th></tr></thead>
-        <tbody>
-          ${sourceNotes.map(item => `
-            <tr>
-              <td>${escapeHtml(item.sourceName)}</td>
-              <td>${item.matched}</td>
-              <td>${item.checked}</td>
-              <td>${item.fetched}</td>
-              <td>${escapeHtml(item.note || '')}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-      </div>
-    ` : '';
-    const rowsHtml = rows.length ? `
-      <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Source</th>
-            <th>Book</th>
-            <th>Target</th>
-            <th>Before</th>
-            <th>After</th>
-            <th>Fetched</th>
-            <th>Note</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows.map(row => `
-            <tr>
-              <td>${escapeHtml(row.sourceName || source)}</td>
-              <td>${escapeHtml(row.title)}</td>
-              <td>${row.chapters_targeted}</td>
-              <td>${row.cached_before}</td>
-              <td>${row.cached_after}</td>
-              <td>${row.fetched}</td>
-              <td>${escapeHtml(row.note || '')}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-      </div>
-    ` : `<div class="empty">${escapeHtml(data.note || 'No books were processed.')}</div>`;
-    document.getElementById('backfill-results').innerHTML = notesHtml + rowsHtml;
-  }
-
-  async function stopBackfill() {
-    if (!token()) {
-      setStatus('backfill-status', 'Admin token is required.', false);
-      return;
-    }
-
-    const source = document.getElementById('backfill-source').value;
-    const res = await fetch(`/ingest/${source}/full-chapters/stop`, {
-      method: 'POST',
-      headers: headers()
-    });
-    const data = await res.json().catch(() => ({}));
-
-    if (!res.ok) {
-      setStatus('backfill-status', data.detail || 'Could not stop backfill.', false);
-      return;
-    }
-
-    setStatus('backfill-status', 'Stop requested. Current chapter will finish first.', true);
-    document.getElementById('backfill-stop-btn').disabled = true;
-  }
-
-  let _singleBookId = null;
-
-  async function runSingleBookIngest() {
-    if (!token()) {
-      setStatus('single-status', 'Admin token is required.', false);
-      return;
-    }
-    const bookId = document.getElementById('single-book-id').value.trim();
-    if (!bookId) {
-      setStatus('single-status', 'Please enter a story ID.', false);
-      return;
-    }
-    _singleBookId = bookId;
-    const maxChapters = document.getElementById('single-max-chapters').value.trim();
-    const force = document.getElementById('single-force').checked;
-    const params = new URLSearchParams({ force: String(force) });
-    if (maxChapters) params.set('max_chapters', maxChapters);
-
-    document.getElementById('single-start-btn').disabled = true;
-    document.getElementById('single-stop-btn').disabled = false;
-    setStatus('single-status', `Fetching chapters for book ID ${bookId}… keep this tab open.`, true);
-    document.getElementById('single-results').innerHTML = '<div class="empty">Working…</div>';
-
-    let res, data = {};
-    try {
-      res = await fetch(`/ingest/books/${bookId}/ingest-chapters?${params.toString()}`, {
-        method: 'POST',
-        headers: headers()
-      });
-      data = await res.json().catch(() => ({}));
-    } finally {
-      document.getElementById('single-start-btn').disabled = false;
-      document.getElementById('single-stop-btn').disabled = true;
-      _singleBookId = null;
-    }
-
-    if (!res || !res.ok) {
-      setStatus('single-status', data.detail || 'Ingest failed.', false);
-      return;
-    }
-
-    const prefix = data.stopped ? 'Stopped.' : 'Finished.';
-    const fetched = data.fetched ?? 0;
-    const after = data.cached_after ?? 0;
-    const note = data.note ? ` ${data.note}` : '';
-    setStatus('single-status', `${prefix} ${fetched} chapter(s) fetched — ${after} now cached for "${data.title}".${note}`, true);
-
-    document.getElementById('single-results').innerHTML = `
-      <div class="table-wrap"><table>
-        <thead><tr><th>Book</th><th>Target</th><th>Before</th><th>After</th><th>Fetched</th><th>Short Previews</th><th>Note</th></tr></thead>
-        <tbody><tr>
-          <td>${escapeHtml(data.title || '')}</td>
-          <td>${data.chapters_targeted ?? '?'}</td>
-          <td>${data.cached_before ?? 0}</td>
-          <td>${after}</td>
-          <td>${fetched}</td>
-          <td>${data.short_preview ?? 0}</td>
-          <td>${escapeHtml(data.note || '')}</td>
-        </tr></tbody>
-      </table></div>`;
-  }
-
-  async function stopSingleBookIngest() {
-    if (!token()) {
-      setStatus('single-status', 'Admin token is required.', false);
-      return;
-    }
-    const bookId = _singleBookId || document.getElementById('single-book-id').value.trim();
-    if (!bookId) return;
-    const res = await fetch(`/ingest/books/${bookId}/ingest-chapters/stop`, {
-      method: 'POST',
-      headers: headers()
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      setStatus('single-status', data.detail || 'Could not stop.', false);
-      return;
-    }
-    setStatus('single-status', 'Stop requested. Current chapter will finish first.', true);
-    document.getElementById('single-stop-btn').disabled = true;
   }
 
   function money(value) {

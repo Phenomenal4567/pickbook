@@ -1,5 +1,3 @@
-import os
-
 from pydantic_settings import BaseSettings
 from typing import List
 
@@ -33,14 +31,8 @@ class Settings(BaseSettings):
     supabase_service_role_key: str = ""
     supabase_public_bucket: str = "pickbook-public"
     supabase_private_bucket: str = "pickbook-private"
+    push_api_base_url: str = ""
 
-    # Scraper feature flags
-    use_playwright: bool = False
-    nf_enrich_details: bool = False  # legacy flag — kept for .env compatibility
-    max_chapters_per_book: int = 10
-    max_cached_chapter_bytes: int = 250_000
-    initial_chapters_per_book: int = 0
-    anystories_pages_per_genre: int = 3
 
     @property
     def origins_list(self) -> List[str]:
@@ -57,9 +49,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = False
+        extra = "ignore"
 
 
 settings = Settings()
-import os 
-print("DATABASE_URL from os.environ:")
-print(os.environ.get("DATABASE_URL"))

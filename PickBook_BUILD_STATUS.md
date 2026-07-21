@@ -117,7 +117,7 @@ Last updated: 2026-07-10
 - Ran Python compilation check: `python -m compileall app`.
 - Fixed a homepage loading-loop JavaScript parse error in the Author Studio action buttons.
 - Verified the inline JavaScript for the homepage and Admin Tools with `node --check`.
-- Seeded local SQLite with `books.compact.sql` so localhost has catalogue data to render.
+- Verified the reader catalog through approved author-submitted stories.
 - Opened Admin Tools in the in-app browser.
 - Verified collapsible Admin Tools sections are generated and collapsed by default.
 - Smoke-tested:

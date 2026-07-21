@@ -22,7 +22,7 @@ from app.core.auth import profile_id_from_token
 from app.core.config import settings
 from app.core.database import SessionLocal
 from app.core.limiter import limiter
-from app.models.book import Book, PremiumRead, Profile, Story
+from app.models.book import Book, Profile
 
 router = APIRouter(prefix="/ingest", tags=["Ingestion"])
 
@@ -69,33 +69,6 @@ def _profile_can_read_locked_chapters(profile: Profile | None) -> bool:
         if expiry > datetime.now(timezone.utc):
             return True
     return (profile.streak_count or 0) >= STREAK_UNLOCK_DAYS
-
-
-def _record_premium_read(db, profile: Profile | None, book: Book) -> None:
-    if not profile or profile.current_plan != "standard":
-        return
-    story = db.query(Story).filter(
-        Story.published_version_id == book.id,
-        Story.author_id.isnot(None),
-    ).first()
-    if not story or not story.author_id:
-        return
-    existing = db.query(PremiumRead).filter(
-        PremiumRead.user_id == profile.id,
-        PremiumRead.book_id == book.id,
-    ).first()
-    if existing:
-        return
-    db.add(
-        PremiumRead(
-            user_id=profile.id,
-            book_id=book.id,
-            author_id=story.author_id,
-            story_id=story.id,
-            genre=book.genre or story.genre,
-        )
-    )
-    db.commit()
 
 
 # =========================================================
@@ -2135,6 +2108,7 @@ def get_books(
     q: str = Query(None),
     genre: str = Query(None),
     source: str = Query(None),
+    original_status: str = Query(None),
     limit: int = Query(1000, ge=1, le=5000),
 ):
 
@@ -2157,11 +2131,18 @@ def get_books(
             )
 
         if genre:
-            query = query.filter(
-                Book.genre.ilike(
-                    f"%{genre}%"
+            genre_term = genre.strip()
+            if genre_term.lower().replace(" ", "_").replace("-", "_") in {"pickbook_original", "pickbook_originals"}:
+                query = query.filter(Book.original_status == "pickbook_original")
+            else:
+                query = query.filter(
+                    Book.genre.ilike(
+                        f"%{genre_term}%"
+                    )
                 )
-            )
+
+        if original_status:
+            query = query.filter(Book.original_status == original_status.strip().lower().replace("-", "_"))
 
         if source:
             query = query.filter(
@@ -2169,22 +2150,15 @@ def get_books(
             )
 
         books = query.order_by(Book.created_at.desc(), Book.id.desc()).limit(limit).all()
-        story_author_by_book_id = {
-            row.published_version_id: row.author_id
-            for row in db.query(Story.published_version_id, Story.author_id)
-            .filter(Story.published_version_id.in_([book.id for book in books]))
-            .filter(Story.published_version_id.isnot(None))
-            .all()
-            if row.published_version_id and row.author_id
-        }
 
     return [
         {
             "id": b.id,
             "title": b.title,
             "author": b.author,
-            "author_id": story_author_by_book_id.get(b.id),
             "genre": b.genre,
+            "original_status": getattr(b, "original_status", "standard") or "standard",
+            "is_pickbook_original": (getattr(b, "original_status", "standard") or "standard") == "pickbook_original",
             "cover": _normalize_image_url(
                 b.cover,
                 WEB_NOVEL_SOURCES.get((b.source or "").lower(), {}).get("base_url"),
@@ -2275,7 +2249,6 @@ def get_book_chapter(
             chapter = chapters[index]
 
             if isinstance(chapter, dict) and chapter.get("html"):
-                _record_premium_read(db, profile, book)
                 return {
                     "book_id": book.id,
                     "chapter": chapter_number,
@@ -2298,7 +2271,6 @@ def get_book_chapter(
                 chapter_number,
                 fetched_chapter,
             )
-            _record_premium_read(db, profile, book)
 
             return {
                 "book_id": book.id,

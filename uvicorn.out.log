@@ -1,106 +1,159 @@
-DATABASE_URL from os.environ:
-sqlite:///C:/Users/Phenomenal/Desktop/Pickbook/pickbook_local.db
-INFO:     127.0.0.1:49644 - "GET /health HTTP/1.1" 200 OK
-INFO:     127.0.0.1:49652 - "GET / HTTP/1.1" 200 OK
-INFO:     127.0.0.1:49652 - "GET /ingest/books?limit=5000 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:49757 - "GET /admin/tools HTTP/1.1" 200 OK
-INFO:     127.0.0.1:49782 - "GET /admin/announcements?status=all HTTP/1.1" 200 OK
-INFO:     127.0.0.1:49782 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
-INFO:     127.0.0.1:49784 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
-INFO:     127.0.0.1:49786 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
-INFO:     127.0.0.1:49791 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
-INFO:     127.0.0.1:49792 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
-INFO:     127.0.0.1:49833 - "GET /admin/dashboard HTTP/1.1" 200 OK
-INFO:     127.0.0.1:49833 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
-INFO:     127.0.0.1:49835 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
-INFO:     127.0.0.1:49844 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
-INFO:     127.0.0.1:49847 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
-INFO:     127.0.0.1:49857 - "GET /admin/dashboard HTTP/1.1" 200 OK
-INFO:     127.0.0.1:49857 - "GET /admin/dashboard HTTP/1.1" 200 OK
-INFO:     127.0.0.1:49857 - "GET /admin/dashboard HTTP/1.1" 200 OK
-INFO:     127.0.0.1:49857 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
-INFO:     127.0.0.1:49904 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
-INFO:     127.0.0.1:49906 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
-INFO:     127.0.0.1:50080 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
-INFO:     127.0.0.1:50081 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
-INFO:     127.0.0.1:50082 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
-INFO:     127.0.0.1:50115 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
-INFO:     127.0.0.1:50117 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
-INFO:     127.0.0.1:50118 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
-INFO:     127.0.0.1:50119 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
-INFO:     127.0.0.1:50120 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
-INFO:     127.0.0.1:50129 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
-INFO:     127.0.0.1:50130 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
-INFO:     127.0.0.1:50132 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
-INFO:     127.0.0.1:50171 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
-INFO:     127.0.0.1:50179 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
-INFO:     127.0.0.1:50180 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
-INFO:     127.0.0.1:50182 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
-INFO:     127.0.0.1:50260 - "GET /admin/announcements?status=all HTTP/1.1" 500 Internal Server Error
-INFO:     127.0.0.1:50261 - "GET /admin/announcements?status=all HTTP/1.1" 500 Internal Server Error
-INFO:     127.0.0.1:50263 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
-INFO:     127.0.0.1:50543 - "GET /admin/dashboard HTTP/1.1" 403 Forbidden
-INFO:     127.0.0.1:50543 - "GET /admin/dashboard HTTP/1.1" 403 Forbidden
-INFO:     127.0.0.1:50543 - "GET /admin/dashboard HTTP/1.1" 200 OK
-INFO:     127.0.0.1:50543 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
-INFO:     127.0.0.1:50555 - "POST /admin/announcements HTTP/1.1" 500 Internal Server Error
-INFO:     127.0.0.1:50556 - "POST /admin/announcements HTTP/1.1" 429 Too Many Requests
-INFO:     127.0.0.1:50556 - "POST /admin/announcements HTTP/1.1" 429 Too Many Requests
-INFO:     127.0.0.1:50556 - "POST /admin/announcements HTTP/1.1" 429 Too Many Requests
-INFO:     127.0.0.1:50556 - "POST /admin/announcements HTTP/1.1" 429 Too Many Requests
-INFO:     127.0.0.1:50556 - "POST /admin/announcements HTTP/1.1" 429 Too Many Requests
-INFO:     127.0.0.1:50556 - "POST /admin/announcements HTTP/1.1" 429 Too Many Requests
-INFO:     127.0.0.1:50632 - "GET /admin/dashboard HTTP/1.1" 200 OK
-INFO:     127.0.0.1:50632 - "POST /admin/coupons HTTP/1.1" 200 OK
-INFO:     127.0.0.1:50632 - "GET /admin/coupons HTTP/1.1" 200 OK
-INFO:     127.0.0.1:50675 - "DELETE /admin/coupons/1 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:50675 - "GET /admin/coupons HTTP/1.1" 200 OK
-INFO:     127.0.0.1:50726 - "GET /admin/authors/applications?status=pending HTTP/1.1" 200 OK
-INFO:     127.0.0.1:50726 - "GET /admin/authors/applications?status=approved HTTP/1.1" 200 OK
-INFO:     127.0.0.1:50726 - "GET /admin/authors/applications?status=rejected HTTP/1.1" 200 OK
-INFO:     127.0.0.1:50726 - "GET /admin/authors/applications?status=rejected HTTP/1.1" 200 OK
-INFO:     127.0.0.1:50726 - "GET /admin/authors/applications?status=all HTTP/1.1" 200 OK
-INFO:     127.0.0.1:50726 - "POST /admin/announcements HTTP/1.1" 429 Too Many Requests
-INFO:     127.0.0.1:50738 - "POST /admin/announcements HTTP/1.1" 429 Too Many Requests
-INFO:     127.0.0.1:50738 - "POST /admin/announcements HTTP/1.1" 429 Too Many Requests
-INFO:     127.0.0.1:50738 - "POST /admin/announcements HTTP/1.1" 429 Too Many Requests
-INFO:     127.0.0.1:50738 - "POST /admin/announcements HTTP/1.1" 429 Too Many Requests
-INFO:     127.0.0.1:50738 - "POST /admin/announcements HTTP/1.1" 429 Too Many Requests
-INFO:     127.0.0.1:50738 - "POST /admin/announcements HTTP/1.1" 429 Too Many Requests
-INFO:     127.0.0.1:50738 - "POST /admin/announcements HTTP/1.1" 429 Too Many Requests
-INFO:     127.0.0.1:50738 - "POST /admin/announcements HTTP/1.1" 429 Too Many Requests
-INFO:     127.0.0.1:50738 - "POST /admin/announcements HTTP/1.1" 429 Too Many Requests
-INFO:     127.0.0.1:50752 - "GET /admin/books/source-summary HTTP/1.1" 200 OK
-INFO:     127.0.0.1:50752 - "GET /admin/books/source-summary HTTP/1.1" 200 OK
-INFO:     127.0.0.1:50772 - "GET / HTTP/1.1" 200 OK
-INFO:     127.0.0.1:50772 - "GET /ingest/books?limit=5000 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:51450 - "GET / HTTP/1.1" 200 OK
-INFO:     127.0.0.1:51450 - "GET /ingest/books?limit=5000 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:51652 - "GET / HTTP/1.1" 200 OK
-INFO:     127.0.0.1:51652 - "GET /ingest/books?limit=5000 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:53286 - "POST /admin/storage/trim-sources?source=all&target_remaining_percent=65&dry_run=true HTTP/1.1" 200 OK
-INFO:     127.0.0.1:53296 - "POST /admin/storage/trim-sources?source=all&target_remaining_percent=90&dry_run=false HTTP/1.1" 200 OK
-INFO:     127.0.0.1:53296 - "POST /admin/storage/trim-sources?source=all&target_remaining_percent=90&dry_run=true HTTP/1.1" 200 OK
-INFO:     127.0.0.1:53357 - "POST /admin/storage/trim-sources?source=all&target_remaining_percent=99&dry_run=true HTTP/1.1" 200 OK
-INFO:     127.0.0.1:53357 - "POST /admin/storage/trim-sources?source=all&target_remaining_percent=99&dry_run=false HTTP/1.1" 200 OK
-INFO:     127.0.0.1:53588 - "GET / HTTP/1.1" 200 OK
-INFO:     127.0.0.1:53588 - "GET /ingest/books?limit=5000 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:53588 - "GET / HTTP/1.1" 200 OK
-INFO:     127.0.0.1:53588 - "GET /ingest/books?limit=5000 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:53588 - "GET / HTTP/1.1" 200 OK
-INFO:     127.0.0.1:53588 - "GET /ingest/books?limit=5000 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:53596 - "GET / HTTP/1.1" 200 OK
-INFO:     127.0.0.1:53596 - "GET /ingest/books?limit=5000 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:53596 - "GET / HTTP/1.1" 200 OK
-INFO:     127.0.0.1:53596 - "GET /ingest/books?limit=5000 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:53596 - "GET / HTTP/1.1" 200 OK
-INFO:     127.0.0.1:53596 - "GET /ingest/books?limit=5000 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:53598 - "GET / HTTP/1.1" 200 OK
-INFO:     127.0.0.1:53598 - "GET /ingest/books?limit=5000 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:53598 - "GET / HTTP/1.1" 200 OK
-INFO:     127.0.0.1:53598 - "GET /ingest/books?limit=5000 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:53598 - "GET / HTTP/1.1" 200 OK
-INFO:     127.0.0.1:53598 - "GET /ingest/books?limit=5000 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:53605 - "POST /admin/storage/trim-sources?source=all&target_remaining_percent=100&dry_run=false HTTP/1.1" 422 Unprocessable Entity
-INFO:     127.0.0.1:53611 - "POST /admin/storage/trim-sources?source=all&target_remaining_percent=99.99&dry_run=false HTTP/1.1" 422 Unprocessable Entity
-INFO:     127.0.0.1:53614 - "POST /admin/storage/trim-sources?source=all&target_remaining_percent=99&dry_run=false HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54600 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54601 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:54603 - "GET /api/reader-state HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:54601 - "GET /service-worker.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54601 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:54601 - "GET /author/submissions HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:54600 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54600 - "POST /author/submit HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:54602 - "GET /api/books?limit=5000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54604 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54600 - "GET /admin/tools HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54681 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54600 - "GET /service-worker.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54604 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54602 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54600 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54715 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54707 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54600 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54604 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54715 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54602 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54604 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54713 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54707 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54600 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54602 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54604 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54715 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54790 - "GET /admin/tools HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54791 - "GET /admin/tools HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54707 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54602 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54604 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54600 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54707 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54713 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54715 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55062 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55098 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55094 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55094 - "GET /admin/tools HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55098 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55094 - "GET /service-worker.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55103 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55061 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55102 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55098 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55062 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55102 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55094 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55098 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55102 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55061 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55094 - "POST /author/submit HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:55103 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55062 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55094 - "GET /admin/tools HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55062 - "GET /service-worker.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55103 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55243 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55103 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55094 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55245 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55062 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55244 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55103 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55062 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55243 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55245 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55094 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55244 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55245 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55243 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55062 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55094 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55103 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55244 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55103 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55244 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55243 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55245 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55103 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55244 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55243 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55062 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55094 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55381 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55382 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55383 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55381 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55382 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55385 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55381 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55386 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55381 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55383 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55387 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55381 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55382 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55383 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55387 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55385 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55386 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55543 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55545 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55546 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55541 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55542 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55541 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55542 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55543 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55541 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55545 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55542 - "GET /admin/stories?status=published HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55546 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55541 - "GET /admin/stories?status=published HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55547 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55545 - "GET /admin/stories?status=unpublished HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55546 - "GET /admin/stories?status=unpublished HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55543 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55541 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55545 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55542 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55546 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55541 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55545 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55546 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55547 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55543 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55542 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55559 - "POST /author/submit HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:55559 - "GET /admin/tools HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55559 - "GET /service-worker.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55562 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55562 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55563 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55559 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55564 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55563 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55566 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55559 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55565 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55562 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55563 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55566 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55559 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55563 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55566 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55564 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55563 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55565 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55562 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55564 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55565 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55563 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55559 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55566 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55562 - "GET /api/authors/9a2cf74f-cbc4-4921-9e13-3d975b2a2c8a/profile HTTP/1.1" 404 Not Found

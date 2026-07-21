@@ -26,6 +26,8 @@ class Book(Base):
 
     genre = Column(String)
 
+    original_status = Column(String, default="standard", nullable=False, index=True)
+
     cover = Column(String)
 
     download = Column(String)
@@ -54,6 +56,8 @@ class Story(Base):
     slug = Column(String, unique=True, nullable=True, index=True)
 
     genre = Column(String, nullable=True)
+
+    original_status = Column(String, default="standard", nullable=False, index=True)
 
     cover = Column(String, nullable=True)
 
@@ -194,6 +198,47 @@ class Draft(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     updated_at = Column(DateTime(timezone=True), nullable=True)
+
+
+class Chapter(Base):
+    """A single chapter that belongs to an author's story.
+
+    Chapters are the unit authors create, upload, edit, reorder, and
+    publish individually. This replaces the old model where an entire
+    manuscript was stored as one undifferentiated blob on ``Draft``.
+    """
+
+    __tablename__ = "chapters"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    story_id = Column(Integer, ForeignKey("stories.id"), nullable=False, index=True)
+
+    author_id = Column(String, ForeignKey("profiles.id"), nullable=True, index=True)
+
+    title = Column(String, nullable=False)
+
+    content = Column(Text, nullable=True)
+
+    position = Column(Integer, nullable=False, default=1)
+
+    # "draft" (author is still working on it / not visible to readers) or
+    # "published" (included in the story's public chapter list).
+    status = Column(String, default="draft", nullable=False, index=True)
+
+    word_count = Column(Integer, default=0, nullable=False)
+
+    original_filename = Column(String, nullable=True)
+
+    source_extension = Column(String, nullable=True)
+
+    upload_error = Column(Text, nullable=True)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    updated_at = Column(DateTime(timezone=True), nullable=True)
+
+    published_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class ReadingProgress(Base):

@@ -63,6 +63,11 @@ PUSH_ADMIN_TOKEN=a-long-random-secret
 
 Deploy the `push-api` folder as its own Railway service.
 
+The folder includes `railway.json` with:
+
+- start command: `npm start`
+- health check path: `/health`
+
 Start command:
 
 ```bash
@@ -83,18 +88,13 @@ Expected response:
 
 ## 5. Connect the Frontend
 
-Import and call the subscription helper after the user signs in.
+Set this variable on the main PickBook frontend/API service:
 
-```js
-import { subscribePickBookUserToPush } from "/push-subscription-manager.js";
-
-await subscribePickBookUserToPush({
-  userId: state.userId,
-  accessToken: state.accessToken,
-  vapidPublicKeyEndpoint: "https://your-push-api.up.railway.app/api/push/vapid-public-key",
-  subscribeEndpoint: "https://your-push-api.up.railway.app/api/push/subscribe",
-});
+```env
+PUSH_API_BASE_URL=https://your-push-api.up.railway.app
 ```
+
+The frontend automatically imports `/push-subscription-manager.js` and calls the subscription helper after the user signs in or an existing session is restored.
 
 The helper:
 
@@ -155,7 +155,7 @@ This handles revoked permissions, expired browser sessions, and deleted push end
 3. Confirm `/health` works.
 4. Confirm `/api/push/vapid-public-key` returns a public key.
 5. Sign in to PickBook.
-6. Call `subscribePickBookUserToPush(...)`.
+6. Accept browser notification permission.
 7. Confirm a row appears in `push_subscriptions`.
 8. Send a test push with `/api/push/send`.
 9. Tap the notification and confirm it opens the target PickBook path.

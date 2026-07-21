@@ -1,11 +1,11 @@
 from datetime import datetime, timedelta, timezone
 import json
-from pathlib import Path
 
 import bleach
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel
-from sqlalchemy import func, text
+from sqlalchemy import func
+from app.core.chapter_text import plain_text_to_html_paragraphs
 from app.core.limiter import limiter
 from app.core.database import SessionLocal
 from app.core.config import settings
@@ -16,6 +16,7 @@ from app.models.book import (
     AuthorNotification,
     AppSetting,
     Book,
+    Chapter,
     Coupon,
     CouponClaim,
     Draft,
@@ -51,6 +52,10 @@ class ReviewDecisionPayload(BaseModel):
     feedback: str | None = None
 
 
+class StoryOriginalStatusPayload(BaseModel):
+    original_status: str
+
+
 class AuthorApplicationDecisionPayload(BaseModel):
     feedback: str | None = None
 
@@ -81,13 +86,6 @@ class AnnouncementPayload(BaseModel):
     critical_repeat_session: bool = True
 
 
-TRIM_SOURCE_OPTIONS = (
-    "anystories",
-    "royalroad",
-    "freewebnovel",
-    "lightnovelworld",
-)
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
 MINIMUM_PAYOUT_KEY = "minimum_author_payout_naira"
 ANNOUNCEMENT_TAGS = [
     "p", "br", "strong", "b", "em", "i", "u", "ul", "ol", "li",
@@ -165,6 +163,14 @@ def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _as_utc(value: datetime | None) -> datetime | None:
+    if value is None:
+        return None
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value
+
+
 def _clean_announcement_html(value: str) -> str:
     html = bleach.clean(
         value or "",
@@ -189,7 +195,19 @@ def _clean_optional_url(value: str | None, *, allow_relative: bool = False) -> s
     raise HTTPException(status_code=400, detail="URL must be http(s) or a PickBook relative path.")
 
 
+def _clean_original_status(value: str | None) -> str:
+    status = (value or "standard").strip().lower().replace("-", "_")
+    if status in {"pickbook_original", "original", "exclusive"}:
+        return "pickbook_original"
+    if status == "standard":
+        return "standard"
+    raise HTTPException(status_code=400, detail="Original status must be standard or pickbook_original.")
+
+
 def _announcement_row(row: Announcement, include_body: bool = True) -> dict:
+    now = _now()
+    publish_at = _as_utc(row.publish_at)
+    expires_at = _as_utc(row.expires_at)
     return {
         "id": row.id,
         "title": row.title,
@@ -206,9 +224,9 @@ def _announcement_row(row: Announcement, include_body: bool = True) -> dict:
         "created_at": row.created_at,
         "updated_at": row.updated_at,
         "is_active": (
-            row.publish_at <= _now()
-            and (row.expires_at is None or row.expires_at > _now())
-        ) if row.publish_at else False,
+            publish_at <= now
+            and (expires_at is None or expires_at > now)
+        ) if publish_at else False,
     }
 
 
@@ -365,6 +383,15 @@ def update_announcement(announcement_id: int, payload: AnnouncementPayload, requ
         return _announcement_row(row)
 
 
+@router.delete("/announcements")
+@limiter.limit("10/hour")
+def delete_all_announcements(request: Request):
+    with SessionLocal() as db:
+        deleted = db.query(Announcement).delete(synchronize_session=False)
+        db.commit()
+        return {"status": "deleted", "deleted": deleted}
+
+
 @router.delete("/announcements/{announcement_id}")
 @limiter.limit("60/hour")
 def delete_announcement(announcement_id: int, request: Request):
@@ -511,8 +538,46 @@ def premium_analytics(
         }
 
 
-def _story_row(story: Story, draft: Draft | None, profile: Profile | None) -> dict:
+def _book_chapters_payload(db, story: Story, draft: Draft | None) -> tuple[list[dict], int]:
+    """Build the reader-facing chapter list for a story being published.
+
+    Prefers the author's real, individually authored chapters (the new
+    chapter upload workflow). Falls back to the legacy single-blob draft
+    content only for stories that predate that workflow.
+    """
+    chapters = (
+        db.query(Chapter)
+        .filter(Chapter.story_id == story.id, Chapter.status == "published")
+        .order_by(Chapter.position.asc(), Chapter.id.asc())
+        .all()
+    )
+    if chapters:
+        payload = [
+            {
+                "title": chapter.title or f"Chapter {index}",
+                "html": plain_text_to_html_paragraphs(chapter.content or ""),
+            }
+            for index, chapter in enumerate(chapters, start=1)
+        ]
+        return payload, len(payload)
+
+    fallback_text = draft.content if draft and draft.content else None
+    payload = [
+        {
+            "title": "Chapter 1",
+            "html": (
+                plain_text_to_html_paragraphs(fallback_text)
+                if fallback_text
+                else "<p>This story is being prepared for readers.</p>"
+            ),
+        }
+    ]
+    return payload, 1
+
+
+def _story_row(db, story: Story, draft: Draft | None, profile: Profile | None) -> dict:
     content = draft.content if draft else None
+    chapter_rows = db.query(Chapter.status).filter(Chapter.story_id == story.id).all()
     return {
         "story_id": story.id,
         "title": story.title,
@@ -520,9 +585,12 @@ def _story_row(story: Story, draft: Draft | None, profile: Profile | None) -> di
         "author_name": profile.username if profile else None,
         "author_email": profile.email if profile else None,
         "status": story.status,
+        "original_status": story.original_status,
         "cover": story.cover,
         "synopsis": story.synopsis or (draft.synopsis if draft else None),
         "preview": (content or "")[:4000] if content else None,
+        "chapter_count": len(chapter_rows),
+        "published_chapter_count": sum(1 for (chapter_status,) in chapter_rows if chapter_status == "published"),
         "feedback": story.review_feedback,
         "submitted_at": story.created_at,
         "updated_at": story.updated_at,
@@ -542,7 +610,7 @@ def pending_stories(request: Request):
             .limit(100)
             .all()
         )
-        return [_story_row(story, draft, profile) for story, draft, profile in rows]
+        return [_story_row(db, story, draft, profile) for story, draft, profile in rows]
 
 
 @router.get("/stories")
@@ -567,7 +635,7 @@ def list_stories(
             .limit(150)
             .all()
         )
-        return [_story_row(story, draft, profile) for story, draft, profile in rows]
+        return [_story_row(db, story, draft, profile) for story, draft, profile in rows]
 
 
 @router.get("/stories/{story_id}/audit")
@@ -611,7 +679,7 @@ def recent_story_reviews(request: Request):
         )
         return [
             {
-                **_story_row(story, draft, profile),
+                **_story_row(db, story, draft, profile),
                 "reviewed_at": story.reviewed_at,
                 "published_at": story.published_at,
                 "unpublished_at": story.unpublished_at,
@@ -642,23 +710,19 @@ def approve_story(story_id: int, payload: ReviewDecisionPayload, request: Reques
         if draft:
             story.synopsis = story.synopsis or draft.synopsis
 
+        chapter_payload, chapter_count = _book_chapters_payload(db, story, draft)
+
         if not story.published_version_id:
             book = Book(
                 source="pickbook-author",
                 title=story.title,
                 author=(profile.username if profile and profile.username else "PickBook Author"),
                 genre=story.genre or "Original",
+                original_status=story.original_status,
                 cover=story.cover,
                 synopsis=story.synopsis or (draft.synopsis if draft else None),
-                chapters_count=1,
-                chapter_content=json.dumps(
-                    [
-                        {
-                            "title": "Chapter 1",
-                            "html": f"<p>{(draft.content if draft and draft.content else 'This story is being prepared for readers.')}</p>",
-                        }
-                    ]
-                ),
+                chapters_count=chapter_count,
+                chapter_content=json.dumps(chapter_payload),
             )
             db.add(book)
             db.flush()
@@ -668,7 +732,10 @@ def approve_story(story_id: int, payload: ReviewDecisionPayload, request: Reques
             if book:
                 book.title = story.title
                 book.cover = story.cover
+                book.original_status = story.original_status
                 book.synopsis = story.synopsis or book.synopsis
+                book.chapters_count = chapter_count
+                book.chapter_content = json.dumps(chapter_payload)
                 if profile and profile.username:
                     book.author = profile.username
                 db.add(book)
@@ -694,6 +761,26 @@ def approve_story(story_id: int, payload: ReviewDecisionPayload, request: Reques
         db.add(story)
         db.commit()
         return {"status": "published", "story_id": story.id, "book_id": story.published_version_id}
+
+
+@router.put("/stories/{story_id}/original-status")
+@limiter.limit("60/hour")
+def update_story_original_status(story_id: int, payload: StoryOriginalStatusPayload, request: Request):
+    with SessionLocal() as db:
+        story = db.query(Story).filter(Story.id == story_id).first()
+        if not story:
+            raise HTTPException(status_code=404, detail="Story not found.")
+        story.original_status = _clean_original_status(payload.original_status)
+        story.updated_at = datetime.now(timezone.utc)
+        if story.published_version_id:
+            book = db.query(Book).filter(Book.id == story.published_version_id).first()
+            if book:
+                book.original_status = story.original_status
+                db.add(book)
+        _audit_story(db, story, request, "original_status_update", None, story.original_status, "Admin updated original designation.")
+        db.add(story)
+        db.commit()
+        return {"status": "updated", "story_id": story.id, "original_status": story.original_status}
 
 
 @router.post("/stories/{story_id}/reject")
@@ -1080,310 +1167,3 @@ def delete_coupon(coupon_id: int, request: Request):
             "id": coupon_id,
             "code": code,
         }
-
-
-@router.post("/seed/compact-books")
-@limiter.limit("3/hour")
-def seed_compact_books(request: Request):
-    seed_path = PROJECT_ROOT / "books.compact.sql"
-    if not seed_path.exists():
-        raise HTTPException(status_code=404, detail="books.compact.sql was not found.")
-
-    rows = []
-    in_books_copy = False
-
-    with seed_path.open("r", encoding="utf-8", errors="replace") as seed_file:
-        for line in seed_file:
-            if line.startswith("COPY public.books "):
-                in_books_copy = True
-                continue
-
-            if in_books_copy and line == "\\.\n":
-                break
-
-            if not in_books_copy:
-                continue
-
-            columns = line.rstrip("\n").split("\t")
-            if len(columns) != 11:
-                continue
-
-            rows.append(columns)
-
-    inserted = 0
-    skipped = 0
-    max_id = 0
-
-    with SessionLocal() as db:
-        existing_downloads = {
-            value
-            for (value,) in db.query(Book.download).filter(Book.download.isnot(None)).all()
-        }
-
-        for columns in rows:
-            book_id = int(columns[0])
-            download = None if columns[6] == r"\N" else columns[6]
-
-            if download and download in existing_downloads:
-                skipped += 1
-                continue
-
-            db.add(
-                Book(
-                    id=book_id,
-                    source=None if columns[1] == r"\N" else columns[1],
-                    title=None if columns[2] == r"\N" else columns[2],
-                    author=None if columns[3] == r"\N" else columns[3],
-                    genre=None if columns[4] == r"\N" else columns[4],
-                    cover=None if columns[5] == r"\N" else columns[5],
-                    download=download,
-                    language=None if columns[7] == r"\N" else columns[7],
-                    synopsis=None if columns[8] == r"\N" else columns[8],
-                    chapters_count=None if columns[9] == r"\N" else int(columns[9]),
-                    chapter_content=None if columns[10] == r"\N" else columns[10],
-                )
-            )
-            inserted += 1
-            max_id = max(max_id, book_id)
-            if download:
-                existing_downloads.add(download)
-
-        db.commit()
-
-        if inserted and db.bind and db.bind.dialect.name == "postgresql":
-            db.execute(
-                text(
-                    "SELECT setval("
-                    "'books_id_seq'::regclass, "
-                    "GREATEST((SELECT COALESCE(MAX(id), 1) FROM books), 1), "
-                    "true)"
-                )
-            )
-            db.commit()
-
-    return {
-        "status": "seeded",
-        "source": str(seed_path.name),
-        "inserted": inserted,
-        "skipped": skipped,
-        "max_id": max_id,
-    }
-
-
-@router.post("/storage/purge-chapter-cache")
-@limiter.limit("6/hour")
-def purge_chapter_cache(
-    request: Request,
-    source: str | None = Query(None),
-    limit: int = Query(500, ge=1, le=5000),
-    dry_run: bool = Query(False),
-):
-    with SessionLocal() as db:
-        query = db.query(Book).filter(Book.chapter_content.isnot(None))
-        if source:
-            query = query.filter(Book.source == source.strip().lower())
-
-        total_matching = query.count()
-        books = query.order_by(Book.id.asc()).limit(limit).all()
-        approx_bytes = sum(
-            len((book.chapter_content or "").encode("utf-8"))
-            for book in books
-        )
-
-        if not dry_run:
-            for book in books:
-                book.chapter_content = None
-            db.commit()
-
-        return {
-            "status": "dry_run" if dry_run else "purged",
-            "source": source or "all",
-            "matched": total_matching,
-            "processed": len(books),
-            "approx_bytes_removed": 0 if dry_run else approx_bytes,
-            "approx_bytes_that_would_be_removed": approx_bytes if dry_run else 0,
-            "note": (
-                "Postgres may need VACUUM or a Railway restart/recovery cycle "
-                "before volume usage visibly drops."
-            ),
-        }
-
-
-def _book_storage_weight(book: Book) -> int:
-    return sum(
-        len((value or "").encode("utf-8"))
-        for value in (
-            book.title,
-            book.author,
-            book.genre,
-            book.cover,
-            book.download,
-            book.language,
-            book.synopsis,
-            book.chapter_content,
-        )
-    )
-
-
-def _cached_chapter_count(chapter_content: str | None) -> int:
-    if not chapter_content:
-        return 0
-
-    try:
-        chapters = json.loads(chapter_content)
-    except json.JSONDecodeError:
-        return 0
-
-    if not isinstance(chapters, list):
-        return 0
-
-    return sum(
-        1
-        for chapter in chapters
-        if isinstance(chapter, dict) and chapter.get("html")
-    )
-
-
-def _ingest_status(book: Book) -> str:
-    cached = _cached_chapter_count(book.chapter_content)
-    total = book.chapters_count or 0
-
-    if total > 0 and cached >= total:
-        return "full"
-
-    if cached > 0:
-        return "partial"
-
-    return "incomplete"
-
-
-@router.get("/books/source-summary")
-@limiter.limit("60/minute")
-def source_summary(request: Request):
-    with SessionLocal() as db:
-        books = db.query(Book).all()
-
-    summary = {}
-    for book in books:
-        source = (book.source or "unknown").lower()
-        row = summary.setdefault(
-            source,
-            {
-                "source": source,
-                "total": 0,
-                "full": 0,
-                "partial": 0,
-                "incomplete": 0,
-            },
-        )
-        row["total"] += 1
-        row[_ingest_status(book)] += 1
-
-    return sorted(
-        summary.values(),
-        key=lambda item: (-item["total"], item["source"]),
-    )
-
-
-def _trim_source_rows(
-    request: Request,
-    target_remaining_percent: int = Query(65, ge=1, le=99),
-    dry_run: bool = Query(True),
-    source: str = Query("all"),
-):
-    normalized_source = source.strip().lower()
-    if normalized_source in {"", "all", "*"}:
-        normalized_source = "all"
-    elif normalized_source not in TRIM_SOURCE_OPTIONS:
-        raise HTTPException(
-            status_code=400,
-            detail=(
-                "Source must be all, anystories, royalroad, freewebnovel, "
-                "or lightnovelworld."
-            ),
-        )
-
-    with SessionLocal() as db:
-        query = db.query(Book)
-        if normalized_source != "all":
-            query = query.filter(func.lower(Book.source) == normalized_source)
-
-        books = query.all()
-        weighted_books = [(book, _book_storage_weight(book)) for book in books]
-
-        total_bytes = sum(size for _book, size in weighted_books)
-        bytes_to_remove = int(total_bytes * ((100 - target_remaining_percent) / 100))
-        weighted_books.sort(key=lambda item: item[1], reverse=True)
-
-        selected = []
-        selected_bytes = 0
-        for book, approx_bytes in weighted_books:
-            if selected_bytes >= bytes_to_remove:
-                break
-            selected.append(book)
-            selected_bytes += approx_bytes
-
-        by_source = {}
-        for book, _approx_bytes in weighted_books:
-            source_name = (book.source or "unknown").lower()
-            by_source.setdefault(source_name, {"matched": 0, "selected": 0})
-            by_source[source_name]["matched"] += 1
-        for book in selected:
-            source_name = (book.source or "unknown").lower()
-            by_source.setdefault(source_name, {"matched": 0, "selected": 0})
-            by_source[source_name]["selected"] += 1
-
-        if not dry_run and selected:
-            for book in selected:
-                db.delete(book)
-            db.commit()
-
-        return {
-            "status": "dry_run" if dry_run else "trimmed",
-            "source": normalized_source,
-            "sources": sorted(by_source),
-            "available_sources": list(TRIM_SOURCE_OPTIONS),
-            "target_remaining_percent": target_remaining_percent,
-            "matched": len(books),
-            "selected": len(selected),
-            "approx_total_bytes": total_bytes,
-            "approx_bytes_removed": 0 if dry_run else selected_bytes,
-            "approx_bytes_that_would_be_removed": selected_bytes if dry_run else 0,
-            "by_source": by_source,
-            "note": (
-                "This removes the largest rows first for the selected source scope. "
-                "Railway/Postgres may still need VACUUM FULL or a database restart "
-                "cycle before volume usage visibly falls."
-            ),
-        }
-
-
-@router.post("/storage/trim-sources")
-@limiter.limit("30/hour")
-def trim_sources(
-    request: Request,
-    target_remaining_percent: int = Query(65, ge=1, le=99),
-    dry_run: bool = Query(True),
-    source: str = Query("all"),
-):
-    return _trim_source_rows(
-        request=request,
-        target_remaining_percent=target_remaining_percent,
-        dry_run=dry_run,
-        source=source,
-    )
-
-
-@router.post("/storage/trim-webnovel-sources")
-@limiter.limit("30/hour")
-def trim_webnovel_sources(
-    request: Request,
-    target_remaining_percent: int = Query(65, ge=1, le=99),
-    dry_run: bool = Query(True),
-):
-    return _trim_source_rows(
-        request=request,
-        target_remaining_percent=target_remaining_percent,
-        dry_run=dry_run,
-        source="all",
-    )

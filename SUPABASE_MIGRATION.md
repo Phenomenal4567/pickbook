@@ -4,7 +4,7 @@ This migration moves PickBook's production database and uploaded files to Supaba
 
 - Postgres tables, indexes, RLS policies, and Storage buckets are created by `sql/001_supabase_schema.sql`.
 - Example coupons can be seeded with `sql/002_seed_example_coupons.sql`.
-- Book catalog data can be loaded from `books.compact.sql` or a production dump.
+- Reader catalog data is created by approving author-submitted stories.
 - Author covers and signed deal documents can be stored in Supabase Storage when `STORAGE_BACKEND=supabase`.
 
 ## 1. Create Supabase Schema
@@ -37,31 +37,15 @@ SUPABASE_PRIVATE_BUCKET=pickbook-private
 
 Keep `SUPABASE_SERVICE_ROLE_KEY` only on the server. It must never be shipped to browser code.
 
-## 3. Load Book Data
+## 3. Publish Author Stories
 
-For the bundled compact seed, start the app with the Supabase `DATABASE_URL`, then call:
+PickBook no longer loads the reader catalog from imported book dumps. Use the author workflow instead:
 
-```bash
-curl -X POST https://your-domain.com/admin/seed/compact-books \
-  -H "x-admin-token: $ADMIN_TOKEN"
-```
-
-For a Postgres dump, export data from the source and restore into Supabase:
-
-```bash
-pg_dump "$SOURCE_DATABASE_URL" --data-only --table=books > books.sql
-psql "$SUPABASE_DATABASE_URL" < books.sql
-```
-
-After loading explicit book IDs, reset the sequence:
-
-```sql
-select setval(
-    'books_id_seq'::regclass,
-    greatest((select coalesce(max(id), 1) from public.books), 1),
-    true
-);
-```
+1. Create or sign in as an author.
+2. Submit an author application if the profile is not already approved.
+3. Approve the author application in Admin Tools.
+4. Submit a story from the author portal.
+5. Approve the story in Admin Tools to publish it into `books`.
 
 Validate:
 

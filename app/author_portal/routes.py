@@ -8,9 +8,17 @@ from uuid import NAMESPACE_URL, uuid5
 from fastapi import APIRouter, UploadFile, File, Form, Header, HTTPException, Request, Response
 from pydantic import BaseModel
 import bleach
+from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 
 from app.core.auth import create_access_token, profile_id_from_token
+from app.core.chapter_text import (
+    CHAPTER_ALLOWED_EXTENSIONS,
+    ChapterExtractionError,
+    chapter_title_from_filename,
+    extract_chapter_text,
+    word_count,
+)
 from app.core.config import settings
 from app.core.database import SessionLocal
 from app.core.limiter import limiter
@@ -26,6 +34,7 @@ from app.models.book import (
     AuthorEarning,
     AuthorNotification,
     Book,
+    Chapter,
     Draft,
     PremiumRead,
     Profile,
@@ -70,6 +79,7 @@ class AuthorSubmissionItem(BaseModel):
     status: str
     review_feedback: str | None = None
     cover: str | None = None
+    original_status: str = "standard"
     filename: str | None = None
     extension: str | None = None
     size_bytes: int | None = None
@@ -94,6 +104,7 @@ class StoryUpdatePayload(BaseModel):
     title: str | None = None
     synopsis: str | None = None
     content: str | None = None
+    original_status: str | None = None
 
 
 class AuthorApplicationPayload(BaseModel):
@@ -113,6 +124,58 @@ class WithdrawalPayload(BaseModel):
     amount_naira: int
 
 
+class ChapterOut(BaseModel):
+    id: int
+    story_id: int
+    title: str
+    status: str
+    position: int
+    word_count: int
+    original_filename: str | None = None
+    upload_error: str | None = None
+    created_at: str | None = None
+    updated_at: str | None = None
+    published_at: str | None = None
+
+
+class ChapterDetailOut(ChapterOut):
+    content: str | None = None
+
+
+class ChapterListResponse(BaseModel):
+    story_id: int
+    chapters: list[ChapterOut]
+    total_chapters: int
+    published_chapters: int
+    total_words: int
+
+
+class ChapterUpdatePayload(BaseModel):
+    title: str | None = None
+    content: str | None = None
+    status: str | None = None
+
+
+class ChapterReorderPayload(BaseModel):
+    chapter_ids: list[int]
+
+
+class ChapterBulkUploadItem(BaseModel):
+    filename: str
+    status: str
+    chapter_id: int | None = None
+    title: str | None = None
+    word_count: int | None = None
+    error: str | None = None
+
+
+class ChapterBulkUploadResponse(BaseModel):
+    story_id: int
+    uploaded: int
+    failed: int
+    results: list[ChapterBulkUploadItem]
+
+
 def _safe_text(value: str) -> str:
     """Strip all HTML tags and limit length."""
     return bleach.clean(value, tags=[], strip=True)[:500]
@@ -122,6 +185,15 @@ def _safe_long_text(value: str | None, limit: int = 200_000) -> str | None:
     if value is None:
         return None
     return bleach.clean(value, tags=[], strip=True)[:limit]
+
+
+def _clean_original_status(value: str | None) -> str:
+    status = (value or "standard").strip().lower().replace("-", "_")
+    if status in {"pickbook_original", "original", "exclusive"}:
+        return "pickbook_original"
+    if status == "standard":
+        return "standard"
+    raise HTTPException(status_code=400, detail="Original status must be standard or pickbook_original.")
 
 
 def _slugify(value: str) -> str:
@@ -406,6 +478,8 @@ def submit_author_application(
             .order_by(AuthorApplication.id.desc())
             .first()
         )
+        if _author_application_status(profile) == "approved":
+            return {"status": "approved", "message": "Your author account is active."}
         if existing and existing.status == "approved":
             return {"status": "approved", "message": "Your author account is active."}
         application = existing if existing and existing.status == "pending" else AuthorApplication(profile_id=profile.id)
@@ -467,7 +541,8 @@ async def submit_novel(
     tags: str | None = Form(None),
     consent: bool = Form(...),
     terms_accepted: bool = Form(False),
-    file: UploadFile = File(...),
+    original_status: str = Form("standard"),
+    file: UploadFile | None = File(None),
     cover: UploadFile | None = File(None),
     authorization: str | None = Header(None),
     x_user_id: str | None = Header(None),
@@ -480,24 +555,25 @@ async def submit_novel(
             detail="Author agreement acceptance required.",
         )
 
-    original_name = PureWindowsPath(file.filename or "").name
-    original_name = PurePath(original_name).name
+    original_name = PureWindowsPath(file.filename or "").name if file and file.filename else ""
+    original_name = PurePath(original_name).name if original_name else ""
 
-    if not original_name or original_name in {".", ".."}:
+    if original_name in {".", ".."}:
         raise HTTPException(status_code=400, detail="Invalid filename.")
 
-    if "." not in original_name.strip("."):
+    if original_name and "." not in original_name.strip("."):
         raise HTTPException(status_code=400, detail="File must have an extension.")
 
-    extension = "." + original_name.rsplit(".", 1)[-1].lower()
+    extension = "." + original_name.rsplit(".", 1)[-1].lower() if original_name else ""
     if extension not in ALLOWED_EXTENSIONS:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Unsupported file type '{extension}'. Allowed: {', '.join(ALLOWED_EXTENSIONS)}",
-        )
+        if original_name:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unsupported file type '{extension}'. Allowed: {', '.join(ALLOWED_EXTENSIONS)}",
+            )
 
     # Enforce file size limit — read only the header chunk needed for the check.
-    chunk = await file.read(MAX_FILE_SIZE_BYTES + 1)
+    chunk = await file.read(MAX_FILE_SIZE_BYTES + 1) if file and original_name else b""
     if len(chunk) > MAX_FILE_SIZE_BYTES:
         raise HTTPException(
             status_code=413,
@@ -509,6 +585,7 @@ async def submit_novel(
     safe_author = _safe_text(author)
     safe_genre = _safe_text(genre or "") or "Original"
     safe_tags = _safe_text(tags or "")
+    safe_original_status = _clean_original_status(original_status)
     if not safe_title:
         raise HTTPException(status_code=400, detail="Title is required.")
     if not safe_author:
@@ -516,9 +593,9 @@ async def submit_novel(
 
     now = datetime.now(timezone.utc)
     manuscript_metadata = {
-        "original_filename": original_name,
-        "extension": extension,
-        "content_type": file.content_type,
+        "original_filename": original_name or None,
+        "extension": extension or None,
+        "content_type": file.content_type if file else None,
         "size_bytes": len(chunk),
         "stored_text": extension == ".txt" and len(chunk) <= MAX_STORED_TEXT_BYTES,
         "genre": safe_genre,
@@ -546,6 +623,7 @@ async def submit_novel(
             title=safe_title,
             slug=_unique_story_slug(db, safe_title),
             genre=safe_genre,
+            original_status=safe_original_status,
             status="pending_review",
             updated_at=now,
         )
@@ -582,7 +660,7 @@ async def submit_novel(
         status="pending_review",
         title=safe_title,
         author=safe_author,
-        filename=original_name,
+        filename=original_name or "chapter-workflow",
         cover=story_cover,
         author_id=author_id,
         author_access_token=create_access_token(author_id),
@@ -634,6 +712,7 @@ def list_author_submissions(
                     status=story.status,
                     review_feedback=story.review_feedback,
                     cover=story.cover,
+                    original_status=story.original_status,
                     filename=metadata.get("original_filename"),
                     extension=metadata.get("extension"),
                     size_bytes=metadata.get("size_bytes"),
@@ -703,6 +782,117 @@ def _author_story_or_404(db, author_id: str, story_id: int) -> tuple[Story, Draf
         raise HTTPException(status_code=404, detail="Story not found.")
     draft = db.query(Draft).filter(Draft.story_id == story.id, Draft.author_id == author_id).first()
     return story, draft
+
+
+def _author_chapter_or_404(db, story_id: int, chapter_id: int) -> Chapter:
+    chapter = (
+        db.query(Chapter)
+        .filter(Chapter.id == chapter_id, Chapter.story_id == story_id)
+        .first()
+    )
+    if not chapter:
+        raise HTTPException(status_code=404, detail="Chapter not found.")
+    return chapter
+
+
+def _next_chapter_position(db, story_id: int) -> int:
+    current_max = (
+        db.query(func.max(Chapter.position))
+        .filter(Chapter.story_id == story_id)
+        .scalar()
+    )
+    return (current_max or 0) + 1
+
+
+def _chapter_out(chapter: Chapter, include_content: bool = False) -> dict:
+    data = {
+        "id": chapter.id,
+        "story_id": chapter.story_id,
+        "title": chapter.title,
+        "status": chapter.status,
+        "position": chapter.position,
+        "word_count": chapter.word_count,
+        "original_filename": chapter.original_filename,
+        "upload_error": chapter.upload_error,
+        "created_at": chapter.created_at.isoformat() if chapter.created_at else None,
+        "updated_at": chapter.updated_at.isoformat() if chapter.updated_at else None,
+        "published_at": chapter.published_at.isoformat() if chapter.published_at else None,
+    }
+    if include_content:
+        data["content"] = chapter.content
+    return data
+
+
+def _clean_chapter_filename(raw_filename: str | None) -> str:
+    """Strip any client-supplied path info down to a plain file name."""
+    name = PureWindowsPath(raw_filename or "").name
+    name = PurePath(name).name
+    return name
+
+
+def _chapter_extension(filename: str) -> str:
+    if "." not in filename.strip("."):
+        raise HTTPException(status_code=400, detail=f"'{filename}' must have a file extension.")
+    return "." + filename.rsplit(".", 1)[-1].lower()
+
+
+async def _read_chapter_upload(upload: UploadFile, original_name: str) -> bytes:
+    chunk = await upload.read(MAX_FILE_SIZE_BYTES + 1)
+    if len(chunk) > MAX_FILE_SIZE_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"'{original_name}' exceeds the {MAX_FILE_SIZE_BYTES // (1024 * 1024)} MB limit.",
+        )
+    if not chunk:
+        raise HTTPException(status_code=400, detail=f"'{original_name}' is empty.")
+    return chunk
+
+
+async def _build_chapter_from_file(
+    db,
+    story: Story,
+    profile: Profile,
+    upload: UploadFile,
+    *,
+    position: int,
+    title_override: str | None = None,
+) -> Chapter:
+    original_name = _clean_chapter_filename(upload.filename)
+    if not original_name or original_name in {".", ".."}:
+        raise HTTPException(status_code=400, detail="Invalid filename.")
+
+    extension = _chapter_extension(original_name)
+    if extension not in CHAPTER_ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Unsupported file type '{extension}'. "
+                f"Allowed: {', '.join(sorted(CHAPTER_ALLOWED_EXTENSIONS))}"
+            ),
+        )
+
+    chunk = await _read_chapter_upload(upload, original_name)
+
+    try:
+        text = extract_chapter_text(original_name, extension, chunk)
+    except ChapterExtractionError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    safe_title = _safe_text(title_override or "") or chapter_title_from_filename(original_name)
+    chapter = Chapter(
+        story_id=story.id,
+        author_id=profile.id,
+        title=safe_title,
+        content=text,
+        position=position,
+        status="draft",
+        word_count=word_count(text),
+        original_filename=original_name,
+        source_extension=extension,
+    )
+    db.add(chapter)
+    db.flush()
+    return chapter
 
 
 @router.post("/stories/{story_id}/cover")
@@ -782,6 +972,8 @@ def update_story(
             story.synopsis = _safe_long_text(payload.synopsis, 5000)
             if draft:
                 draft.synopsis = story.synopsis
+        if payload.original_status is not None:
+            story.original_status = _clean_original_status(payload.original_status)
         if payload.content is not None:
             if not draft:
                 draft = Draft(story_id=story.id, author_id=profile.id, title=story.title)
@@ -901,6 +1093,380 @@ def update_bank_details(
         db.add(profile)
         db.commit()
         return {"status": "updated"}
+    finally:
+        db.close()
+
+
+@router.get("/stories/{story_id}/chapters", response_model=ChapterListResponse)
+def list_chapters(
+    story_id: int,
+    authorization: str | None = Header(None),
+    x_user_id: str | None = Header(None),
+):
+    db = SessionLocal()
+    try:
+        profile = _author_profile_or_401(db, authorization, x_user_id)
+        story, _draft = _author_story_or_404(db, profile.id, story_id)
+        chapters = (
+            db.query(Chapter)
+            .filter(Chapter.story_id == story.id)
+            .order_by(Chapter.position.asc(), Chapter.id.asc())
+            .all()
+        )
+        return ChapterListResponse(
+            story_id=story.id,
+            chapters=[ChapterOut(**_chapter_out(chapter)) for chapter in chapters],
+            total_chapters=len(chapters),
+            published_chapters=sum(1 for chapter in chapters if chapter.status == "published"),
+            total_words=sum(chapter.word_count or 0 for chapter in chapters),
+        )
+    finally:
+        db.close()
+
+
+@router.get("/stories/{story_id}/chapters/{chapter_id}", response_model=ChapterDetailOut)
+def get_chapter(
+    story_id: int,
+    chapter_id: int,
+    authorization: str | None = Header(None),
+    x_user_id: str | None = Header(None),
+):
+    db = SessionLocal()
+    try:
+        profile = _author_profile_or_401(db, authorization, x_user_id)
+        story, _draft = _author_story_or_404(db, profile.id, story_id)
+        chapter = _author_chapter_or_404(db, story.id, chapter_id)
+        return ChapterDetailOut(**_chapter_out(chapter, include_content=True))
+    finally:
+        db.close()
+
+
+@router.post("/stories/{story_id}/chapters", response_model=ChapterDetailOut)
+async def create_chapter(
+    story_id: int,
+    title: str | None = Form(None),
+    content: str | None = Form(None),
+    status: str = Form("draft"),
+    file: UploadFile | None = File(None),
+    authorization: str | None = Header(None),
+    x_user_id: str | None = Header(None),
+):
+    """Create a single chapter, either from a title+content pair or from an
+    uploaded .txt/.docx file. This is what "Create chapters one at a time"
+    and single-file upload both use."""
+    if status not in {"draft", "published"}:
+        raise HTTPException(status_code=400, detail="Status must be 'draft' or 'published'.")
+
+    db = SessionLocal()
+    try:
+        profile = _author_profile_or_401(db, authorization, x_user_id)
+        story, _draft = _author_story_or_404(db, profile.id, story_id)
+        position = _next_chapter_position(db, story.id)
+
+        if file is not None and file.filename:
+            chapter = await _build_chapter_from_file(
+                db, story, profile, file, position=position, title_override=title,
+            )
+        else:
+            safe_title = _safe_text(title or "")
+            if not safe_title:
+                raise HTTPException(status_code=400, detail="Chapter title is required.")
+            safe_content = _safe_long_text(content, 500_000) or ""
+            if not safe_content.strip():
+                raise HTTPException(status_code=400, detail="Chapter content is required.")
+            chapter = Chapter(
+                story_id=story.id,
+                author_id=profile.id,
+                title=safe_title,
+                content=safe_content,
+                position=position,
+                status="draft",
+                word_count=word_count(safe_content),
+            )
+            db.add(chapter)
+            db.flush()
+
+        if status == "published":
+            chapter.status = "published"
+            chapter.published_at = datetime.now(timezone.utc)
+
+        now = datetime.now(timezone.utc)
+        chapter.updated_at = now
+        story.updated_at = now
+        db.add(chapter)
+        db.add(story)
+        db.commit()
+        db.refresh(chapter)
+        return ChapterDetailOut(**_chapter_out(chapter, include_content=True))
+    finally:
+        db.close()
+
+
+@router.post("/stories/{story_id}/chapters/bulk", response_model=ChapterBulkUploadResponse)
+async def bulk_upload_chapters(
+    story_id: int,
+    files: list[UploadFile] = File(...),
+    authorization: str | None = Header(None),
+    x_user_id: str | None = Header(None),
+):
+    """Bulk upload: each selected file becomes its own chapter, in the order
+    the files were selected. If one file fails, the rest still get
+    uploaded — every file is handled independently and committed on its
+    own, so a single bad file can never roll back the good ones."""
+    if not files:
+        raise HTTPException(status_code=400, detail="Select at least one file to upload.")
+    if len(files) > 100:
+        raise HTTPException(status_code=400, detail="Upload at most 100 files at once.")
+
+    db = SessionLocal()
+    try:
+        profile = _author_profile_or_401(db, authorization, x_user_id)
+        story, _draft = _author_story_or_404(db, profile.id, story_id)
+
+        next_position = _next_chapter_position(db, story.id)
+        results: list[dict] = []
+        uploaded = 0
+        failed = 0
+
+        for upload in files:
+            display_name = upload.filename or "untitled"
+            try:
+                chapter = await _build_chapter_from_file(
+                    db, story, profile, upload, position=next_position,
+                )
+                story.updated_at = datetime.now(timezone.utc)
+                db.add(story)
+                db.commit()
+                db.refresh(chapter)
+                next_position += 1
+                uploaded += 1
+                results.append(
+                    {
+                        "filename": display_name,
+                        "status": "success",
+                        "chapter_id": chapter.id,
+                        "title": chapter.title,
+                        "word_count": chapter.word_count,
+                        "error": None,
+                    }
+                )
+            except HTTPException as exc:
+                db.rollback()
+                failed += 1
+                results.append(
+                    {
+                        "filename": display_name,
+                        "status": "error",
+                        "chapter_id": None,
+                        "title": None,
+                        "word_count": None,
+                        "error": exc.detail,
+                    }
+                )
+            except Exception:
+                db.rollback()
+                failed += 1
+                results.append(
+                    {
+                        "filename": display_name,
+                        "status": "error",
+                        "chapter_id": None,
+                        "title": None,
+                        "word_count": None,
+                        "error": "Unexpected error while processing this file.",
+                    }
+                )
+
+        return ChapterBulkUploadResponse(
+            story_id=story.id,
+            uploaded=uploaded,
+            failed=failed,
+            results=[ChapterBulkUploadItem(**item) for item in results],
+        )
+    finally:
+        db.close()
+
+
+@router.put("/stories/{story_id}/chapters/reorder", response_model=ChapterListResponse)
+def reorder_chapters(
+    story_id: int,
+    payload: ChapterReorderPayload,
+    authorization: str | None = Header(None),
+    x_user_id: str | None = Header(None),
+):
+    db = SessionLocal()
+    try:
+        profile = _author_profile_or_401(db, authorization, x_user_id)
+        story, _draft = _author_story_or_404(db, profile.id, story_id)
+        chapters = db.query(Chapter).filter(Chapter.story_id == story.id).all()
+        chapters_by_id = {chapter.id: chapter for chapter in chapters}
+
+        if len(payload.chapter_ids) != len(set(payload.chapter_ids)):
+            raise HTTPException(status_code=400, detail="Duplicate chapter id in reorder list.")
+        if set(payload.chapter_ids) != set(chapters_by_id.keys()):
+            raise HTTPException(
+                status_code=400,
+                detail="The reorder list must include every chapter in this story exactly once.",
+            )
+
+        now = datetime.now(timezone.utc)
+        for index, chapter_id in enumerate(payload.chapter_ids, start=1):
+            chapter = chapters_by_id[chapter_id]
+            chapter.position = index
+            chapter.updated_at = now
+            db.add(chapter)
+
+        story.updated_at = now
+        db.add(story)
+        db.commit()
+
+        ordered = sorted(chapters_by_id.values(), key=lambda chapter: chapter.position)
+        return ChapterListResponse(
+            story_id=story.id,
+            chapters=[ChapterOut(**_chapter_out(chapter)) for chapter in ordered],
+            total_chapters=len(ordered),
+            published_chapters=sum(1 for chapter in ordered if chapter.status == "published"),
+            total_words=sum(chapter.word_count or 0 for chapter in ordered),
+        )
+    finally:
+        db.close()
+
+
+@router.put("/stories/{story_id}/chapters/{chapter_id}", response_model=ChapterDetailOut)
+def update_chapter(
+    story_id: int,
+    chapter_id: int,
+    payload: ChapterUpdatePayload,
+    authorization: str | None = Header(None),
+    x_user_id: str | None = Header(None),
+):
+    """Edit, rename, change content, or move a chapter between draft and
+    published (i.e. "Save as Draft" vs "Publish")."""
+    db = SessionLocal()
+    try:
+        profile = _author_profile_or_401(db, authorization, x_user_id)
+        story, _draft = _author_story_or_404(db, profile.id, story_id)
+        chapter = _author_chapter_or_404(db, story.id, chapter_id)
+
+        if payload.title is not None:
+            safe_title = _safe_text(payload.title)
+            if not safe_title:
+                raise HTTPException(status_code=400, detail="Chapter title is required.")
+            chapter.title = safe_title
+
+        if payload.content is not None:
+            safe_content = _safe_long_text(payload.content, 500_000) or ""
+            chapter.content = safe_content
+            chapter.word_count = word_count(safe_content)
+            chapter.upload_error = None
+
+        if payload.status is not None:
+            if payload.status not in {"draft", "published"}:
+                raise HTTPException(status_code=400, detail="Status must be 'draft' or 'published'.")
+            if payload.status == "published" and chapter.status != "published":
+                chapter.published_at = datetime.now(timezone.utc)
+            if payload.status == "draft":
+                chapter.published_at = None
+            chapter.status = payload.status
+
+        now = datetime.now(timezone.utc)
+        chapter.updated_at = now
+        story.updated_at = now
+        db.add(chapter)
+        db.add(story)
+        db.commit()
+        db.refresh(chapter)
+        return ChapterDetailOut(**_chapter_out(chapter, include_content=True))
+    finally:
+        db.close()
+
+
+@router.post("/stories/{story_id}/chapters/{chapter_id}/publish", response_model=ChapterOut)
+def publish_chapter(
+    story_id: int,
+    chapter_id: int,
+    authorization: str | None = Header(None),
+    x_user_id: str | None = Header(None),
+):
+    db = SessionLocal()
+    try:
+        profile = _author_profile_or_401(db, authorization, x_user_id)
+        story, _draft = _author_story_or_404(db, profile.id, story_id)
+        chapter = _author_chapter_or_404(db, story.id, chapter_id)
+        if not (chapter.content or "").strip():
+            raise HTTPException(status_code=400, detail="Add some content before publishing this chapter.")
+        now = datetime.now(timezone.utc)
+        chapter.status = "published"
+        chapter.published_at = now
+        chapter.updated_at = now
+        story.updated_at = now
+        db.add(chapter)
+        db.add(story)
+        db.commit()
+        db.refresh(chapter)
+        return ChapterOut(**_chapter_out(chapter))
+    finally:
+        db.close()
+
+
+@router.post("/stories/{story_id}/chapters/{chapter_id}/unpublish", response_model=ChapterOut)
+def unpublish_chapter(
+    story_id: int,
+    chapter_id: int,
+    authorization: str | None = Header(None),
+    x_user_id: str | None = Header(None),
+):
+    """Move a chapter back to draft (used by the "Save as Draft" action)."""
+    db = SessionLocal()
+    try:
+        profile = _author_profile_or_401(db, authorization, x_user_id)
+        story, _draft = _author_story_or_404(db, profile.id, story_id)
+        chapter = _author_chapter_or_404(db, story.id, chapter_id)
+        now = datetime.now(timezone.utc)
+        chapter.status = "draft"
+        chapter.published_at = None
+        chapter.updated_at = now
+        story.updated_at = now
+        db.add(chapter)
+        db.add(story)
+        db.commit()
+        db.refresh(chapter)
+        return ChapterOut(**_chapter_out(chapter))
+    finally:
+        db.close()
+
+
+@router.delete("/stories/{story_id}/chapters/{chapter_id}")
+def delete_chapter(
+    story_id: int,
+    chapter_id: int,
+    authorization: str | None = Header(None),
+    x_user_id: str | None = Header(None),
+):
+    db = SessionLocal()
+    try:
+        profile = _author_profile_or_401(db, authorization, x_user_id)
+        story, _draft = _author_story_or_404(db, profile.id, story_id)
+        chapter = _author_chapter_or_404(db, story.id, chapter_id)
+        db.delete(chapter)
+        db.flush()
+
+        # Compact positions so there are no gaps left behind.
+        remaining = (
+            db.query(Chapter)
+            .filter(Chapter.story_id == story.id)
+            .order_by(Chapter.position.asc(), Chapter.id.asc())
+            .all()
+        )
+        for index, remaining_chapter in enumerate(remaining, start=1):
+            if remaining_chapter.position != index:
+                remaining_chapter.position = index
+                db.add(remaining_chapter)
+
+        story.updated_at = datetime.now(timezone.utc)
+        db.add(story)
+        db.commit()
+        return {"status": "deleted", "chapter_id": chapter_id, "story_id": story.id}
     finally:
         db.close()
 

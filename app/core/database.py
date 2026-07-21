@@ -124,6 +124,9 @@ def ensure_database_schema() -> None:
         if "chapter_content" not in existing_columns:
             missing_columns.append(("chapter_content", text_type))
 
+        if "original_status" not in existing_columns:
+            missing_columns.append(("original_status", "VARCHAR DEFAULT 'standard' NOT NULL"))
+
         if "created_at" not in existing_columns:
             missing_columns.append(("created_at", "TIMESTAMP"))
 
@@ -283,6 +286,9 @@ def ensure_database_schema() -> None:
         if "genre" not in story_columns:
             story_missing_columns.append(("genre", "VARCHAR"))
 
+        if "original_status" not in story_columns:
+            story_missing_columns.append(("original_status", "VARCHAR DEFAULT 'standard' NOT NULL"))
+
         if "cover" not in story_columns:
             story_missing_columns.append(("cover", "VARCHAR"))
 
@@ -326,9 +332,36 @@ def ensure_database_schema() -> None:
         "story_review_audits",
         "author_notifications",
         "app_settings",
+        "chapters",
     ):
         if not inspector.has_table(table_name):
             Base.metadata.tables[table_name].create(bind=engine, checkfirst=True)
+
+    if inspector.has_table("chapters"):
+        chapter_columns = {
+            column["name"]
+            for column in inspector.get_columns("chapters")
+        }
+        chapter_missing_columns = []
+
+        if "upload_error" not in chapter_columns:
+            chapter_missing_columns.append(("upload_error", text_type))
+
+        if "original_filename" not in chapter_columns:
+            chapter_missing_columns.append(("original_filename", "VARCHAR"))
+
+        if "source_extension" not in chapter_columns:
+            chapter_missing_columns.append(("source_extension", "VARCHAR"))
+
+        if "published_at" not in chapter_columns:
+            chapter_missing_columns.append(("published_at", "TIMESTAMP"))
+
+        if chapter_missing_columns:
+            with engine.begin() as connection:
+                for name, column_type in chapter_missing_columns:
+                    connection.execute(
+                        text(f"ALTER TABLE chapters ADD COLUMN {name} {column_type}")
+                    )
 
     if inspector.has_table("reader_engagement"):
         engagement_columns = {

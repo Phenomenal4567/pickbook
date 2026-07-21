@@ -2,11 +2,17 @@ import os
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
-# 1. Look for Railway's default Redis variable, or a custom one. 
-# 2. Fallback to "memory://" if neither exists (great for local dev).
-redis_url = os.getenv("REDIS_URL") or os.getenv("RATELIMIT_STORAGE_URI") or "memory://"
+def _rate_limit_storage_uri() -> str:
+    """Use Redis for rate limiting only when it is configured explicitly."""
+    explicit_uri = os.getenv("RATELIMIT_STORAGE_URI", "").strip()
+    if explicit_uri:
+        return explicit_uri
+
+    # Railway can expose REDIS_URL for unrelated services. If those credentials
+    # are stale or disabled, SlowAPI raises before the endpoint can run.
+    return "memory://"
 
 limiter = Limiter(
     key_func=get_remote_address,
-    storage_uri=redis_url
+    storage_uri=_rate_limit_storage_uri()
 )

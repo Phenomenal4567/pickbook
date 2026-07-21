@@ -1,7 +1,6 @@
 
 import asyncio
 import sys
-from urllib.parse import urlparse
 
 # Playwright on Windows requires ProactorEventLoop
 # because it launches browser subprocesses internally.
@@ -9,11 +8,10 @@ if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 from contextlib import asynccontextmanager
 from pathlib import Path
-import requests
+from urllib.parse import urlparse
 from fastapi import FastAPI, Request, Header, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, FileResponse
-from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import inspect
@@ -24,29 +22,12 @@ from app.core.limiter import limiter
 from app.core.database import engine, initialize_database
 from app.author_portal.routes import router as author_router
 from app.admin.routes import router as admin_router
-from app.ingest.routes import router as ingest_router
 from app.payments.routes import router as payments_router
 from app.features.routes import router as features_router
 
 # Absolute path to this file's directory (app/)
 # Prevents broken paths when the working directory differs from the project root
 BASE_DIR = Path(__file__).resolve().parent
-IMAGE_PROXY_HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/124.0.0.0 Safari/537.36"
-    ),
-}
-IMAGE_PROXY_HOSTS = {
-    "freewebnovel.com",
-    "www.freewebnovel.com",
-    "lightnovelworld.org",
-    "www.lightnovelworld.org",
-    "royalroad.com",
-    "www.royalroad.com",
-}
-
 # =========================================================
 # DATABASE INIT — lifespan replaces deprecated @on_event
 # =========================================================
@@ -89,6 +70,15 @@ app.add_middleware(
 )
 
 
+def _csp_connect_src() -> str:
+    sources = ["'self'", "https://api.paystack.co"]
+    if settings.push_api_base_url:
+        parsed = urlparse(settings.push_api_base_url)
+        if parsed.scheme and parsed.netloc:
+            sources.append(f"{parsed.scheme}://{parsed.netloc}")
+    return " ".join(sources)
+
+
 @app.middleware("http")
 async def security_headers(request: Request, call_next):
     response = await call_next(request)
@@ -106,7 +96,7 @@ async def security_headers(request: Request, call_next):
             "script-src 'self' 'unsafe-inline'; "
             "style-src 'self' 'unsafe-inline'; "
             "img-src 'self' data: https:; "
-            "connect-src 'self' https://api.paystack.co; "
+            f"connect-src {_csp_connect_src()}; "
             "frame-src https://checkout.paystack.com; "
             "object-src 'none'; "
             "base-uri 'self'; "
@@ -131,6 +121,30 @@ app.mount(
     StaticFiles(directory=str(PROJECT_ROOT / "public" / "uploads")),
     name="uploads",
 )
+
+
+@app.get("/service-worker.js", include_in_schema=False)
+async def service_worker():
+    return FileResponse(
+        str(PROJECT_ROOT / "public" / "service-worker.js"),
+        media_type="application/javascript",
+    )
+
+
+@app.get("/push-subscription-manager.js", include_in_schema=False)
+async def push_subscription_manager():
+    return FileResponse(
+        str(PROJECT_ROOT / "public" / "push-subscription-manager.js"),
+        media_type="application/javascript",
+    )
+
+
+@app.get("/manifest.json", include_in_schema=False)
+async def manifest():
+    return FileResponse(
+        str(BASE_DIR / "pwa" / "manifest.json"),
+        media_type="application/manifest+json",
+    )
 
 # =========================================================
 # TEMPLATES — absolute path avoids working-directory issues
@@ -157,7 +171,6 @@ def verify_admin(x_admin_token: str = Header(None)) -> None:
 app.include_router(author_router)
 # admin_router is protected globally — every route requires a valid token
 app.include_router(admin_router, dependencies=[Depends(verify_admin)])
-app.include_router(ingest_router)
 app.include_router(payments_router)
 app.include_router(features_router)
 
@@ -176,7 +189,7 @@ async def public_admin_tools(request: Request):
 async def home(request: Request):
     return templates.TemplateResponse(
         "index.html",
-        {"request": request},
+        {"request": request, "settings": settings},
     )
 
 
@@ -184,39 +197,9 @@ async def home(request: Request):
 async def payment_success(request: Request):
     return templates.TemplateResponse(
         "index.html",
-        {"request": request},
+        {"request": request, "settings": settings},
     )
 
-
-@app.get("/cover-proxy")
-def cover_proxy(url: str):
-    parsed = urlparse(url)
-    host = (parsed.hostname or "").lower()
-
-    if parsed.scheme not in {"http", "https"} or host not in IMAGE_PROXY_HOSTS:
-        raise HTTPException(status_code=400, detail="Unsupported cover URL")
-
-    try:
-        response = requests.get(
-            url,
-            headers=IMAGE_PROXY_HEADERS,
-            timeout=20,
-            stream=True,
-        )
-        response.raise_for_status()
-    except requests.RequestException:
-        raise HTTPException(status_code=502, detail="Cover image unavailable")
-
-    content_type = response.headers.get("content-type", "image/jpeg")
-    if not content_type.startswith("image/"):
-        response.close()
-        raise HTTPException(status_code=502, detail="Cover URL is not an image")
-
-    return StreamingResponse(
-        response.iter_content(chunk_size=8192),
-        media_type=content_type,
-        headers={"Cache-Control": "public, max-age=86400"},
-    )
 
 # =========================================================
 # HEALTH CHECK
