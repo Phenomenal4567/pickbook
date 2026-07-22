@@ -33,6 +33,7 @@ def run_migrations_online() -> None:
 
     if settings.sqlalchemy_database_url.startswith("postgres"):
         connect_args["sslmode"] = settings.database_sslmode
+        connect_args["prepare_threshold"] = None
 
     connectable = engine_from_config(
         section,

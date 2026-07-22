@@ -35,6 +35,7 @@ if database_url.startswith("postgres"):
     connect_args = {
         "sslmode": settings.database_sslmode,
         "connect_timeout": settings.database_connect_timeout_seconds,
+        "prepare_threshold": None,
     }
 elif database_url.startswith("sqlite"):
     connect_args = {"check_same_thread": False}
