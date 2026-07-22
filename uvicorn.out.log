@@ -157,3 +157,348 @@ INFO:     127.0.0.1:55563 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
 INFO:     127.0.0.1:55559 - "GET /admin/dashboard HTTP/1.1" 200 OK
 INFO:     127.0.0.1:55566 - "GET /admin/dashboard HTTP/1.1" 200 OK
 INFO:     127.0.0.1:55562 - "GET /api/authors/9a2cf74f-cbc4-4921-9e13-3d975b2a2c8a/profile HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56054 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56054 - "GET /author/submissions HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56054 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56055 - "GET /author/submissions HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56054 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56055 - "GET /author/submissions HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56054 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56055 - "GET /author/submissions HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56054 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56055 - "GET /author/submissions HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56054 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56055 - "GET /author/submissions HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56054 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56055 - "GET /author/submissions HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56054 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56055 - "GET /author/submissions HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56386 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56387 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56387 - "GET /api/reader-state HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56391 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56391 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56393 - "GET /api/reader-state HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56386 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56386 - "GET /service-worker.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56388 - "GET /api/books?limit=5000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56389 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56386 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56388 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56388 - "GET /api/reader-state HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56391 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56391 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56392 - "GET /api/books?limit=5000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56392 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56392 - "GET /api/reader-state HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56386 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56391 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56391 - "GET /service-worker.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56389 - "GET /api/books?limit=5000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56392 - "GET /api/books?limit=5000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56388 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56386 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56393 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56898 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56898 - "GET /author/submissions HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58313 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58315 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58317 - "GET /api/reader-state HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58313 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58316 - "GET /api/books?limit=5000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58315 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58313 - "GET /service-worker.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58313 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58315 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58316 - "GET /api/reader-state HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58316 - "GET /service-worker.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58316 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58316 - "GET /author/submissions HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58315 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58317 - "GET /api/books?limit=5000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58313 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58324 - "POST /author/submit HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:58324 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58326 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58324 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58327 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58324 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58329 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58327 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58326 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58324 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58328 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58329 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58327 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58326 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58324 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58330 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58486 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58489 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58491 - "GET /api/reader-state HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58490 - "GET /api/books?limit=5000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58486 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58491 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58486 - "GET /service-worker.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58490 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58486 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58486 - "GET /api/reader-state HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58494 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58494 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58496 - "GET /api/reader-state HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58490 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58486 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58491 - "GET /api/books?limit=5000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58490 - "GET /service-worker.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58486 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58486 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58486 - "GET /api/reader-state HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58497 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58494 - "GET /api/books?limit=5000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58494 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58497 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58497 - "GET /api/reader-state HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58486 - "GET /api/books?limit=5000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58490 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58491 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58490 - "GET /service-worker.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58490 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58491 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58491 - "GET /api/reader-state HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58496 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58494 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58497 - "GET /api/books?limit=5000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58486 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58490 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58491 - "GET /api/books?limit=5000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58494 - "GET /service-worker.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58496 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58486 - "GET /admin/tools HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58490 - "GET /service-worker.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58494 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58490 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58490 - "GET /api/reader-state HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58497 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58491 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58491 - "GET /api/reader-state HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58486 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58486 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58490 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58494 - "GET /api/books?limit=5000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58494 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58486 - "GET /service-worker.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58494 - "GET /api/reader-state HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58497 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58496 - "GET /api/books?limit=5000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58497 - "GET /service-worker.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58490 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58486 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58494 - "GET /api/books?limit=5000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58491 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58497 - "GET /api/novels/2/engagement/me HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58497 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58504 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58506 - "GET /api/reader-state HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58497 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58504 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58505 - "GET /api/books?limit=5000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58497 - "GET /service-worker.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58497 - "GET /api/novels/2/engagement/me HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58516 - "GET /api/authors/ac42dd95-a315-49ff-8779-745805adbff5/profile HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58516 - "GET /uploads/covers/story-2-fd9250ad6aa7163c.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58518 - "GET /uploads/covers/story-3-55d17e565689d514.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58520 - "GET /api/novels/3/engagement/me HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58520 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58521 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58523 - "GET /api/reader-state HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58523 - "GET /service-worker.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58520 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58521 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58520 - "GET /api/novels/2/engagement/me HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58522 - "GET /api/books?limit=5000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58523 - "GET /uploads/covers/story-2-fd9250ad6aa7163c.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58522 - "GET /uploads/covers/story-3-55d17e565689d514.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58520 - "GET /api/authors/ac42dd95-a315-49ff-8779-745805adbff5/profile HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58526 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58526 - "GET /author/submissions HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58526 - "POST /author/submit HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:58530 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58531 - "GET /author/submissions HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58531 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58531 - "GET /author/submissions HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58531 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58530 - "GET /author/submissions HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58531 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58530 - "GET /author/submissions HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58531 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58530 - "GET /author/submissions HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58531 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58530 - "GET /author/submissions HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58531 - "GET /admin/tools HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58538 - "GET /service-worker.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58538 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58540 - "GET /uploads/covers/story-3-55d17e565689d514.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58541 - "GET /uploads/covers/story-2-fd9250ad6aa7163c.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58539 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58538 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58538 - "POST /admin/stories/2/approve HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58548 - "GET /uploads/covers/story-2-fd9250ad6aa7163c.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58547 - "GET /uploads/covers/story-3-55d17e565689d514.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58548 - "GET /uploads/covers/story-3-55d17e565689d514.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58547 - "GET /uploads/covers/story-2-fd9250ad6aa7163c.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58549 - "GET /uploads/covers/story-3-55d17e565689d514.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58550 - "GET /uploads/covers/story-2-fd9250ad6aa7163c.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58538 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58548 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58546 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58547 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58548 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58538 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58548 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58552 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58547 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58538 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58551 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58538 - "POST /author/submit HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:58538 - "GET /admin/tools HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58557 - "GET /service-worker.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58557 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58558 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58560 - "GET /uploads/covers/story-2-fd9250ad6aa7163c.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58560 - "GET /uploads/covers/story-3-55d17e565689d514.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58559 - "GET /admin/stories?status=pending_review HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58561 - "GET /uploads/covers/story-2-fd9250ad6aa7163c.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58561 - "GET /uploads/covers/story-3-55d17e565689d514.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58563 - "GET /uploads/covers/story-2-fd9250ad6aa7163c.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58563 - "GET /uploads/covers/story-3-55d17e565689d514.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58557 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58557 - "GET /uploads/covers/story-2-fd9250ad6aa7163c.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58557 - "GET /uploads/covers/story-3-55d17e565689d514.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58558 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58558 - "GET /uploads/covers/story-2-fd9250ad6aa7163c.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58558 - "GET /uploads/covers/story-3-55d17e565689d514.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58559 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58561 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58561 - "GET /uploads/covers/story-3-55d17e565689d514.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58561 - "GET /uploads/covers/story-2-fd9250ad6aa7163c.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58557 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58560 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58563 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58559 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58558 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58569 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58569 - "GET /author/submissions HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:58572 - "GET /uploads/covers/story-2-fd9250ad6aa7163c.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58572 - "GET /uploads/covers/story-3-55d17e565689d514.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58573 - "GET /uploads/covers/story-2-fd9250ad6aa7163c.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58573 - "GET /uploads/covers/story-3-55d17e565689d514.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58571 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58574 - "GET /uploads/covers/story-2-fd9250ad6aa7163c.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58574 - "GET /uploads/covers/story-3-55d17e565689d514.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58572 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58572 - "GET /uploads/covers/story-2-fd9250ad6aa7163c.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58572 - "GET /uploads/covers/story-3-55d17e565689d514.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58569 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58570 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58573 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58574 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58571 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58579 - "POST /author/submit HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:58580 - "GET /admin/tools HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58582 - "GET /service-worker.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58586 - "GET /uploads/covers/story-3-55d17e565689d514.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58585 - "GET /uploads/covers/story-2-fd9250ad6aa7163c.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58585 - "GET /uploads/covers/story-2-fd9250ad6aa7163c.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58587 - "GET /uploads/covers/story-3-55d17e565689d514.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58584 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58586 - "GET /admin/stories?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58582 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63911 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63912 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:63914 - "GET /api/reader-state HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:63911 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:63913 - "GET /api/books?limit=5000 HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:63912 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:63914 - "GET /service-worker.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63967 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63969 - "GET /api/streak/calendar HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:64036 - "GET /api/achievements HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:64039 - "DELETE /api/auth/account HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:64042 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64042 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:64043 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:64045 - "GET /api/reader-state HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:64044 - "GET /api/books?limit=5000 HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:64043 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 500 Internal Server Error
+INFO:     127.0.0.1:64045 - "GET /service-worker.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64045 - "GET /api/achievements HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:64047 - "DELETE /api/auth/account HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:64095 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:64095 - "GET /author/submissions HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:64112 - "GET /api/streak/calendar HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:64122 - "GET /admin/tools HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60162 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60165 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:60167 - "GET /api/reader-state HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:60162 - "GET /service-worker.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60162 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60165 - "GET /manifest.json HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60162 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:60162 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60180 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:60182 - "GET /api/reader-state HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:60180 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60180 - "GET /service-worker.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60162 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60181 - "GET /api/books?limit=5000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60162 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:60162 - "GET /api/achievements HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:60162 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:60162 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:60162 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:60162 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:60162 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:60162 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:60486 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60486 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:60488 - "GET /api/reader-state HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:60488 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60488 - "GET /service-worker.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60487 - "GET /api/announcements?limit=20&offset=0&audience=authors HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60486 - "GET /api/books?limit=5000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60486 - "GET /author/application HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:60494 - "POST /api/auth/signup HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:60494 - "GET /api/achievements HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:60498 - "DELETE /api/auth/account HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:60498 - "GET /api/achievements HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:60498 - "POST /api/auth/logout HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60501 - "GET /static/legal/PickBook_Author_Agreement_and_Monetization_Policy.docx HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60501 - "GET /service-worker.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60501 - "POST /api/auth/signup HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60501 - "POST /api/reader-state HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60501 - "GET /push-subscription-manager.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60501 - "GET /api/push/vapid-public-key HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:60501 - "GET /author/application HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60501 - "GET /author/application HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60501 - "GET /author/application HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60513 - "POST /author/application HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60513 - "GET /author/application HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60513 - "GET /admin/tools HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60513 - "GET /service-worker.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60513 - "GET /admin/authors/applications?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60513 - "POST /admin/authors/applications/2/approve HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60515 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60513 - "GET /admin/authors/applications?status=all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60518 - "GET /service-worker.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60517 - "GET /author/application HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60516 - "GET /api/announcements?limit=20&offset=0&audience=free HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60513 - "GET /api/books?limit=5000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60515 - "GET /api/reader-state HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60518 - "GET /author/application HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60518 - "GET /api/push/vapid-public-key HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:60515 - "GET /api/announcements?limit=20&offset=0&audience=free HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60518 - "GET /author/submissions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60901 - "GET /author/application HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60901 - "GET /author/submissions HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60903 - "GET /api/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60903 - "GET /api/push/vapid-public-key HTTP/1.1" 404 Not Found

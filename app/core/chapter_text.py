@@ -16,6 +16,25 @@ import re
 import bleach
 
 CHAPTER_ALLOWED_EXTENSIONS = {".txt", ".docx"}
+CHAPTER_FILENAME_FORMAT = (
+    "Name chapter files like 'Chapter 01.docx', 'Chapter 01 - Arrival.docx', "
+    "or '01_Arrival.txt'. Leading zeros are optional."
+)
+CHAPTER_FILENAME_PATTERN = re.compile(
+    r"""
+    ^\s*
+    (?:
+        (?:chapter|chap|ch)\s*
+    )?
+    (?P<number>0*[1-9]\d*)
+    (?:
+        \s*(?:[-_:.\u2013\u2014])\s*
+        (?P<title>.+?)
+    )?
+    \s*$
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
 
 
 class ChapterExtractionError(ValueError):
@@ -23,7 +42,33 @@ class ChapterExtractionError(ValueError):
 
 
 def normalize_text(value: str) -> str:
-    return re.sub(r"[ \t]+", " ", (value or "").replace("\r\n", "\n").replace("\r", "\n")).strip()
+    text = (value or "").replace("\r\n", "\n").replace("\r", "\n")
+    text = re.sub(r"[\u00a0\u200b\ufeff]", " ", text)
+    text = re.sub(r"[ \t]+", " ", text)
+    text = re.sub(r" *\n *", "\n", text)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
+
+
+def parse_chapter_filename(filename: str) -> tuple[int, str | None]:
+    """Return the chapter number and optional title encoded in a filename.
+
+    Supported examples:
+    - Chapter 01.docx
+    - Chapter 1 - The Door Opens.txt
+    - Ch 02_Second Night.docx
+    - 03.Arrival.txt
+    """
+    stem = filename.rsplit(".", 1)[0] if "." in filename else filename
+    match = CHAPTER_FILENAME_PATTERN.match(stem)
+    if not match:
+        raise ChapterExtractionError(
+            f"'{filename}' does not match the required chapter filename format. "
+            f"{CHAPTER_FILENAME_FORMAT}"
+        )
+
+    title = normalize_text(re.sub(r"[_\-]+", " ", match.group("title") or ""))
+    return int(match.group("number")), (title[:255] if title else None)
 
 
 def extract_docx_text(content: bytes) -> str:
@@ -51,7 +96,7 @@ def extract_docx_text(content: bytes) -> str:
                 if cell.text.strip():
                     paragraphs.append(cell.text)
 
-    text = "\n\n".join(part.strip() for part in paragraphs if part.strip())
+    text = "\n\n".join(normalize_text(part) for part in paragraphs if normalize_text(part))
     return normalize_text(text)
 
 
@@ -80,6 +125,12 @@ def extract_chapter_text(filename: str, extension: str, content: bytes) -> str:
 
 
 def chapter_title_from_filename(filename: str) -> str:
+    try:
+        number, parsed_title = parse_chapter_filename(filename)
+        return (parsed_title or f"Chapter {number}")[:255]
+    except ChapterExtractionError:
+        pass
+
     stem = filename.rsplit(".", 1)[0] if "." in filename else filename
     stem = re.sub(r"[_\-]+", " ", stem).strip()
     stem = re.sub(r"\s+", " ", stem)

@@ -1351,6 +1351,7 @@
         <div class="author-rights-note"><strong>Your stories remain yours. Always.</strong> PickBook only needs a non-exclusive license to host and distribute work you choose to submit.</div>
         <div class="author-rules">
           Manuscripts: TXT, DOCX, or EPUB only. Chapter files: TXT or DOCX, multiple files allowed.<br>
+          Chapter files must be named like Chapter 01.docx, Chapter 01 - Title.docx, or 01_Title.txt. PickBook orders chapters by that number.<br>
           Covers: JPG, PNG, or WEBP only. Maximum size: 5 MB.
         </div>
         <div class="author-upload-form form-stack">
@@ -1387,6 +1388,7 @@
           <input id="author-file" type="file" accept=".txt,.docx,.epub">
           <label>Bulk chapter files <span class="feature-note">(each file becomes one editable chapter)</span></label>
           <input id="author-chapter-files" type="file" accept=".txt,.docx" multiple>
+          <div class="feature-note">Use Chapter 01.docx, Chapter 01 - Title.docx, or 01_Title.txt. Duplicate or missing chapter numbers are rejected.</div>
           <progress id="author-chapter-upload-progress" class="hidden" value="0" max="100" style="width:100%;margin-top:0.45rem"></progress>
           <label>Book cover</label>
           <input id="author-cover" type="file" accept=".jpg,.jpeg,.png,.webp" onchange="previewAuthorCover()">
@@ -1825,9 +1827,48 @@ function saveState() {
 }
 
 let readerSyncTimer = null;
+let sessionRenewalTimer = null;
 let readerSyncStatus = (state.userId || state.accessToken) ? 'synced' : 'local';
 const authorStoryTitles = {};
 const authorStoryOriginalStatuses = {};
+
+function decodeJwtPayload(token) {
+  if (!token || typeof token !== 'string' || token.split('.').length < 2) return null;
+  try {
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64.padEnd(base64.length + ((4 - base64.length % 4) % 4), '=');
+    return JSON.parse(atob(padded));
+  } catch (err) {
+    return null;
+  }
+}
+
+function tokenExpiryMillis(token) {
+  const payload = decodeJwtPayload(token);
+  return payload && Number(payload.exp) ? Number(payload.exp) * 1000 : null;
+}
+
+function tokenExpiresWithin(token, windowMs) {
+  const expiresAt = tokenExpiryMillis(token);
+  return !!expiresAt && expiresAt - Date.now() <= windowMs;
+}
+
+function scheduleSessionRenewal() {
+  clearTimeout(sessionRenewalTimer);
+  const expiresAt = tokenExpiryMillis(state.accessToken);
+  if (!expiresAt) return;
+  const renewAt = Math.max(30 * 1000, expiresAt - Date.now() - (5 * 60 * 1000));
+  sessionRenewalTimer = setTimeout(() => {
+    refreshLocalSession().catch(err => console.warn('[PickBook] Session renewal failed:', err));
+  }, renewAt);
+}
+
+function refreshSessionAfterResume() {
+  if (!state.accessToken) return;
+  if (tokenExpiresWithin(state.accessToken, 10 * 60 * 1000)) {
+    refreshLocalSession().catch(err => console.warn('[PickBook] Session resume refresh failed:', err));
+  }
+}
 
 function readerStatePayload() {
   return {
@@ -2382,16 +2423,13 @@ async function subscribeSignedInUserToPush() {
   });
 }
 function authorAuthHeaders() {
-  const headers = authHeaders();
-  if (Object.keys(headers).length) return headers;
+  if (state.authorToken) return { 'Authorization': `Bearer ${state.authorToken}` };
+  if (state.accessToken) return { 'Authorization': `Bearer ${state.accessToken}` };
   return state.authorId ? { 'X-User-Id': state.authorId } : {};
 }
 
 function clearExpiredAuthorSession() {
-  state.accessToken = null;
-  state.authorToken = null;
-  saveState();
-  renderAccountSyncStatus();
+  showToast('Please sign in again to continue.');
 }
 function isStandard() {
   if (state.plan !== 'standard') return false;
@@ -2492,9 +2530,10 @@ function applyProfileSession(profile) {
   state.plan = profile.current_plan || state.plan;
   state.subscriptionExpiry = profile.subscription_expiry || state.subscriptionExpiry;
   state.referralCode = profile.referral_code || state.referralCode;
+  scheduleSessionRenewal();
 }
-function requestAccountEmail() {
-  setAccountMode('signup');
+function requestAccountEmail(mode = 'signup') {
+  setAccountMode(mode);
   const overlay = document.getElementById('account-email-overlay');
   const input = document.getElementById('account-email-input');
   const passwordInput = document.getElementById('account-password-input');
@@ -2655,6 +2694,35 @@ async function ensureLocalProfile() {
   await pushReaderState();
   subscribeSignedInUserToPush().catch(err => console.info('[PickBook] Push subscription skipped:', err.message || err));
   return state.userId;
+}
+
+async function requestFreshAccountSession() {
+  const account = await requestAccountEmail('login');
+  if (!account) return false;
+  const endpoint = account.mode === 'reset'
+    ? '/api/auth/password-reset/confirm'
+    : '/api/auth/login';
+  const body = account.mode === 'reset'
+    ? { token: account.resetToken, newPassword: account.password }
+    : { email: account.email, password: account.password };
+  const res = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    showToast(err.detail || 'Could not sign in again.');
+    return false;
+  }
+  const profile = await res.json();
+  applyProfileSession(profile);
+  state.authorToken = profile.access_token || state.authorToken;
+  state.authorId = profile.id || state.authorId;
+  saveState();
+  renderPlan();
+  renderAccountSyncStatus('synced');
+  return true;
 }
 async function openAccountControls() {
   if (state.userId || state.accessToken) {
@@ -3344,10 +3412,18 @@ async function submitAuthorApplication() {
 }
 async function loadAuthorApplication() {
   if (!state.userId && !state.accessToken) return { status: null };
-  const res = await fetch('/author/application', { headers: authorAuthHeaders() });
+  let res = await fetch('/author/application', { headers: authorAuthHeaders() });
+  if (res.status === 401 && await refreshLocalSession()) {
+    res = await fetch('/author/application', { headers: authorAuthHeaders() });
+  }
+  if (res.status === 401 && (state.accessToken || state.authorToken)) {
+    clearExpiredAuthorSession();
+    if (await requestFreshAccountSession()) {
+      res = await fetch('/author/application', { headers: authorAuthHeaders() });
+    }
+  }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    if (res.status === 401) clearExpiredAuthorSession();
     return { status: null };
   }
   const penInput = document.getElementById('author-pen-name');
@@ -3726,6 +3802,7 @@ function renderAuthorSubmissions(data) {
           </div>
           <label>Bulk chapter files</label>
           <input id="chapter-files-${Number(item.story_id)}" type="file" accept=".txt,.docx" multiple>
+          <div class="feature-note">Name files Chapter 01.docx or Chapter 01 - Title.docx. Upload order does not matter.</div>
           <progress id="chapter-upload-progress-${Number(item.story_id)}" class="hidden" value="0" max="100" style="width:100%"></progress>
           <button class="btn-secondary" type="button" onclick="bulkUploadAuthorChapters(${Number(item.story_id)})">Upload Files</button>
         </div>
@@ -3780,8 +3857,9 @@ async function loadAuthorSubmissions() {
   }
   if (res.status === 401 && (state.accessToken || state.authorToken)) {
     clearExpiredAuthorSession();
-    const profileId = await ensureLocalProfile();
-    if (profileId) res = await fetch('/author/submissions', { headers: authorAuthHeaders() });
+    if (await requestFreshAccountSession()) {
+      res = await fetch('/author/submissions', { headers: authorAuthHeaders() });
+    }
   }
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
@@ -3838,8 +3916,9 @@ async function submitAuthorDraft() {
   }
   if (result.status === 401 && (state.accessToken || state.authorToken)) {
     clearExpiredAuthorSession();
-    const profileId = await ensureLocalProfile();
-    if (profileId) result = await uploadAuthorDraftWithProgress(payload);
+    if (await requestFreshAccountSession()) {
+      result = await uploadAuthorDraftWithProgress(payload);
+    }
   }
   const data = result.data || {};
   if (!result.ok) {
@@ -5243,6 +5322,7 @@ function initPickBook() {
   renderDownloadCount();
   renderPlan();
   renderAccountSyncStatus();
+  scheduleSessionRenewal();
   restoreAccountState();
   handlePaymentReturn();
   checkSubscriptionReminder();
@@ -5265,6 +5345,10 @@ function initPickBook() {
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') setAuthorGenreMenuOpen(false);
   });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') refreshSessionAfterResume();
+  });
+  window.addEventListener('pageshow', refreshSessionAfterResume);
   renderAuthorGenrePicker();
   refreshAuthorNavState();
 

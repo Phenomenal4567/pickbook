@@ -1,5 +1,6 @@
 from pathlib import Path, PurePath, PureWindowsPath
 from datetime import datetime, timezone
+from dataclasses import dataclass
 import json
 import re
 import secrets
@@ -14,9 +15,11 @@ from sqlalchemy.exc import IntegrityError
 from app.core.auth import create_access_token, profile_id_from_token
 from app.core.chapter_text import (
     CHAPTER_ALLOWED_EXTENSIONS,
+    CHAPTER_FILENAME_FORMAT,
     ChapterExtractionError,
     chapter_title_from_filename,
     extract_chapter_text,
+    parse_chapter_filename,
     word_count,
 )
 from app.core.config import settings
@@ -90,6 +93,7 @@ class AuthorSubmissionItem(BaseModel):
 
 class AuthorDashboardResponse(BaseModel):
     author_id: str
+    author_access_token: str | None = None
     author_name: str | None = None
     submissions: list[AuthorSubmissionItem]
     earnings: dict | None = None
@@ -174,6 +178,15 @@ class ChapterBulkUploadResponse(BaseModel):
     uploaded: int
     failed: int
     results: list[ChapterBulkUploadItem]
+
+
+@dataclass
+class PreparedChapterUpload:
+    upload_index: int
+    upload: UploadFile
+    filename: str
+    chapter_number: int
+    parsed_title: str | None = None
 
 
 def _safe_text(value: str) -> str:
@@ -724,6 +737,7 @@ def list_author_submissions(
 
         return AuthorDashboardResponse(
             author_id=profile.id,
+            author_access_token=create_access_token(profile.id),
             author_name=profile.username,
             submissions=submissions,
             earnings=_author_totals(db, profile.id),
@@ -836,6 +850,88 @@ def _chapter_extension(filename: str) -> str:
     return "." + filename.rsplit(".", 1)[-1].lower()
 
 
+def _parse_chapter_upload_filename(filename: str) -> tuple[int, str | None]:
+    try:
+        return parse_chapter_filename(filename)
+    except ChapterExtractionError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+def _prepare_chapter_uploads(files: list[UploadFile]) -> list[PreparedChapterUpload]:
+    prepared: list[PreparedChapterUpload] = []
+    seen: dict[int, str] = {}
+
+    for index, upload in enumerate(files):
+        original_name = _clean_chapter_filename(upload.filename)
+        if not original_name or original_name in {".", ".."}:
+            raise HTTPException(status_code=400, detail="Invalid filename.")
+
+        extension = _chapter_extension(original_name)
+        if extension not in CHAPTER_ALLOWED_EXTENSIONS:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"Unsupported file type '{extension}' for '{original_name}'. "
+                    f"Allowed: {', '.join(sorted(CHAPTER_ALLOWED_EXTENSIONS))}"
+                ),
+            )
+
+        chapter_number, parsed_title = _parse_chapter_upload_filename(original_name)
+        if chapter_number in seen:
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    f"Chapter number {chapter_number} appears in both "
+                    f"'{seen[chapter_number]}' and '{original_name}'. "
+                    "Each uploaded chapter file must use a unique chapter number."
+                ),
+            )
+        seen[chapter_number] = original_name
+        prepared.append(
+            PreparedChapterUpload(
+                upload_index=index,
+                upload=upload,
+                filename=original_name,
+                chapter_number=chapter_number,
+                parsed_title=parsed_title,
+            )
+        )
+
+    return sorted(prepared, key=lambda item: (item.chapter_number, item.upload_index))
+
+
+def _existing_chapter_filename_numbers(db, story_id: int) -> dict[int, str]:
+    rows = (
+        db.query(Chapter.original_filename)
+        .filter(Chapter.story_id == story_id, Chapter.original_filename.isnot(None))
+        .all()
+    )
+    numbers: dict[int, str] = {}
+    for (filename,) in rows:
+        if not filename:
+            continue
+        try:
+            chapter_number, _title = parse_chapter_filename(filename)
+        except ChapterExtractionError:
+            continue
+        numbers.setdefault(chapter_number, filename)
+    return numbers
+
+
+def _reject_existing_chapter_number_conflicts(db, story_id: int, prepared: list[PreparedChapterUpload]) -> None:
+    existing = _existing_chapter_filename_numbers(db, story_id)
+    for item in prepared:
+        existing_filename = existing.get(item.chapter_number)
+        if existing_filename:
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    f"Chapter number {item.chapter_number} already exists in "
+                    f"'{existing_filename}'. Rename '{item.filename}' or delete/reorder the existing chapter first."
+                ),
+            )
+
+
 async def _read_chapter_upload(upload: UploadFile, original_name: str) -> bytes:
     chunk = await upload.read(MAX_FILE_SIZE_BYTES + 1)
     if len(chunk) > MAX_FILE_SIZE_BYTES:
@@ -856,8 +952,10 @@ async def _build_chapter_from_file(
     *,
     position: int,
     title_override: str | None = None,
+    original_name_override: str | None = None,
+    parsed_title: str | None = None,
 ) -> Chapter:
-    original_name = _clean_chapter_filename(upload.filename)
+    original_name = original_name_override or _clean_chapter_filename(upload.filename)
     if not original_name or original_name in {".", ".."}:
         raise HTTPException(status_code=400, detail="Invalid filename.")
 
@@ -878,7 +976,7 @@ async def _build_chapter_from_file(
     except ChapterExtractionError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
-    safe_title = _safe_text(title_override or "") or chapter_title_from_filename(original_name)
+    safe_title = _safe_text(title_override or "") or _safe_text(parsed_title or "") or chapter_title_from_filename(original_name)
     chapter = Chapter(
         story_id=story.id,
         author_id=profile.id,
@@ -1164,8 +1262,30 @@ async def create_chapter(
         position = _next_chapter_position(db, story.id)
 
         if file is not None and file.filename:
+            original_name = _clean_chapter_filename(file.filename)
+            chapter_number, parsed_title = _parse_chapter_upload_filename(original_name)
+            _reject_existing_chapter_number_conflicts(
+                db,
+                story.id,
+                [
+                    PreparedChapterUpload(
+                        upload_index=0,
+                        upload=file,
+                        filename=original_name,
+                        chapter_number=chapter_number,
+                        parsed_title=parsed_title,
+                    )
+                ],
+            )
             chapter = await _build_chapter_from_file(
-                db, story, profile, file, position=position, title_override=title,
+                db,
+                story,
+                profile,
+                file,
+                position=position,
+                title_override=title,
+                original_name_override=original_name,
+                parsed_title=parsed_title,
             )
         else:
             safe_title = _safe_text(title or "")
@@ -1222,17 +1342,25 @@ async def bulk_upload_chapters(
     try:
         profile = _author_profile_or_401(db, authorization, x_user_id)
         story, _draft = _author_story_or_404(db, profile.id, story_id)
+        prepared_uploads = _prepare_chapter_uploads(files)
+        _reject_existing_chapter_number_conflicts(db, story.id, prepared_uploads)
 
         next_position = _next_chapter_position(db, story.id)
         results: list[dict] = []
         uploaded = 0
         failed = 0
 
-        for upload in files:
-            display_name = upload.filename or "untitled"
+        for item in prepared_uploads:
+            display_name = item.filename
             try:
                 chapter = await _build_chapter_from_file(
-                    db, story, profile, upload, position=next_position,
+                    db,
+                    story,
+                    profile,
+                    item.upload,
+                    position=next_position,
+                    original_name_override=item.filename,
+                    parsed_title=item.parsed_title,
                 )
                 story.updated_at = datetime.now(timezone.utc)
                 db.add(story)

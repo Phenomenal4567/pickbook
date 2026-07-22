@@ -1,4 +1,4 @@
-const CACHE_NAME = "pickbook-cache-v1";
+const CACHE_NAME = "pickbook-cache-v2";
 const DEFAULT_NOTIFICATION_URL = "/";
 const DEFAULT_ICON = "/static/favicon.ico";
 const DEFAULT_BADGE = "/static/favicon.ico";
@@ -36,6 +36,22 @@ self.addEventListener("activate", event => {
 self.addEventListener("fetch", event => {
   // Only cache GET requests; skip cross-origin requests.
   if (event.request.method !== "GET") return;
+
+  const url = new URL(event.request.url);
+  const isSameOrigin = url.origin === self.location.origin;
+  const isNavigation = event.request.mode === "navigate";
+  const isApiRequest = isSameOrigin && (
+    url.pathname.startsWith("/api/") ||
+    url.pathname.startsWith("/author/") ||
+    url.pathname.startsWith("/admin/")
+  );
+
+  if (isNavigation || isApiRequest) {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(event.request))
+    );
+    return;
+  }
 
   event.respondWith(
     caches.open(CACHE_NAME).then(async cache => {

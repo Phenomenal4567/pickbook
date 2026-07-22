@@ -230,7 +230,7 @@ def _safe_public_profile(profile: Profile) -> dict:
         "terms_version": profile.terms_version,
         "access_token": create_access_token(profile.id),
         "token_type": "bearer",
-        "expires_in": 15 * 60,
+        "expires_in": settings.access_token_expire_minutes * 60,
     }
 
 

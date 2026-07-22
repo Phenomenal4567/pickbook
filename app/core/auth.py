@@ -9,12 +9,11 @@ from app.models.book import Profile
 
 bearer_scheme = HTTPBearer(auto_error=False)
 JWT_ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 15
 
 
 def create_access_token(profile_id: str) -> str:
     expires_at = datetime.now(timezone.utc) + timedelta(
-        minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+        minutes=settings.access_token_expire_minutes
     )
     return jwt.encode(
         {

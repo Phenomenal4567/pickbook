@@ -5,6 +5,7 @@ from typing import List
 class Settings(BaseSettings):
     app_env: str = "development"
     secret_key: str = "dev-secret-change-in-production"
+    access_token_expire_minutes: int = 60 * 24 * 30
     allowed_origins: str = "http://localhost:3000"
     database_url: str = "postgresql://pickbook:pickbook@localhost:5432/pickbook"
     database_sslmode: str = "require"
