@@ -1388,7 +1388,7 @@
           <input id="author-file" type="file" accept=".txt,.docx,.epub">
           <label>Bulk chapter files <span class="feature-note">(each file becomes one editable chapter)</span></label>
           <input id="author-chapter-files" type="file" accept=".txt,.docx" multiple>
-          <div class="feature-note">Use Chapter 01.docx, Chapter 01 - Title.docx, or 01_Title.txt. Duplicate or missing chapter numbers are rejected.</div>
+          <div class="feature-note">Name files like Chapter 01.docx, Chapter 01 - Title.docx, Chapter 2.docx, or Chapter 12 - The Journey.docx. You can use any positive chapter number (e.g., 1, 2, 12, 100), with or without leading zeros (01, 012). Every chapter must have a unique number; duplicate or missing chapter numbers are not allowed.</div>
           <progress id="author-chapter-upload-progress" class="hidden" value="0" max="100" style="width:100%;margin-top:0.45rem"></progress>
           <label>Book cover</label>
           <input id="author-cover" type="file" accept=".jpg,.jpeg,.png,.webp" onchange="previewAuthorCover()">
@@ -1831,6 +1831,7 @@ let sessionRenewalTimer = null;
 let readerSyncStatus = (state.userId || state.accessToken) ? 'synced' : 'local';
 const authorStoryTitles = {};
 const authorStoryOriginalStatuses = {};
+const CHAPTER_FILENAME_HELP = 'Name chapter files like Chapter 01.docx, Chapter 01 - Title.docx, or 01_Title.txt.';
 
 function decodeJwtPayload(token) {
   if (!token || typeof token !== 'string' || token.split('.').length < 2) return null;
@@ -1846,6 +1847,26 @@ function decodeJwtPayload(token) {
 function tokenExpiryMillis(token) {
   const payload = decodeJwtPayload(token);
   return payload && Number(payload.exp) ? Number(payload.exp) * 1000 : null;
+}
+
+function parseChapterFilename(name) {
+  const base = String(name || '').split(/[\\/]/).pop().replace(/\.[^.]+$/, '');
+  const match = base.match(/^\s*(?:(?:chapter|chap|ch)\s*)?(0*[1-9]\d*)(?:\s*[-_:.]\s*(.+?))?\s*$/i);
+  if (!match) return null;
+  return { number: Number(match[1]), title: (match[2] || '').trim() || null };
+}
+
+function chapterFileValidationError(files) {
+  const seen = new Map();
+  for (const file of files) {
+    const ext = (file.name.split('.').pop() || '').toLowerCase();
+    if (!['txt','docx'].includes(ext)) return `${file.name} is not supported. Chapter files must be TXT or DOCX.`;
+    const parsed = parseChapterFilename(file.name);
+    if (!parsed) return `${file.name} does not match the chapter filename format. ${CHAPTER_FILENAME_HELP}`;
+    if (seen.has(parsed.number)) return `Chapter ${parsed.number} appears in both ${seen.get(parsed.number)} and ${file.name}. Use unique chapter numbers.`;
+    seen.set(parsed.number, file.name);
+  }
+  return '';
 }
 
 function tokenExpiresWithin(token, windowMs) {
@@ -3887,8 +3908,8 @@ async function submitAuthorDraft() {
   if (!file && !chapterFiles.length) { setAuthorUploadStatus('Choose a manuscript or select chapter files for bulk upload.'); return; }
   if (file && !['txt','docx','epub'].includes((file.name.split('.').pop() || '').toLowerCase())) { setAuthorUploadStatus('Manuscript must be TXT, DOCX, or EPUB.'); return; }
   if (file && file.size > 50 * 1024 * 1024) { setAuthorUploadStatus('Manuscript must be 50 MB or smaller.'); return; }
-  const badChapterFile = chapterFiles.find(chapterFile => !['txt','docx'].includes((chapterFile.name.split('.').pop() || '').toLowerCase()));
-  if (badChapterFile) { setAuthorUploadStatus(`${badChapterFile.name} is not supported. Chapter files must be TXT or DOCX.`); return; }
+  const chapterFileError = chapterFileValidationError(chapterFiles);
+  if (chapterFileError) { setAuthorUploadStatus(chapterFileError); return; }
   if (cover && !['jpg','jpeg','png','webp'].includes((cover.name.split('.').pop() || '').toLowerCase())) { setAuthorUploadStatus('Cover must be JPG, PNG, or WEBP.'); return; }
   if (cover && cover.size > 5 * 1024 * 1024) { setAuthorUploadStatus('Cover must be 5 MB or smaller.'); return; }
   if (!consent) { setAuthorUploadStatus('Please confirm you have permission to submit this manuscript.'); return; }
@@ -4055,8 +4076,8 @@ function bulkUploadAuthorChapters(storyId) {
   const input = document.getElementById(`chapter-files-${storyId}`);
   const files = Array.from(input?.files || []);
   if (!files.length) { setChapterStatus(storyId, 'Select one or more TXT or DOCX files.'); return; }
-  const bad = files.find(file => !['txt','docx'].includes((file.name.split('.').pop() || '').toLowerCase()));
-  if (bad) { setChapterStatus(storyId, `${bad.name} is not a supported chapter file.`); return; }
+  const fileError = chapterFileValidationError(files);
+  if (fileError) { setChapterStatus(storyId, fileError); return; }
   const payload = new FormData();
   files.forEach(file => payload.append('files', file));
   const progress = document.getElementById(`chapter-upload-progress-${storyId}`);

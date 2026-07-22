@@ -1329,7 +1329,7 @@ async def bulk_upload_chapters(
     authorization: str | None = Header(None),
     x_user_id: str | None = Header(None),
 ):
-    """Bulk upload: each selected file becomes its own chapter, in the order
+    """Bulk upload: each selected file becomes its own chapter, ordered by filename.
     the files were selected. If one file fails, the rest still get
     uploaded — every file is handled independently and committed on its
     own, so a single bad file can never roll back the good ones."""
